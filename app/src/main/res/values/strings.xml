@@ -1,5 +1,9 @@
 <resources>
     <string name="app_name">Floats</string>
-    <string name="welcome_word">Welcome</string>
+
+<!--    its a design, the letter w is a little bigger-->
+    <string name="letter_w">W</string>
+    <string name="welcome_word">ELCOME</string>
+
     <string name="welcome_description">To be able to manage files via another device, the application needs you to grant permission to manage files on your device.</string>
 </resources>
