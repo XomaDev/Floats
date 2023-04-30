@@ -11,16 +11,21 @@ import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
-import java.util.Timer
-import java.util.TimerTask
 
 
 class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        if (Environment.isExternalStorageManager()) {
+            startActivity(
+                Intent(this, HomeActivity::class.java)
+            )
+        }
         setContentView(R.layout.activity_welcome)
         activityWelcome()
     }
+
+
 
     fun activityWelcome() {
         val allowButton = findViewById<Button>(R.id.allow_button)
@@ -44,6 +49,11 @@ class MainActivity : AppCompatActivity() {
                     "Access to storage was not granted.",
                     Toast.LENGTH_SHORT
                 ).show()
+            } else {
+                startActivity(
+                    Intent(this,
+                        HomeActivity::class.java)
+                )
             }
         }
 

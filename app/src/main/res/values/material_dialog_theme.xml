@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="FloatsCustomDialogTheme" parent="@style/ThemeOverlay.Material3.MaterialAlertDialog">
+        <item name="materialAlertDialogTitleTextStyle">@style/FloatsDialogTitleText</item>
+        <item name="materialAlertDialogBodyTextStyle">@style/FloatsDialogText</item>
+        <item name="buttonBarPositiveButtonStyle">@style/FloatsDialogButton</item>
+    </style>
+
+    <style name="FloatsDialogTitleText" parent="@style/MaterialAlertDialog.Material3.Title.Text">
+        <item name="android:fontFamily">@font/inter</item>
+    </style>
+
+    <style name="FloatsDialogText" parent="@style/MaterialAlertDialog.Material3.Body.Text">
+        <item name="android:fontFamily">@font/inter</item>
+    </style>
+
+    <style name="FloatsDialogButton" parent="@style/Widget.Material3.Button.TextButton.Dialog">
+        <item name="fontFamily">@font/inter</item>
+    </style>
+</resources>
