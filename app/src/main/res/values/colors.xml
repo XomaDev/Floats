@@ -1,5 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="black">#FF000000</color>
+    <color name="tint_color_image">@color/material_dynamic_neutral_variant60</color>
     <color name="white">#FFFFFFFF</color>
+
+    <color name="alt_variant_60">#907DB1</color>
 </resources>

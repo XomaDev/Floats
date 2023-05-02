@@ -2,16 +2,17 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
-    android:layout_margin="30dp"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:layout_margin="30dp"
     android:orientation="vertical"
     tools:context=".HomeActivity">
 
     <LinearLayout
-        android:gravity="center"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content">
+        android:layout_height="wrap_content"
+        android:gravity="center">
+
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -20,6 +21,7 @@
             android:textSize="40sp"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
+
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -30,54 +32,56 @@
             app:layout_constraintTop_toTopOf="parent" />
 
         <LinearLayout
-            android:layout_gravity="center"
-            android:gravity="end"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content">
-            <ImageView
-                android:layout_gravity="center"
-                android:id="@+id/iconButton"
-                android:backgroundTint="@color/material_dynamic_primary60"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:gravity="end">
 
-                android:background="@drawable/gear"
+            <ImageView
+                android:id="@+id/gear"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                />
+
+                android:layout_gravity="center"
+                android:background="@drawable/gear"
+                android:backgroundTint="@color/alt_variant_60" />
         </LinearLayout>
     </LinearLayout>
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:gravity="center">
+        android:gravity="center"
+        android:orientation="vertical">
+
         <TextView
             android:id="@+id/device_label"
-            android:layout_marginTop="25dp"
-            android:fontFamily="@font/inter"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Samsung Galaxy A03s"/>
+            android:layout_marginTop="25dp"
+            android:fontFamily="@font/inter"
+            android:text="Samsung Galaxy A03s" />
 
         <ImageView
-            android:layout_width="200dp"
-            android:backgroundTint="@color/material_dynamic_neutral_variant60"
-            android:layout_height="200dp"
-            android:background="@drawable/dummy_qr"/>
+            android:id="@+id/qr_image"
+            android:layout_width="300dp"
+            android:layout_height="300dp"
+            android:backgroundTint="@color/alt_variant_60" />
 
         <TextView
-            android:layout_marginTop="25dp"
-            android:fontFamily="@font/inter"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Scan the code above from another device to connect."/>
+            android:layout_marginTop="25dp"
+            android:fontFamily="@font/inter"
+            android:text="Scan the code above from another device to connect." />
 
         <com.google.android.material.button.MaterialButton
-            android:layout_marginTop="25dp"
+            android:id="@+id/scanButton"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            app:icon="@drawable/qr_code_scan"
+            android:layout_marginTop="25dp"
             android:fontFamily="@font/inter"
-            android:text="Scan from another device" />
+            android:text="Scan from another device"
+            app:icon="@drawable/qr_code_scan" />
     </LinearLayout>
 </LinearLayout>

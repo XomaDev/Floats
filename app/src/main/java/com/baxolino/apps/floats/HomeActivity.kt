@@ -1,48 +1,95 @@
 package com.baxolino.apps.floats
 
 import android.Manifest
+import android.annotation.SuppressLint
 import android.bluetooth.BluetoothAdapter
+import android.bluetooth.BluetoothDevice
 import android.bluetooth.BluetoothManager
 import android.content.DialogInterface
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.graphics.drawable.Drawable
 import android.net.Uri
+import android.os.Build
 import android.os.Bundle
 import android.provider.Settings
+import android.util.Log
+import android.widget.ImageView
 import android.widget.TextView
+import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
+import androidx.camera.core.ExperimentalGetImage
 import androidx.core.app.ActivityCompat
+import com.baxolino.apps.floats.camera.ScanActivity
+import com.baxolino.apps.floats.tools.PermissionHelper
+import com.baxolino.apps.floats.tools.ThemeHelper
+import com.github.alexzhirkevich.customqrgenerator.QrData
+import com.github.alexzhirkevich.customqrgenerator.vector.QrCodeDrawable
+import com.github.alexzhirkevich.customqrgenerator.vector.QrVectorOptions
+import com.github.alexzhirkevich.customqrgenerator.vector.style.QrVectorBallShape
+import com.github.alexzhirkevich.customqrgenerator.vector.style.QrVectorColor
+import com.github.alexzhirkevich.customqrgenerator.vector.style.QrVectorColors
+import com.github.alexzhirkevich.customqrgenerator.vector.style.QrVectorFrameShape
+import com.github.alexzhirkevich.customqrgenerator.vector.style.QrVectorPixelShape
+import com.github.alexzhirkevich.customqrgenerator.vector.style.QrVectorShapes
+import com.google.android.material.button.MaterialButton
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
+import java.io.ByteArrayOutputStream
 
 
+@ExperimentalGetImage
 class HomeActivity : AppCompatActivity() {
 
     companion object {
         private val TAG = "HomeActivity"
-        private val BLUETOOTH_PERMISSION_REQUEST_CODE = 7
+        private const val BLUETOOTH_PERMISSION_REQUEST_CODE = 7
     }
 
     private lateinit var adapter: BluetoothAdapter
+    private lateinit var deviceName: String
+    private val connector = FloatsBluetooth(this)
 
+    @SuppressLint("HardwareIds")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
         setContentView(R.layout.activity_home)
+        ThemeHelper.themeOfHomeActivity(this)
+
         val bluetoothManager = getSystemService(BluetoothManager::class.java)
         adapter = bluetoothManager.adapter
 
         val deviceText = findViewById<TextView>(R.id.device_label)
-        if (ActivityCompat.checkSelfPermission(
-                this,
-                Manifest.permission.BLUETOOTH_CONNECT
-            ) != PackageManager.PERMISSION_GRANTED
-        ) {
-            // TODO: Consider calling
-            //    ActivityCompat#requestPermissions
-            // here to request the missing permissions, and then overriding
-            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
-            //                                          int[] grantResults)
-            // to handle the case where the user grants the permission. See the documentation
-            // for ActivityCompat#requestPermissions for more details.
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            checkBluetoothPermission()
+        }
+
+        deviceText.text = adapter.name
+        deviceName = adapter.name
+
+        val qrImageView = findViewById<ImageView>(R.id.qr_image)
+        generateQr(qrImageView, adapter.name)
+
+        val scanButton = findViewById<MaterialButton>(R.id.scanButton)
+
+        if (intent.hasExtra("address") && PermissionHelper.canAccessBluetooth(this)) {
+            // we are back from the qr scan activity
+            // and we can connect to that bluetooth device from the address
+            val address = intent.getStringExtra("address")
+            connect(address!!)
+        } else {
+            scanButton.setOnClickListener {
+                startActivity(
+                    Intent(this, ScanActivity::class.java)
+                )
+            }
+            connector.acceptConnection(adapter)
+        }
+    }
+
+    @RequiresApi(Build.VERSION_CODES.S)
+    private fun checkBluetoothPermission() {
+        if (!PermissionHelper.canAccessBluetooth(this)) {
             ActivityCompat.requestPermissions(
                 this,
                 arrayOf(Manifest.permission.BLUETOOTH_CONNECT),
@@ -50,8 +97,92 @@ class HomeActivity : AppCompatActivity() {
             )
             return
         }
-        deviceText.text = adapter.name
-        val bondedDevices = adapter.bondedDevices
+    }
+
+    @SuppressLint("MissingPermission")
+    private fun connect(name: String) {
+        var remoteDevice: BluetoothDevice? = null
+
+        for (device in adapter.bondedDevices) {
+            if (device.name == name) {
+                remoteDevice = device
+                break
+            }
+        }
+
+        if (remoteDevice != null) {
+            MaterialAlertDialogBuilder(this, R.style.FloatsCustomDialogTheme)
+                .setTitle("Connection")
+                .setMessage("Requesting connection to ${remoteDevice.name}")
+                .show()
+            connector.requestConnection(remoteDevice)
+        } else {
+            Log.d(TAG, "Did not find device $name")
+        }
+    }
+
+    // called from FloatsBluetooth.kt class after
+    // creating connection with another device
+    fun establishedConnection(isServer: Boolean) {
+        var serverName: String? = null
+        if (!isServer) {
+            // we need to send the another device details
+            // about the current device
+            connector.write(deviceName.toByteArray())
+            connector.writeByte(0) // flags the end of the name
+        } else {
+            // non-ui thread
+            Thread.sleep(100)
+            val byteStream = ByteArrayOutputStream()
+
+            while (true) {
+                val b = connector.readByte()
+                if (b == 0) break
+                byteStream.write(b)
+            }
+            Log.d(TAG, "Connected to: $byteStream")
+            serverName = byteStream.toString()
+        }
+        runOnUiThread {
+            if (isServer) {
+                // show a dialog that it's connected
+                MaterialAlertDialogBuilder(this, R.style.FloatsCustomDialogTheme)
+                    .setTitle("Connected")
+                    .setMessage("Established connection with $serverName")
+                    .show()
+            }
+        }
+    }
+
+    private fun generateQr(qrImageView: ImageView, text: String) {
+        Log.d(TAG, "generateQr: $text")
+        val primaryColor = ThemeHelper.variant60Color(this)
+
+        val data = QrData.Text(text)
+        val options = QrVectorOptions.Builder()
+            .setPadding(.3f)
+            .setColors(
+                QrVectorColors(
+                    dark = QrVectorColor
+                        .Solid(primaryColor),
+                    ball = QrVectorColor.Solid(
+                        primaryColor
+                    )
+                )
+            )
+            .setShapes(
+                QrVectorShapes(
+                    darkPixel = QrVectorPixelShape
+                        .RoundCorners(.5f),
+                    ball = QrVectorBallShape
+                        .RoundCorners(.25f),
+                    frame = QrVectorFrameShape
+                        .RoundCorners(.25f),
+                )
+            )
+            .build()
+        val drawable: Drawable = QrCodeDrawable(data, options)
+        qrImageView.background = drawable
     }
 
     override fun onRequestPermissionsResult(

@@ -7,4 +7,11 @@
 
     <string name="welcome_description">To be able to manage files via another device, the application needs you to grant permission to manage files on your device.</string>
     <string name="subtext_connection">Check if the device\'s paired if it does not appear in this list.</string>
+    <string name="title_activity_scan">ScanActivity</string>
+    <!-- Strings used for fragments for navigation -->
+    <string name="first_fragment_label">First Fragment</string>
+    <string name="second_fragment_label">Second Fragment</string>
+    <string name="next">Next</string>
+    <string name="previous">Previous</string>
+
 </resources>
