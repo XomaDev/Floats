@@ -16,8 +16,8 @@ import java.util.UUID
 @SuppressLint("MissingPermission")
 class FloatsBluetooth(val homeActivity: HomeActivity) {
 
-    private var writeStream: OutputStream? = null
-    private var readStream: InputStream? = null
+    var writeStream: OutputStream? = null
+    var readStream: InputStream? = null
 
     companion object {
         private const val APP_NAME = "Floats"

@@ -17,10 +17,12 @@ import android.util.Log
 import android.widget.ImageView
 import android.widget.TextView
 import androidx.annotation.RequiresApi
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.camera.core.ExperimentalGetImage
 import androidx.core.app.ActivityCompat
 import com.baxolino.apps.floats.camera.ScanActivity
+import com.baxolino.apps.floats.core.KRSystem
 import com.baxolino.apps.floats.tools.PermissionHelper
 import com.baxolino.apps.floats.tools.ThemeHelper
 import com.github.alexzhirkevich.customqrgenerator.QrData
@@ -34,7 +36,6 @@ import com.github.alexzhirkevich.customqrgenerator.vector.style.QrVectorPixelSha
 import com.github.alexzhirkevich.customqrgenerator.vector.style.QrVectorShapes
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
-import java.io.ByteArrayOutputStream
 
 
 @ExperimentalGetImage
@@ -48,6 +49,10 @@ class HomeActivity : AppCompatActivity() {
     private lateinit var adapter: BluetoothAdapter
     private lateinit var deviceName: String
     private val connector = FloatsBluetooth(this)
+
+    private var krSystem: KRSystem? = null
+
+    private var alertDialog: AlertDialog? = null
 
     @SuppressLint("HardwareIds")
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -111,7 +116,7 @@ class HomeActivity : AppCompatActivity() {
         }
 
         if (remoteDevice != null) {
-            MaterialAlertDialogBuilder(this, R.style.FloatsCustomDialogTheme)
+            alertDialog = MaterialAlertDialogBuilder(this, R.style.FloatsCustomDialogTheme)
                 .setTitle("Connection")
                 .setMessage("Requesting connection to ${remoteDevice.name}")
                 .show()
@@ -123,35 +128,39 @@ class HomeActivity : AppCompatActivity() {
 
     // called from FloatsBluetooth.kt class after
     // creating connection with another device
+    @SuppressLint("MissingPermission")
     fun establishedConnection(isServer: Boolean) {
-        var serverName: String? = null
-        if (!isServer) {
-            // we need to send the another device details
-            // about the current device
-            connector.write(deviceName.toByteArray())
-            connector.writeByte(0) // flags the end of the name
-        } else {
-            // non-ui thread
-            Thread.sleep(100)
-            val byteStream = ByteArrayOutputStream()
+        krSystem = KRSystem(connector)
 
-            while (true) {
-                val b = connector.readByte()
-                if (b == 0) break
-                byteStream.write(b)
+        val serverName: String?
+        if (!isServer) {
+            krSystem!!.postKnowRequest(deviceName, {
+                // client received know-request
+                Log.d(TAG, "Know Request Successful")
+
+                runOnUiThread {
+                    alertDialog?.apply {
+                        dismiss()
+                    }
+                    informConnection(deviceName)
+                }
+            }, {
+                Log.d(TAG, "Server failed to respond to KR")
+            })
+        } else {
+            serverName = krSystem!!.readKnowRequest()
+            Log.d(TAG, "Received Server Name $serverName")
+            runOnUiThread {
+                informConnection(serverName)
             }
-            Log.d(TAG, "Connected to: $byteStream")
-            serverName = byteStream.toString()
         }
-        runOnUiThread {
-            if (isServer) {
-                // show a dialog that it's connected
-                MaterialAlertDialogBuilder(this, R.style.FloatsCustomDialogTheme)
-                    .setTitle("Connected")
-                    .setMessage("Established connection with $serverName")
-                    .show()
-            }
-        }
+    }
+
+    private fun informConnection(deviceName: String) {
+        MaterialAlertDialogBuilder(this, R.style.FloatsCustomDialogTheme)
+            .setTitle("Connected")
+            .setMessage("Established connection with $deviceName")
+            .show()
     }
 
     private fun generateQr(qrImageView: ImageView, text: String) {
