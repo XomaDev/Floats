@@ -39,6 +39,13 @@ public class KRSystem {
         return krSystem = new KRSystem(deviceName, floats);
     }
 
+    public interface FileListener {
+        boolean acceptRequest(String fileName);
+        void updateReceiveProgress(int total, int received);
+    }
+
+    public FileListener fileListener = null;
+
     public final String deviceName;
 
     private final InputStream readStream;
@@ -100,13 +107,6 @@ public class KRSystem {
         writeStream.write(bytes);
     }
 
-    private void postLengthHeader(int len) throws IOException {
-        // 32 bit is unnecessary, so 16 bit
-
-        writeStream.write(len >> 8);
-        writeStream.write((byte) len);
-    }
-
     public String readKnowRequest() throws IOException {
         int len = readLengthHeader();
 
@@ -121,14 +121,23 @@ public class KRSystem {
         } else {
             // TODO:
             // now let the other device know the message is delivered
-            writeStream.write(KNOW_RESPONSE_INT);
+            write(KNOW_RESPONSE_INT);
             return new String(allocation);
         }
     }
 
+    private void postLengthHeader(int len) throws IOException {
+        write(len >> 24);
+        write(len >> 16);
+        write(len >> 8);
+        write(len);
+    }
+
     private int readLengthHeader() throws IOException {
-        return ((byte) readStream.read() & 255) << 8 |
-                (byte) readStream.read() & 255;
+        return (((byte) read() & 255) << 24) |
+                (((byte) read() & 255) << 16) |
+                (((byte) read() & 255) << 8) |
+                (((byte) read() & 255));
     }
 
     public void pushStream(String name, InputStream input) throws IOException {
@@ -146,7 +155,7 @@ public class KRSystem {
         //  them into segments
         int read;
         while ((read = input.read()) != -1) {
-            writeStream.write(read);
+            write(read);
         }
         Log.d(TAG, "Data Was Written");
     }
@@ -165,20 +174,32 @@ public class KRSystem {
     }
 
     private void handleIncomingStream() {
+        if (fileListener == null)
+            throw new IllegalStateException();
+
+        Log.d(TAG, "handleIncomingStream()");
         String fileName;
         byte[] content;
         try {
-            fileName = new String(readWithHeader());
-            content = readWithHeader();
+            fileName = new String(readWithHeader(false));
+            if (!fileListener.acceptRequest(fileName))
+                // file receive request was denied
+                // TODO:
+                //  create an alternative mechanism where the
+                //  sender will not send the contents until received
+                //  approval
+                return;
+            content = readWithHeader(true);
         } catch (IOException e) {
+            Log.d(TAG, "handleIncomingStream: " + e.getMessage());
             throw new RuntimeException(e);
         }
 
         Log.d(TAG, "Received File = " + fileName);
-        Log.d(TAG, "Content = " + new String(content));
+        Log.d(TAG, "handleIncomingStream: Size = " + content.length);
     }
 
-    private byte[] readWithHeader() throws IOException {
+    private byte[] readWithHeader(boolean isContent) throws IOException {
         // we don't allocate or read more than we require
         int lengthHeader = readLengthHeader();
 
@@ -188,9 +209,11 @@ public class KRSystem {
 
         while (lengthHeader != numOfBytes) {
             numOfBytes += readStream.read(bytes);
-            Log.d(TAG, "readWithHeader: " + numOfBytes);
+            if (isContent)
+                fileListener.updateReceiveProgress(lengthHeader, numOfBytes);
+            Log.d(TAG, "readWithHeader: " + numOfBytes + "/" + lengthHeader);
         }
-        Log.d(TAG, "readWithHeader: Content = " + new String(bytes));
+        Log.d(TAG, "readWithHeader: Content Len = " + numOfBytes);
         return bytes;
     }
 
@@ -200,5 +223,13 @@ public class KRSystem {
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    private void write(int n) throws IOException {
+        writeStream.write(n);
+    }
+
+    private int read() throws IOException {
+        return readStream.read();
     }
 }

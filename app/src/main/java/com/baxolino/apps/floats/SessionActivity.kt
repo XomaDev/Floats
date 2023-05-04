@@ -10,6 +10,10 @@ import android.widget.TextView
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import com.baxolino.apps.floats.core.KRSystem
+import com.baxolino.apps.floats.core.KRSystem.FileListener
+import com.baxolino.apps.floats.tools.ThemeHelper
+import com.google.android.material.floatingactionbutton.FloatingActionButton
+import com.google.android.material.progressindicator.LinearProgressIndicator
 import java.io.IOException
 import java.lang.Exception
 
@@ -26,7 +30,7 @@ class SessionActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_session)
 
-        val button = findViewById<Button>(R.id.add)
+        val button = findViewById<FloatingActionButton>(R.id.floating_action_button)
         button.setOnClickListener {
             filePickResult.launch(
                 Intent.createChooser(
@@ -35,21 +39,49 @@ class SessionActivity : AppCompatActivity() {
                 )
             )
         }
+
+        val fileNameLabel = findViewById<TextView>(R.id.file_name)
+        val progressBar = findViewById<LinearProgressIndicator>(R.id.progress_bar)
+
+        val secondaryLabel = findViewById<TextView>(R.id.secondary_label)
+
         try {
             krSystem = KRSystem.getInstance()
             krSystem!!.listenIncomingData()
 
             val deviceName = intent.getStringExtra("deviceName")
             val label = findViewById<TextView>(R.id.label)
-            label.text = "Connected to ${deviceName}"
+            label.text = "Connected to $deviceName"
+
+            krSystem!!.fileListener = object: FileListener {
+                override fun acceptRequest(fileName: String?): Boolean {
+                    runOnUiThread {
+                        fileNameLabel.text = fileName!!.split('.')[0]
+                    }
+                    return true
+                }
+
+                override fun updateReceiveProgress(total: Int, received: Int) {
+                    runOnUiThread {
+                        val percentage = (received.toDouble() / total * 100).toInt()
+
+                        progressBar.progress = percentage
+                        secondaryLabel.text = "$received / $total $percentage%"
+                    }
+                }
+            }
         } catch (io: Exception) {
             // we are still in the testing stage
         }
+        ThemeHelper.themeOfSessionActivity(this)
     }
 
     private var filePickResult =
         registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {
-            val contentUri = it.data!!.data
+            if (it.data == null)
+                // no file has been picked
+                return@registerForActivityResult
+            val contentUri = it.data?.data
             contentUri?.let {
                 val stream = contentResolver.openInputStream(contentUri)
                 val fileName = contentUri.getName()
