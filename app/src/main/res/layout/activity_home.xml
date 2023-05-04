@@ -83,5 +83,6 @@
             android:fontFamily="@font/inter"
             android:text="Scan from another device"
             app:icon="@drawable/qr_code_scan" />
+
     </LinearLayout>
 </LinearLayout>

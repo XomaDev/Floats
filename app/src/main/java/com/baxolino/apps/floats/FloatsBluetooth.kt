@@ -4,6 +4,7 @@ import android.annotation.SuppressLint
 import android.bluetooth.BluetoothAdapter
 import android.bluetooth.BluetoothDevice
 import android.bluetooth.BluetoothSocket
+import android.content.Context
 import android.util.Log
 import java.io.IOException
 import java.io.InputStream
@@ -23,6 +24,7 @@ class FloatsBluetooth(val homeActivity: HomeActivity) {
         private const val APP_NAME = "Floats"
         private const val TAG = "Floats"
         private val APP_UUID = UUID.fromString("8ce255c0-223a-11e0-ac64-0803450c9a66")
+
     }
 
     @SuppressLint("UnsafeOptInUsageError")
@@ -37,7 +39,7 @@ class FloatsBluetooth(val homeActivity: HomeActivity) {
             writeStream = socket.outputStream
             readStream = socket.inputStream
 
-            homeActivity.establishedConnection(false)
+            homeActivity.establishedConnection(false, device)
         }.start()
     }
 
@@ -61,7 +63,7 @@ class FloatsBluetooth(val homeActivity: HomeActivity) {
                             writeStream = socket!!.outputStream
                             readStream = socket!!.inputStream
 
-                            homeActivity.establishedConnection(true)
+                            homeActivity.establishedConnection(true, null)
                             t.cancel()
                         }
                     } catch (exception: IOException) {
@@ -72,7 +74,7 @@ class FloatsBluetooth(val homeActivity: HomeActivity) {
         }.start()
     }
 
-    fun write(bytes: ByteArray) {
+    private fun write(bytes: ByteArray) {
         if (writeStream == null) {
             throw IllegalStateException("Write Stream Is Null")
         } else {
@@ -80,27 +82,4 @@ class FloatsBluetooth(val homeActivity: HomeActivity) {
         }
     }
 
-    fun writeByte(byte: Byte) {
-        write(
-            ByteArray(1).apply { set(0, byte) }
-        )
-    }
-
-    fun read(size: Int): ByteArray {
-        if (readStream == null) {
-            throw IllegalStateException("Read Stream Is Null")
-        } else {
-            val bytes = ByteArray(size)
-            readStream!!.read(bytes)
-            return bytes
-        }
-    }
-
-    fun readByte(): Int {
-        if (readStream == null) {
-            throw IllegalStateException("Read Stream Is Null")
-        } else {
-            return readStream!!.read()
-        }
-    }
 }

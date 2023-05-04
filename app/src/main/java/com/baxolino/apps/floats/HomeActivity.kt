@@ -16,6 +16,7 @@ import android.provider.Settings
 import android.util.Log
 import android.widget.ImageView
 import android.widget.TextView
+import android.widget.Toast
 import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
@@ -129,8 +130,8 @@ class HomeActivity : AppCompatActivity() {
     // called from FloatsBluetooth.kt class after
     // creating connection with another device
     @SuppressLint("MissingPermission")
-    fun establishedConnection(isServer: Boolean) {
-        krSystem = KRSystem(connector)
+    fun establishedConnection(isServer: Boolean, device: BluetoothDevice?) {
+        krSystem = KRSystem.getInstance(deviceName, connector)
 
         val serverName: String?
         if (!isServer) {
@@ -142,10 +143,13 @@ class HomeActivity : AppCompatActivity() {
                     alertDialog?.apply {
                         dismiss()
                     }
-                    informConnection(deviceName)
+                    informConnection(device!!.name)
                 }
             }, {
                 Log.d(TAG, "Server failed to respond to KR")
+                Toast.makeText(this,
+                    "${device!!.name} did not respond to request.",
+                    Toast.LENGTH_SHORT).show();
             })
         } else {
             serverName = krSystem!!.readKnowRequest()
@@ -157,10 +161,10 @@ class HomeActivity : AppCompatActivity() {
     }
 
     private fun informConnection(deviceName: String) {
-        MaterialAlertDialogBuilder(this, R.style.FloatsCustomDialogTheme)
-            .setTitle("Connected")
-            .setMessage("Established connection with $deviceName")
-            .show()
+        startActivity(
+            Intent(this, SessionActivity::class.java)
+                .putExtra("deviceName", deviceName)
+        )
     }
 
     private fun generateQr(qrImageView: ImageView, text: String) {
