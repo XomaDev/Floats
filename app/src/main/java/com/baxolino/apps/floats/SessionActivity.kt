@@ -5,16 +5,16 @@ import android.net.Uri
 import android.os.Bundle
 import android.provider.OpenableColumns
 import android.util.Log
-import android.widget.Button
 import android.widget.TextView
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import com.baxolino.apps.floats.core.KRSystem
-import com.baxolino.apps.floats.core.KRSystem.FileListener
+import com.baxolino.apps.floats.core.KRSystem.FileRequest
+import com.baxolino.apps.floats.core.KRSystem.ReceiveListener
+import com.baxolino.apps.floats.core.KRSystem.UpdateListener
 import com.baxolino.apps.floats.tools.ThemeHelper
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.google.android.material.progressindicator.LinearProgressIndicator
-import java.io.IOException
 import java.lang.Exception
 
 
@@ -45,28 +45,41 @@ class SessionActivity : AppCompatActivity() {
 
         val secondaryLabel = findViewById<TextView>(R.id.secondary_label)
 
+        val deviceName = intent.getStringExtra("deviceName")
+        val label = findViewById<TextView>(R.id.label)
+        label.text = "Connected to $deviceName"
+
         try {
-            krSystem = KRSystem.getInstance()
-            krSystem!!.listenIncomingData()
+            krSystem = KRSystem.getInstance().apply {
+                listenIncomingData()
 
-            val deviceName = intent.getStringExtra("deviceName")
-            val label = findViewById<TextView>(R.id.label)
-            label.text = "Connected to $deviceName"
+                receiveListener = object :
+                    ReceiveListener {
+                    var initialTime: Long = 0
 
-            krSystem!!.fileListener = object: FileListener {
-                override fun acceptRequest(fileName: String?): Boolean {
-                    runOnUiThread {
-                        fileNameLabel.text = fileName!!.split('.')[0]
+                    override fun acceptRequest(fileName: String?): Boolean {
+                        runOnUiThread {
+                            fileNameLabel.text = fileName!!.split('.')[0]
+                        }
+                        initialTime = System.currentTimeMillis() - 1
+                        return true
                     }
-                    return true
-                }
 
-                override fun updateReceiveProgress(total: Int, received: Int) {
-                    runOnUiThread {
-                        val percentage = (received.toDouble() / total * 100).toInt()
+                    override fun updateReceiveProgress(total: Int, received: Int) {
+                        runOnUiThread {
+                            val percentage = (received.toDouble() / total * 100).toInt()
 
-                        progressBar.progress = percentage
-                        secondaryLabel.text = "$received / $total $percentage%"
+                            progressBar.progress = percentage
+
+                            val diff = System.currentTimeMillis() - initialTime
+                            if (received != 0 && diff != 0L) {
+                                val secs = diff / 1000
+                                if (secs != 0L) {
+                                    val speed = received / secs
+                                    secondaryLabel.text = "$received / $total $percentage% $speed bytes / second"
+                                }
+                            }
+                        }
                     }
                 }
             }
@@ -79,7 +92,7 @@ class SessionActivity : AppCompatActivity() {
     private var filePickResult =
         registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {
             if (it.data == null)
-                // no file has been picked
+            // no file has been picked
                 return@registerForActivityResult
             val contentUri = it.data?.data
             contentUri?.let {
@@ -88,7 +101,16 @@ class SessionActivity : AppCompatActivity() {
 
                 Log.d(TAG, "File Name = $fileName")
                 Thread {
-                    krSystem?.pushStream(fileName, stream)
+                    val fileRequest = FileRequest(fileName, stream, object : UpdateListener {
+                        override fun updateProgress(total: Int, sent: Int) {
+                            Log.d(TAG, "Sent $sent / $total")
+                        }
+
+                        override fun success() {
+
+                        }
+                    })
+                    krSystem?.send(fileRequest)
                 }.start()
             }
         }

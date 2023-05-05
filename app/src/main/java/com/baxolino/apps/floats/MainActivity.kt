@@ -26,6 +26,12 @@ import com.baxolino.apps.floats.tools.ThemeHelper
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+//        if (true) {
+//            startActivity(
+//                Intent(this, SessionActivity::class.java)
+//            )
+//            return
+//        }
         if (hasStorageAccess()) {
             startActivity(
                 Intent(this, HomeActivity::class.java)
@@ -37,7 +43,7 @@ import com.baxolino.apps.floats.tools.ThemeHelper
     }
 
 
-    fun activityWelcome() {
+    private fun activityWelcome() {
         val allowButton = findViewById<Button>(R.id.allow_button)
         allowButton.setOnClickListener {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {

@@ -39,12 +39,17 @@ public class KRSystem {
         return krSystem = new KRSystem(deviceName, floats);
     }
 
-    public interface FileListener {
+    public interface ReceiveListener {
         boolean acceptRequest(String fileName);
         void updateReceiveProgress(int total, int received);
     }
 
-    public FileListener fileListener = null;
+    public interface UpdateListener {
+        void updateProgress(int total, int sent);
+        void success();
+    }
+
+    public ReceiveListener receiveListener = null;
 
     public final String deviceName;
 
@@ -140,23 +145,31 @@ public class KRSystem {
                 (((byte) read() & 255));
     }
 
-    public void pushStream(String name, InputStream input) throws IOException {
+    public void send(FileRequest request) throws IOException {
+        String name = request.name;
+        InputStream input = request.stream;
+        UpdateListener listener = request.listener;
+
         byte[] bytes = name.getBytes();
 
+        // post length data
         sendWithHeader(bytes);
 
         // this avoids extra allocation of
         // byte[] objects
-        postLengthHeader(input.available());
+        int contentLength = input.available();
+        postLengthHeader(contentLength);
 
         // TODO:
         //  while sending large chunks of data, only
         //  some gets delivered so we have to also break
         //  them into segments
-        int read;
+        int read, sent = 0;
         while ((read = input.read()) != -1) {
             write(read);
+            listener.updateProgress(contentLength, ++sent);
         }
+        listener.success();
         Log.d(TAG, "Data Was Written");
     }
 
@@ -168,30 +181,25 @@ public class KRSystem {
                 if (!hasPendingData())
                     return;
                 Log.d(TAG, "Handling Incoming Data");
-                handleIncomingStream();
+                handlePendingData();
             }
         }, 0, LISTEN_DATA_INTERVAL)).start();
     }
 
-    private void handleIncomingStream() {
-        if (fileListener == null)
+    private void handlePendingData() {
+        Log.d(TAG, "Handling Pending Data");
+        if (receiveListener == null)
             throw new IllegalStateException();
 
-        Log.d(TAG, "handleIncomingStream()");
         String fileName;
         byte[] content;
         try {
             fileName = new String(readWithHeader(false));
-            if (!fileListener.acceptRequest(fileName))
-                // file receive request was denied
-                // TODO:
-                //  create an alternative mechanism where the
-                //  sender will not send the contents until received
-                //  approval
+            if (!receiveListener.acceptRequest(fileName))
                 return;
             content = readWithHeader(true);
         } catch (IOException e) {
-            Log.d(TAG, "handleIncomingStream: " + e.getMessage());
+            Log.d(TAG, "Failed Processing Pending Data: " + e.getMessage());
             throw new RuntimeException(e);
         }
 
@@ -210,7 +218,7 @@ public class KRSystem {
         while (lengthHeader != numOfBytes) {
             numOfBytes += readStream.read(bytes);
             if (isContent)
-                fileListener.updateReceiveProgress(lengthHeader, numOfBytes);
+                receiveListener.updateReceiveProgress(lengthHeader, numOfBytes);
             Log.d(TAG, "readWithHeader: " + numOfBytes + "/" + lengthHeader);
         }
         Log.d(TAG, "readWithHeader: Content Len = " + numOfBytes);
@@ -231,5 +239,21 @@ public class KRSystem {
 
     private int read() throws IOException {
         return readStream.read();
+    }
+
+    public static class FileRequest {
+
+        // we could implement many tools here
+
+        private final String name;
+        private final InputStream stream;
+
+        private final UpdateListener listener;
+
+        public FileRequest(String name, InputStream stream, UpdateListener listener) {
+            this.name = name;
+            this.stream = stream;
+            this.listener = listener;
+        }
     }
 }
