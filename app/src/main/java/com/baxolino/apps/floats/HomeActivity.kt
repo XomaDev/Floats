@@ -133,7 +133,6 @@ class HomeActivity : AppCompatActivity() {
     fun establishedConnection(isServer: Boolean, device: BluetoothDevice?) {
         krSystem = KRSystem.getInstance(deviceName, connector)
 
-        val serverName: String?
         if (!isServer) {
             krSystem!!.postKnowRequest(deviceName, {
                 // client received know-request
@@ -152,19 +151,21 @@ class HomeActivity : AppCompatActivity() {
                     Toast.LENGTH_SHORT).show();
             })
         } else {
-            serverName = krSystem!!.readKnowRequest()
-            Log.d(TAG, "Received Server Name $serverName")
-            runOnUiThread {
-                informConnection(serverName)
+            Log.d(TAG, "establishedConnection: waiting")
+            krSystem!!.readKnowRequest {
+                Log.d(TAG, "Received Server Name $it")
+                runOnUiThread {
+                    informConnection(it)
+                }
             }
         }
     }
 
     private fun informConnection(deviceName: String) {
-        startActivity(
-            Intent(this, SessionActivity::class.java)
-                .putExtra("deviceName", deviceName)
-        )
+//        startActivity(
+//            Intent(this, SessionActivity::class.java)
+//                .putExtra("deviceName", deviceName)
+//        )
     }
 
     private fun generateQr(qrImageView: ImageView, text: String) {

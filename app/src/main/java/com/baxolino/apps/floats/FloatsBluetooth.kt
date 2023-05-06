@@ -32,6 +32,8 @@ class FloatsBluetooth(val homeActivity: HomeActivity) {
         Log.d(TAG, "requestConnection()")
         Thread {
             val socket = device.createRfcommSocketToServiceRecord(APP_UUID)
+            // TODO:
+            //  we may need to retry here
             Log.d(TAG, "Requesting...")
             socket.connect()
             Log.d(TAG, "requestConnection: Connection established")

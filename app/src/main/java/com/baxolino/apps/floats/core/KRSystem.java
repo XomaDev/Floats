@@ -1,28 +1,37 @@
 package com.baxolino.apps.floats.core;
 
-import android.os.Handler;
-import android.os.Looper;
 import android.util.Log;
 
 import com.baxolino.apps.floats.FloatsBluetooth;
+import com.baxolino.apps.floats.core.bytes.ChunkDivider;
+import com.baxolino.apps.floats.core.bytes.io.BitOutputStream;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.util.Timer;
-import java.util.TimerTask;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 // know-response system class that manages communication
 // between two devices and let's each other know when the message
 // is delivered
 public class KRSystem {
 
+
     private static final String TAG = "KRSystem";
 
-    private static final int KNOW_RESPONSE_INT = 1;
-    private static final int KNOW_RESPONSE_TIMEOUT = 2000;
+    public interface KnowListener {
+        void received(String name);
+    }
 
-    private static final int LISTEN_DATA_INTERVAL = 500;
+
+    // a success code sent back by know-request receiver
+    private static final byte KNOW_RESPONSE_INT = 1;
+    private static final int KNOW_RESPONSE_TIMEOUT = 5000;
+
+    private static final byte KNOW_REQUEST_CHANNEL = 1;
+
+    private boolean knowRequestDone = false;
 
     private static KRSystem krSystem = null;
 
@@ -39,221 +48,71 @@ public class KRSystem {
         return krSystem = new KRSystem(deviceName, floats);
     }
 
-    public interface ReceiveListener {
-        boolean acceptRequest(String fileName);
-        void updateReceiveProgress(int total, int received);
-    }
-
-    public interface UpdateListener {
-        void updateProgress(int total, int sent);
-        void success();
-    }
-
-    public ReceiveListener receiveListener = null;
-
     public final String deviceName;
 
-    private final InputStream readStream;
-    private final OutputStream writeStream;
+    private final MultiChannelStream reader;
+    private final MultiChannelSystem writer;
 
     private KRSystem(String deviceName, FloatsBluetooth floats) {
         this.deviceName = deviceName;
-        readStream = floats.getReadStream();
-        writeStream = floats.getWriteStream();
+        reader = new MultiChannelStream(floats.getReadStream());
+        writer = new MultiChannelSystem(floats.getWriteStream());
+
+        reader.start();
+        writer.start();
     }
-
-
-    /**
-     * Lets the other server device know our device name
-     *
-     * @param name           Name to be sent
-     * @param knowSuccessful called when KR is received
-     * @param knowFailed     called when KR is not received with a timeout
-     */
 
     public void postKnowRequest(String name, Runnable knowSuccessful, Runnable knowFailed) throws IOException {
         byte[] bytes = name.getBytes();
+        ChunkDivider divider = new ChunkDivider(KNOW_REQUEST_CHANNEL,
+                new BitOutputStream()
+                        .writeShort16((short) bytes.length)
+                        .write(bytes)
+                        .toBytes());
+        writer.add(
+                divider.divide(),
+                MultiChannelSystem.Priority.TOP
+        ).addRefillListener(() -> {
+            // add the next part of bytes
+            if (divider.pending())
+                writer.add(divider.divide(), MultiChannelSystem.Priority.TOP);
+        });
 
-        // this sends a two-byte length header before the data
-
-        sendWithHeader(bytes);
-
-        final Handler handler = new Handler(Looper.getMainLooper());
-        handler.postDelayed(() -> {
-
-            // so there is some data in the stream
-            int read = readInt();
-            boolean done = read == KNOW_RESPONSE_INT;
-            if (!done) {
-                Log.d(TAG, "Invalid Code = " + read);
-            }
-            // TODO:
-            //  implement state mechanism
-            if (done) {
+        reader.listen(KNOW_REQUEST_CHANNEL, (channel, chunk) -> {
+            if (chunk[0] == KNOW_RESPONSE_INT) {
+                knowRequestDone = true;
                 knowSuccessful.run();
+
+                // unregister the response listener
+                reader.forget(KNOW_REQUEST_CHANNEL);
             } else {
+                Log.d("HomeActivity", "Received different response");
+            }
+        });
+        ScheduledExecutorService service = Executors.newScheduledThreadPool(1);
+        service.schedule(() -> {
+            if (!knowRequestDone)
                 knowFailed.run();
-            }
-        }, KNOW_RESPONSE_TIMEOUT);
+
+            // unregister the response listener
+            reader.forget(KNOW_REQUEST_CHANNEL);
+        }, KNOW_RESPONSE_TIMEOUT, TimeUnit.MILLISECONDS);
     }
 
-    private int readInt() {
-        try {
-            return readStream.read();
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-    }
+    public void readKnowRequest(KnowListener listener) {
 
-    private void sendWithHeader(byte[] bytes) throws IOException {
-        // send the length of the next incoming data
-        postLengthHeader(bytes.length);
+        reader.listen(KNOW_REQUEST_CHANNEL, (channel, chunk) -> {
+            String name = new String(chunk);
+            listener.received(name);
 
-        writeStream.write(bytes);
-    }
+            // sends a receive success request back
+            writer.add(
+                    ChunkDivider.oneChunk(KNOW_RESPONSE_INT),
+                    MultiChannelSystem.Priority.TOP
+            );
 
-    public String readKnowRequest() throws IOException {
-        int len = readLengthHeader();
-
-        byte[] allocation = new byte[len];
-
-        int numOfBytesRead = readStream.read(allocation);
-        if (numOfBytesRead != len) {
-            // device is not connected, or slow connection
-            // retry with a buffer
-
-            throw new IOException("Improper Know Request");
-        } else {
-            // TODO:
-            // now let the other device know the message is delivered
-            write(KNOW_RESPONSE_INT);
-            return new String(allocation);
-        }
-    }
-
-    private void postLengthHeader(int len) throws IOException {
-        write(len >> 24);
-        write(len >> 16);
-        write(len >> 8);
-        write(len);
-    }
-
-    private int readLengthHeader() throws IOException {
-        return (((byte) read() & 255) << 24) |
-                (((byte) read() & 255) << 16) |
-                (((byte) read() & 255) << 8) |
-                (((byte) read() & 255));
-    }
-
-    public void send(FileRequest request) throws IOException {
-        String name = request.name;
-        InputStream input = request.stream;
-        UpdateListener listener = request.listener;
-
-        byte[] bytes = name.getBytes();
-
-        // post length data
-        sendWithHeader(bytes);
-
-        // this avoids extra allocation of
-        // byte[] objects
-        int contentLength = input.available();
-        postLengthHeader(contentLength);
-
-        // TODO:
-        //  while sending large chunks of data, only
-        //  some gets delivered so we have to also break
-        //  them into segments
-        int read, sent = 0;
-        while ((read = input.read()) != -1) {
-            write(read);
-            listener.updateProgress(contentLength, ++sent);
-        }
-        listener.success();
-        Log.d(TAG, "Data Was Written");
-    }
-
-    public void listenIncomingData() {
-        new Thread(() -> new Timer().schedule(new TimerTask() {
-            @Override
-            public void run() {
-                Log.d(TAG, "Checking For Data");
-                if (!hasPendingData())
-                    return;
-                Log.d(TAG, "Handling Incoming Data");
-                handlePendingData();
-            }
-        }, 0, LISTEN_DATA_INTERVAL)).start();
-    }
-
-    private void handlePendingData() {
-        Log.d(TAG, "Handling Pending Data");
-        if (receiveListener == null)
-            throw new IllegalStateException();
-
-        String fileName;
-        byte[] content;
-        try {
-            fileName = new String(readWithHeader(false));
-            if (!receiveListener.acceptRequest(fileName))
-                return;
-            content = readWithHeader(true);
-        } catch (IOException e) {
-            Log.d(TAG, "Failed Processing Pending Data: " + e.getMessage());
-            throw new RuntimeException(e);
-        }
-
-        Log.d(TAG, "Received File = " + fileName);
-        Log.d(TAG, "handleIncomingStream: Size = " + content.length);
-    }
-
-    private byte[] readWithHeader(boolean isContent) throws IOException {
-        // we don't allocate or read more than we require
-        int lengthHeader = readLengthHeader();
-
-        byte[] bytes = new byte[lengthHeader];
-        int numOfBytes = 0;
-
-
-        while (lengthHeader != numOfBytes) {
-            numOfBytes += readStream.read(bytes);
-            if (isContent)
-                receiveListener.updateReceiveProgress(lengthHeader, numOfBytes);
-            Log.d(TAG, "readWithHeader: " + numOfBytes + "/" + lengthHeader);
-        }
-        Log.d(TAG, "readWithHeader: Content Len = " + numOfBytes);
-        return bytes;
-    }
-
-    private boolean hasPendingData() {
-        try {
-            return readStream.available() > 0;
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    private void write(int n) throws IOException {
-        writeStream.write(n);
-    }
-
-    private int read() throws IOException {
-        return readStream.read();
-    }
-
-    public static class FileRequest {
-
-        // we could implement many tools here
-
-        private final String name;
-        private final InputStream stream;
-
-        private final UpdateListener listener;
-
-        public FileRequest(String name, InputStream stream, UpdateListener listener) {
-            this.name = name;
-            this.stream = stream;
-            this.listener = listener;
-        }
+            // unregisters the listener
+            reader.forget(KNOW_REQUEST_CHANNEL);
+        });
     }
 }
