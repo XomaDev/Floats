@@ -152,4 +152,8 @@ public class KRSystem {
             reader.forget(KNOW_REQUEST_CHANNEL);
         }, KNOW_RECEIVE_TIMEOUT, TimeUnit.MILLISECONDS);
     }
+
+    public void requestFileTransfer(String name, int length) {
+
+    }
 }
