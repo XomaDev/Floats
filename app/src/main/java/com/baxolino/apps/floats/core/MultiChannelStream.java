@@ -4,6 +4,8 @@ import static com.baxolino.apps.floats.core.Config.CHUNK_SIZE;
 
 import android.util.Log;
 
+import com.baxolino.apps.floats.core.bytes.io.BitInputStream;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.HashMap;
@@ -17,7 +19,7 @@ public class MultiChannelStream {
     void incoming(byte channel, byte[] chunk) throws IOException;
   }
 
-  private final HashMap<Byte, Channel> channels = new HashMap<>();
+  private final HashMap<Byte, BitInputStream> channels = new HashMap<>();
 
   private final InputStream input;
 
@@ -25,9 +27,13 @@ public class MultiChannelStream {
     this.input = input;
   }
 
-  public MultiChannelStream listen(byte channel, Channel listener) {
-    channels.put(channel, listener);
-    return this;
+  public BitInputStream getChannelStream(byte channel) {
+    BitInputStream stream = channels.get(channel);
+    if (stream != null)
+      return stream;
+    stream = new BitInputStream();
+    channels.put(channel, stream);
+    return stream;
   }
 
   public void forget(byte channel) {
@@ -43,24 +49,15 @@ public class MultiChannelStream {
 
           byte[] chunk = readChunk();
 
-          Channel listener = channels.get(channel);
+          BitInputStream listener = channels.get(channel);
           if (listener != null) {
-            listener.incoming(channel, chunk);
+            listener.addChunk(chunk);
           }
         }
       } catch (IOException e) {
         throw new RuntimeException(e);
       }
     }, 0, 500, TimeUnit.MILLISECONDS);
-  }
-
-  private boolean readBoolean() throws IOException {
-    int n = input.read();
-    if (n == 0)
-      return false;
-    if (n == 1)
-      return true;
-    throw new IOException("Illegal, Expected Boolean Code, but found #" + n);
   }
 
   private byte[] readChunk() throws IOException {

@@ -4,9 +4,9 @@ import android.util.Log;
 
 import com.baxolino.apps.floats.FloatsBluetooth;
 import com.baxolino.apps.floats.core.bytes.ChunkDivider;
+import com.baxolino.apps.floats.core.bytes.io.BitInputStream;
 import com.baxolino.apps.floats.core.bytes.io.BitOutputStream;
 
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -22,16 +22,24 @@ public class KRSystem {
 
     public interface KnowListener {
         void received(String name);
+
+        void timeout();
+    }
+
+    enum KnowRequestState {
+        NONE, SUCCESS, FAILED
     }
 
 
     // a success code sent back by know-request receiver
     private static final byte KNOW_RESPONSE_INT = 1;
-    private static final int KNOW_RESPONSE_TIMEOUT = 5000;
+
+    private static final int KNOW_RECEIVE_TIMEOUT = 2000;
+    private static final int KNOW_RECEIVE_BACK_TIMEOUT = 5000;
 
     private static final byte KNOW_REQUEST_CHANNEL = 1;
 
-    private boolean knowRequestDone = false;
+    private KnowRequestState knowState = KnowRequestState.NONE;
 
     private static KRSystem krSystem = null;
 
@@ -65,6 +73,8 @@ public class KRSystem {
     public void postKnowRequest(String name, Runnable knowSuccessful, Runnable knowFailed) throws IOException {
         byte[] bytes = name.getBytes();
         ChunkDivider divider = new ChunkDivider(KNOW_REQUEST_CHANNEL,
+                // we send a 16 bit number representing length
+                // of next oncoming bytes, i.e device name
                 new BitOutputStream()
                         .writeShort16((short) bytes.length)
                         .write(bytes)
@@ -74,45 +84,72 @@ public class KRSystem {
                 MultiChannelSystem.Priority.TOP
         ).addRefillListener(() -> {
             // add the next part of bytes
-            if (divider.pending())
+            if (divider.pending()) {
                 writer.add(divider.divide(), MultiChannelSystem.Priority.TOP);
-        });
-
-        reader.listen(KNOW_REQUEST_CHANNEL, (channel, chunk) -> {
-            if (chunk[0] == KNOW_RESPONSE_INT) {
-                knowRequestDone = true;
-                knowSuccessful.run();
-
-                // unregister the response listener
-                reader.forget(KNOW_REQUEST_CHANNEL);
-            } else {
-                Log.d("HomeActivity", "Received different response");
             }
         });
+
+        BitInputStream input = reader.getChannelStream(KNOW_REQUEST_CHANNEL);
+        input.setChunkListener(() -> {
+            int read = input.read();
+            if (read == KNOW_RESPONSE_INT) {
+                knowSuccessful.run();
+                knowState = KnowRequestState.SUCCESS;
+            } else {
+                Log.d(TAG, "Received Unexpected: " + read);
+                knowState = KnowRequestState.FAILED;
+                knowFailed.run();
+            }
+        });
+
         ScheduledExecutorService service = Executors.newScheduledThreadPool(1);
         service.schedule(() -> {
-            if (!knowRequestDone)
+            // we do not check for == FAILED
+            // because it's already dispatched then
+            if (knowState == KnowRequestState.NONE) {
                 knowFailed.run();
-
-            // unregister the response listener
+                return;
+            }
             reader.forget(KNOW_REQUEST_CHANNEL);
-        }, KNOW_RESPONSE_TIMEOUT, TimeUnit.MILLISECONDS);
+        }, KNOW_RECEIVE_BACK_TIMEOUT, TimeUnit.MILLISECONDS);
     }
 
     public void readKnowRequest(KnowListener listener) {
+        BitInputStream input = reader.getChannelStream(KNOW_REQUEST_CHANNEL);
+        ScheduledExecutorService service = Executors.newScheduledThreadPool(1);
+        service.schedule(() -> {
+            if (input.reachedEOS()) {
+                listener.timeout();
+                reader.forget(KNOW_REQUEST_CHANNEL);
+                return;
+            }
+            int lenContent = input.readShort16();
+            byte[] bytes = new byte[lenContent];
 
-        reader.listen(KNOW_REQUEST_CHANNEL, (channel, chunk) -> {
-            String name = new String(chunk);
-            listener.received(name);
+            if (input.read(bytes) != lenContent) {
+                // we did not receive number of bytes
+                // we expected
+                listener.timeout();
+            } else {
+                Log.d(TAG, "Received Device Name = " + new String(bytes));
+                listener.received(new String(bytes));
 
-            // sends a receive success request back
-            writer.add(
-                    ChunkDivider.oneChunk(KNOW_RESPONSE_INT),
-                    MultiChannelSystem.Priority.TOP
-            );
+                // now we have to send a request back
+                // saying received
 
-            // unregisters the listener
+                ChunkDivider divider = new ChunkDivider(KNOW_REQUEST_CHANNEL,
+                        new BitOutputStream()
+                                .write(KNOW_RESPONSE_INT)
+                                .toBytes());
+                byte[][] divided;
+                try {
+                    divided = divider.divide();
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+                writer.add(divided, MultiChannelSystem.Priority.TOP);
+            }
             reader.forget(KNOW_REQUEST_CHANNEL);
-        });
+        }, KNOW_RECEIVE_TIMEOUT, TimeUnit.MILLISECONDS);
     }
 }

@@ -51,9 +51,7 @@ public class MultiChannelSystem {
     Log.d("KRSystem", "start()");
     for (;;) {
       if (write()) {
-        for (ChannelStatusListener listener : listeners) {
-          listener.onNeedRefill();
-        }
+        postRefillListeners();
         // tries to write again
         if (write()) {
           // we will check if there is any other
@@ -67,12 +65,21 @@ public class MultiChannelSystem {
     }
   }
 
+  private void postRefillListeners() {
+    try {
+      for (ChannelStatusListener listener : listeners) {
+        listener.onNeedRefill();
+      }
+    } catch (IOException e) {
+      throw new RuntimeException(e);
+    }
+  }
+
   private boolean write() {
     if (byteChunks.isEmpty())
       return true;
     byte[] poll = byteChunks.remove(0);
     if (poll != null) {
-      Log.d("KRSystem", "write " + poll[0] + " (" + new String(poll) + ")");
       try {
         stream.write(poll);
       } catch (IOException e) {

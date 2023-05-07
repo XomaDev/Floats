@@ -1,22 +1,39 @@
 package com.baxolino.apps.floats.core.bytes.io;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.LinkedList;
 
-public class BitInputStream {
+public class BitInputStream extends InputStream {
+
+  public interface ChunkListener {
+    void onNewChunksAvailable();
+  }
+
+  private ChunkListener listener;
 
   private final LinkedList<Chunk> chunks = new LinkedList<>();
 
   private Chunk chunk = null;
 
-  private boolean reachedEOS = false;
+  private boolean reachedEOS = true;
 
   private int currentInt = 0;
   private int bitCursor = -1;
 
 
+  public void setChunkListener(ChunkListener listener) {
+    this.listener = listener;
+    if (listener != null && !reachedEOS)
+      listener.onNewChunksAvailable();
+  }
+
   public void addChunk(byte[] bytes) {
     chunks.add(new Chunk(bytes));
+    reachedEOS = false;
+
+    if (listener != null)
+      listener.onNewChunksAvailable();
   }
 
   private int readChunkInt() {
@@ -34,7 +51,7 @@ public class BitInputStream {
     return reachedEOS;
   }
 
-  public int readShort16() throws IOException {
+  public int readShort16()  {
     return ((byte) read() & 255) << 8 |
             (byte) read() & 255;
   }
@@ -43,7 +60,7 @@ public class BitInputStream {
    * Reads a 32-bit integer from the stream
    */
 
-  public int readInt32() throws IOException {
+  public int readInt32() {
     return (((byte) read() & 255) << 24) |
             (((byte) read() & 255) << 16) |
             (((byte) read() & 255) << 8) |
@@ -79,6 +96,17 @@ public class BitInputStream {
       if (bit == -1)
         break;
       n = (n << 1) | bit;
+    }
+    return n;
+  }
+
+  public int read(byte[] bytes) {
+    int n = 0;
+    for (int len = bytes.length; n < len; n++) {
+      int read = read();
+      if (read == -1)
+        return n;
+      bytes[n] = (byte) read;
     }
     return n;
   }

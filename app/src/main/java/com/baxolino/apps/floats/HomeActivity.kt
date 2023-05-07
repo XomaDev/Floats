@@ -24,6 +24,7 @@ import androidx.camera.core.ExperimentalGetImage
 import androidx.core.app.ActivityCompat
 import com.baxolino.apps.floats.camera.ScanActivity
 import com.baxolino.apps.floats.core.KRSystem
+import com.baxolino.apps.floats.core.KRSystem.KnowListener
 import com.baxolino.apps.floats.tools.PermissionHelper
 import com.baxolino.apps.floats.tools.ThemeHelper
 import com.github.alexzhirkevich.customqrgenerator.QrData
@@ -146,26 +147,33 @@ class HomeActivity : AppCompatActivity() {
                 }
             }, {
                 Log.d(TAG, "Server failed to respond to KR")
-                Toast.makeText(this,
-                    "${device!!.name} did not respond to request.",
-                    Toast.LENGTH_SHORT).show();
+                runOnUiThread {
+                    Toast.makeText(this,
+                        "${device!!.name} did not respond to request.",
+                        Toast.LENGTH_SHORT).show();
+                }
             })
         } else {
             Log.d(TAG, "establishedConnection: waiting")
-            krSystem!!.readKnowRequest {
-                Log.d(TAG, "Received Server Name $it")
-                runOnUiThread {
-                    informConnection(it)
+            krSystem!!.readKnowRequest(object: KnowListener {
+                override fun received(name: String) {
+                    runOnUiThread {
+                        informConnection(name)
+                    }
                 }
-            }
+
+                override fun timeout() {
+                    Log.d(TAG, "Client failed to send KR")
+                }
+            })
         }
     }
 
     private fun informConnection(deviceName: String) {
-//        startActivity(
-//            Intent(this, SessionActivity::class.java)
-//                .putExtra("deviceName", deviceName)
-//        )
+        startActivity(
+            Intent(this, SessionActivity::class.java)
+                .putExtra("deviceName", deviceName)
+        )
     }
 
     private fun generateQr(qrImageView: ImageView, text: String) {
