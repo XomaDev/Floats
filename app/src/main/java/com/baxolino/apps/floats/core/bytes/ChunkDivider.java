@@ -23,7 +23,7 @@ public class ChunkDivider {
         }
         byte[] chunk = new byte[Config.CHUNK_SIZE];
         System.arraycopy(bytes, 0, chunk, 0, len);
-        return new byte[][] { chunk };
+        return new byte[][]{chunk};
     }
 
     private final byte channel;
@@ -45,6 +45,10 @@ public class ChunkDivider {
 
     public byte[][] divide() throws IOException {
         int available = input.available();
+
+        if (available >= CHUNK_SIZE)
+            Log.d(TAG, "Warning! Know what your doing, input exceeds chunk size");
+
         int allocateSize = Math.max(available, CHUNK_SIZE) / CHUNK_SIZE;
         if (available % 5 != 0)
             allocateSize++;
@@ -56,10 +60,17 @@ public class ChunkDivider {
             if (available == 0 || available == -1)
                 break;
 
-            byte[] chunk = new byte[CHUNK_SIZE + 1]; // +1 for channel header
+            byte[] chunk = new byte[CHUNK_SIZE + 2]; // +1 for channel header, +1 for blank spots
             chunk[0] = channel; // set the channel header
+            //                                                 @offset 2
+            int blankSpots = chunk.length - input.read(chunk, 2, CHUNK_SIZE) - 2;
 
-            int blankSpots = chunk.length - input.read(chunk, 1, CHUNK_SIZE) - 1;
+            // TODO:
+            //  warning, this can cause overflow when the chunk
+            //  size will be too big
+            //  ..
+            //  to solve this we could allocate extra or int 16 or int 32
+            chunk[1] = (byte) blankSpots;
             // unused indexes of @chunk is called a blank spot here
             Log.d("KRSystem", "Blank Spots " + blankSpots);
 

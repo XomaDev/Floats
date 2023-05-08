@@ -219,10 +219,10 @@ public class KRSystem {
 
         int length = stream.readInt32();
 
+        // @Important
         // sometimes there can be some leftover null bytes,
         // this will just skip it
 
-        // @Important
         stream.flushCurrent();
         return new Pair<>(fileName.toString(), length);
     }
