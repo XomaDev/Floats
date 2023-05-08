@@ -1,13 +1,17 @@
 package com.baxolino.apps.floats.core;
 
 import android.util.Log;
+import android.util.Pair;
 
 import com.baxolino.apps.floats.FloatsBluetooth;
 import com.baxolino.apps.floats.core.bytes.ChunkDivider;
 import com.baxolino.apps.floats.core.bytes.io.BitInputStream;
 import com.baxolino.apps.floats.core.bytes.io.BitOutputStream;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.util.Timer;
+import java.util.TimerTask;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -37,7 +41,10 @@ public class KRSystem {
     private static final int KNOW_RECEIVE_TIMEOUT = 2000;
     private static final int KNOW_RECEIVE_BACK_TIMEOUT = 5000;
 
+    private static final int LOOK_FILE_REQUEST_INTERVAL = 200;
+
     private static final byte KNOW_REQUEST_CHANNEL = 1;
+    private static final byte FILE_REQUEST_CHANNEL = 2;
 
     private KnowRequestState knowState = KnowRequestState.NONE;
 
@@ -100,6 +107,9 @@ public class KRSystem {
                 knowState = KnowRequestState.FAILED;
                 knowFailed.run();
             }
+            // @Important if we use the same channel
+            // again
+            input.flushCurrent();
         });
 
         ScheduledExecutorService service = Executors.newScheduledThreadPool(1);
@@ -131,6 +141,9 @@ public class KRSystem {
                 // we expected
                 listener.timeout();
             } else {
+                // @Important if we want to use same channel again
+                input.flushCurrent();
+
                 Log.d(TAG, "Received Device Name = " + new String(bytes));
                 listener.received(new String(bytes));
 
@@ -153,7 +166,64 @@ public class KRSystem {
         }, KNOW_RECEIVE_TIMEOUT, TimeUnit.MILLISECONDS);
     }
 
-    public void requestFileTransfer(String name, int length) {
+    public void requestFileTransfer(String name, int length) throws IOException {
+        ChunkDivider divider = new ChunkDivider(FILE_REQUEST_CHANNEL,
+                new BitOutputStream()
+                        .write(name.getBytes())
+                        .write(Config.FILE_NAME_LENGTH_SEPARATOR)
+                        .writeInt32(length)
+                        .toBytes());
+        writer.add(
+                divider.divide(),
+                MultiChannelSystem.Priority.TOP
+        ).addRefillListener(() -> {
+            // add the next part of bytes
+            if (divider.pending()) {
+                writer.add(divider.divide(), MultiChannelSystem.Priority.TOP);
+            }
+        });
+    }
 
+    // called when Session class is started
+    // this looks for incoming file requests that contains
+    // the file name followed by the file length
+
+    public void checkFileRequests() {
+        BitInputStream requestsStream = reader.getChannelStream(FILE_REQUEST_CHANNEL);
+        ScheduledExecutorService service = Executors.newScheduledThreadPool(2);
+        service.scheduleAtFixedRate(() -> {
+            if (requestsStream.reachedEOS())
+                return;
+            service.schedule(() -> {
+                // TODO:
+                //  we need to create a more effective system
+                //  where we can avoid again scheduling a delay
+                //  to read the incoming data
+
+                // basically wait for the complete data to arrive
+                Pair<String, Integer> request = readFileRequest(requestsStream);
+                Log.d(TAG, "File Request: " + request);
+            }, LOOK_FILE_REQUEST_INTERVAL * 10, TimeUnit.MILLISECONDS);
+
+        }, 0, LOOK_FILE_REQUEST_INTERVAL, TimeUnit.MILLISECONDS);
+    }
+
+    private Pair<String, Integer> readFileRequest(BitInputStream stream) {
+        if (stream.reachedEOS())
+            throw new RuntimeException("No Data Found");
+
+        ByteArrayOutputStream fileName = new ByteArrayOutputStream();
+        int read;
+        while ((read = stream.read()) != Config.FILE_NAME_LENGTH_SEPARATOR && read != -1)
+            fileName.write(read);
+
+        int length = stream.readInt32();
+
+        // sometimes there can be some leftover null bytes,
+        // this will just skip it
+
+        // @Important
+        stream.flushCurrent();
+        return new Pair<>(fileName.toString(), length);
     }
 }

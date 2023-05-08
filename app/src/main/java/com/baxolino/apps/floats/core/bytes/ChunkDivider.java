@@ -14,6 +14,8 @@ import java.util.Arrays;
 
 public class ChunkDivider {
 
+    private static final String TAG = "ChunkDivider";
+
     public static byte[][] oneChunk(byte... bytes) {
         int len = bytes.length;
         if (len > Config.CHUNK_SIZE) {
@@ -57,11 +59,12 @@ public class ChunkDivider {
             byte[] chunk = new byte[CHUNK_SIZE + 1]; // +1 for channel header
             chunk[0] = channel; // set the channel header
 
-            input.read(chunk, 1, CHUNK_SIZE);
+            int blankSpots = chunk.length - input.read(chunk, 1, CHUNK_SIZE) - 1;
+            // unused indexes of @chunk is called a blank spot here
+            Log.d("KRSystem", "Blank Spots " + blankSpots);
 
             chunks[i] = chunk;
         }
-        Log.d("KRSystem", "Chunks: " + Arrays.deepToString(chunks));
         return chunks;
     }
 }

@@ -36,6 +36,17 @@ public class BitInputStream extends InputStream {
       listener.onNewChunksAvailable();
   }
 
+  // removes the current chunk, this is mainly
+  // because some data can have blank spots, i.e null bytes
+  // because of strict chunk size system
+
+  public void flushCurrent() {
+    chunk = chunks.poll();
+    if (chunk == null) {
+      reachedEOS = true;
+    }
+  }
+
   private int readChunkInt() {
     if (chunk == null || chunk.available() == 0) {
       chunk = chunks.poll();

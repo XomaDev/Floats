@@ -8,6 +8,7 @@ import android.util.Log
 import android.widget.TextView
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
+import com.baxolino.apps.floats.core.KRSystem
 import com.baxolino.apps.floats.tools.ThemeHelper
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 
@@ -16,6 +17,8 @@ class SessionActivity : AppCompatActivity() {
     companion object {
         private const val TAG = "SessionActivity"
     }
+
+    private lateinit var krSystem: KRSystem
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -41,6 +44,8 @@ class SessionActivity : AppCompatActivity() {
                     )
                 )
             }
+            krSystem = KRSystem.getInstance()
+            krSystem.checkFileRequests()
         }
     }
 
@@ -57,6 +62,7 @@ class SessionActivity : AppCompatActivity() {
             val fileLength = get(OpenableColumns.SIZE)
 
             Log.d(TAG, "Picked File $fileName of length $fileLength")
+            krSystem.requestFileTransfer(fileName, fileLength.toInt())
         }
     }
 
