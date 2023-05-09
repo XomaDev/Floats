@@ -16,16 +16,6 @@ public class ChunkDivider {
 
     private static final String TAG = "ChunkDivider";
 
-    public static byte[][] oneChunk(byte... bytes) {
-        int len = bytes.length;
-        if (len > Config.CHUNK_SIZE) {
-            throw new RuntimeException("Exceeds Chunk Size (" + Config.CHUNK_SIZE + ")");
-        }
-        byte[] chunk = new byte[Config.CHUNK_SIZE];
-        System.arraycopy(bytes, 0, chunk, 0, len);
-        return new byte[][]{chunk};
-    }
-
     private final byte channel;
     private final InputStream input;
 
@@ -60,17 +50,18 @@ public class ChunkDivider {
             if (available == 0 || available == -1)
                 break;
 
-            byte[] chunk = new byte[CHUNK_SIZE + 2]; // +1 for channel header, +1 for blank spots
+            int bytesExtra = 3;
+            byte[] chunk = new byte[CHUNK_SIZE + bytesExtra];
+            // +1 for channel header, +2 for storing the number of blank spots
+
             chunk[0] = channel; // set the channel header
             //                                                 @offset 2
-            int blankSpots = chunk.length - input.read(chunk, 2, CHUNK_SIZE) - 2;
+            int blankSpots = chunk.length - input.read(chunk, bytesExtra, CHUNK_SIZE) - bytesExtra;
 
-            // TODO:
-            //  warning, this can cause overflow when the chunk
-            //  size will be too big
-            //  ..
-            //  to solve this we could allocate extra or int 16 or int 32
-            chunk[1] = (byte) blankSpots;
+
+            chunk[1] = (byte) (blankSpots >> 8);
+            chunk[2] = (byte) blankSpots;
+            Log.d("KRSystem", "divide: " + chunk[1] + " $ " + chunk[2]);
             // unused indexes of @chunk is called a blank spot here
             Log.d("KRSystem", "Blank Spots " + blankSpots);
 

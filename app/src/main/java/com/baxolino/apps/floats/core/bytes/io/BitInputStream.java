@@ -2,67 +2,52 @@ package com.baxolino.apps.floats.core.bytes.io;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.LinkedList;
 
-public class BitInputStream extends InputStream {
+public abstract class BitInputStream extends InputStream {
 
-  public interface ChunkListener {
-    void onNewChunksAvailable();
-  }
-
-  private ChunkListener listener;
-
-  private final LinkedList<Chunk> chunks = new LinkedList<>();
-
-  private Chunk chunk = null;
-
-  private boolean reachedEOS = true;
+  private final InputStream stream;
 
   private int currentInt = 0;
   private int bitCursor = -1;
 
-
-  public void setChunkListener(ChunkListener listener) {
-    this.listener = listener;
-    if (listener != null && !reachedEOS)
-      listener.onNewChunksAvailable();
+  public BitInputStream(InputStream stream) {
+    this.stream = stream;
   }
 
-  public void addChunk(byte[] bytes) {
-    chunks.add(new Chunk(bytes));
-    reachedEOS = false;
-
-    if (listener != null)
-      listener.onNewChunksAvailable();
-  }
-
-  // removes the current chunk, this is mainly
-  // because some data can have blank spots, i.e null bytes
-  // because of strict chunk size system
-
-  public void flushCurrent() {
-    chunk = chunks.poll();
-    if (chunk == null) {
-      reachedEOS = true;
+  public int available() {
+    if (stream != null) {
+      int available;
+      try {
+        available = stream.available();
+      } catch (IOException e) {
+        throw new RuntimeException(e);
+        // unreachable
+      }
+      if (bitCursor != -1)
+        available++;
+      return available;
     }
+    // the extending class should override it
+    return availableStream();
   }
 
-  private int readChunkInt() {
-    if (chunk == null || chunk.available() == 0) {
-      chunk = chunks.poll();
-      if (chunk == null) {
-        reachedEOS = true;
-        return -1;
+  public abstract int availableStream();
+
+  public abstract int readStream();
+
+  int _read() {
+    if (stream != null) {
+      try {
+        return stream.read();
+      } catch (IOException e) {
+        throw new RuntimeException(e);
       }
     }
-    return chunk.read();
+    // the extending class should override it
+    return readStream();
   }
 
-  public boolean reachedEOS() {
-    return reachedEOS;
-  }
-
-  public int readShort16()  {
+  public int readShort16() {
     return ((byte) read() & 255) << 8 |
             (byte) read() & 255;
   }
@@ -83,7 +68,7 @@ public class BitInputStream extends InputStream {
    */
   public int readBit() {
     if (bitCursor == -1) { // no buffer
-      currentInt = readChunkInt();
+      currentInt = _read();
       if (currentInt == -1)
         return -1;
       bitCursor = 7;
@@ -98,7 +83,8 @@ public class BitInputStream extends InputStream {
    * @return a byte
    */
 
-  public int read() {
+
+  public int read()  {
     int n = readBit();
     if (n == -1) // important
       return n;
@@ -120,5 +106,11 @@ public class BitInputStream extends InputStream {
       bytes[n] = (byte) read;
     }
     return n;
+  }
+
+  public long skip(long n) {
+    while (n-- > 0) //noinspection ResultOfMethodCallIgnored
+      read();
+    return -1;
   }
 }
