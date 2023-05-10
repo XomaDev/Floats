@@ -142,6 +142,7 @@
                                 android:layout_height="wrap_content"
                                 android:fontFamily="@font/inter"
                                 android:text="Cancel"
+                                android:textColor="#FFFFFF"
                                 android:textAlignment="center"
                                 android:textSize="11sp" />
                         </LinearLayout>

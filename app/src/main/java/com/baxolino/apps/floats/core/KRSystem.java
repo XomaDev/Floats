@@ -3,21 +3,24 @@ package com.baxolino.apps.floats.core;
 import android.util.Log;
 
 import com.baxolino.apps.floats.FloatsBluetooth;
-import com.baxolino.apps.floats.core.bytes.ChunkDivider;
+import com.baxolino.apps.floats.core.bytes.ChunkConstructor;
 import com.baxolino.apps.floats.core.bytes.io.DataInputStream;
 import com.baxolino.apps.floats.core.bytes.io.BitOutputStream;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.util.Arrays;
+import java.util.Random;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 
 // know-response system class that manages communication
 // between two devices and let's each other know when the message
 // is delivered
 public class KRSystem {
-
 
   private static final String TAG = "KRSystem";
 
@@ -38,8 +41,9 @@ public class KRSystem {
   private static final int KNOW_RECEIVE_TIMEOUT = 2000;
   private static final int KNOW_RECEIVE_BACK_TIMEOUT = 6000;
 
-  private static final byte KNOW_REQUEST_CHANNEL = 1;
-  private static final byte FILE_REQUEST_CHANNEL = 2;
+
+  private static final Channel KNOW_REQUEST_CHANNEL = new Channel((byte) 1);
+  private static final Channel FILE_REQUEST_CHANNEL = new Channel((byte) 2);
 
   private KnowRequestState knowState = KnowRequestState.NONE;
 
@@ -58,6 +62,8 @@ public class KRSystem {
     return krSystem = new KRSystem(deviceName, floats);
   }
 
+  private final Random random;
+
   public final String deviceName;
 
   private final MultiChannelStream reader;
@@ -70,11 +76,12 @@ public class KRSystem {
 
     reader.start();
     writer.start();
+    random = new Random(deviceName.hashCode());
   }
 
   public void postKnowRequest(String name, Runnable knowSuccessful, Runnable knowFailed) throws IOException {
     byte[] bytes = name.getBytes();
-    ChunkDivider divider = new ChunkDivider(KNOW_REQUEST_CHANNEL,
+    ChunkConstructor divider = new ChunkConstructor(KNOW_REQUEST_CHANNEL.bytes(),
             // we send a 16 bit number representing length
             // of next oncoming bytes, i.e device name
             new BitOutputStream()
@@ -146,7 +153,7 @@ public class KRSystem {
         // now we have to send a request back
         // saying received
 
-        ChunkDivider divider = new ChunkDivider(KNOW_REQUEST_CHANNEL,
+        ChunkConstructor divider = new ChunkConstructor(KNOW_REQUEST_CHANNEL.bytes(),
                 new BitOutputStream()
                         .write(KNOW_RESPONSE_INT)
                         .toBytes());
@@ -162,13 +169,20 @@ public class KRSystem {
     }, KNOW_RECEIVE_TIMEOUT, TimeUnit.MILLISECONDS);
   }
 
-  public void requestFileTransfer(String name, int length) throws IOException {
-    ChunkDivider divider = new ChunkDivider(FILE_REQUEST_CHANNEL,
+  public void requestFileTransfer(InputStream input, String name, int length) throws IOException {
+    byte[] requestId = new byte[Config.FILE_NAME_LENGTH_SEPARATOR];
+    random.nextBytes(requestId);
+
+    // we send the file information before
+    // the content
+    ChunkConstructor divider = new ChunkConstructor(FILE_REQUEST_CHANNEL.bytes(),
             new BitOutputStream()
                     .write(name.getBytes())
                     .write(Config.FILE_NAME_LENGTH_SEPARATOR)
                     .writeInt32(length)
+                    .write(requestId)
                     .toBytes());
+
     writer.add(
             divider.divide(),
             MultiChannelSystem.Priority.TOP
@@ -178,6 +192,23 @@ public class KRSystem {
         writer.add(divider.divide(), MultiChannelSystem.Priority.TOP);
       }
     });
+
+    divider.setCompleteListener(() -> writeContentFromStream(requestId, input));
+  }
+
+  private void writeContentFromStream(byte[] channelId, InputStream input) {
+    // divide the bytes into the sizes of each chunk
+    // then send the bytes
+    new Thread(() -> {
+      try {
+        while (input.available() > 0) {
+          byte[] chunk = ChunkConstructor.construct(channelId, input);
+          writer.add(chunk, MultiChannelSystem.Priority.NORMAL);
+        }
+      } catch (IOException e) {
+        throw new RuntimeException(e);
+      }
+    }).start();
   }
 
   // called when Session class is started
@@ -194,9 +225,16 @@ public class KRSystem {
         requestStream.skip(chunkIndex + 1);
         int lengthFile = requestStream.readInt32();
 
-        Log.d(TAG, "Received File Request, name = " + name + " length = " + lengthFile);
+        // file request id, in form of bytes
+        byte[] requestId = new byte[Config.CHANNEL_SIZE];
+        requestStream.read(requestId);
+
+        Log.d(TAG, "Received File Request, name = " + name + " length = "
+                + lengthFile + " id = " + new String(requestId));
+        receiveContent(name.toString(), lengthFile, requestId);
         // reset the name array
         name.reset();
+        requestStream.flushCurrent();
         return true;
       }
       name.write(b);
@@ -204,5 +242,17 @@ public class KRSystem {
     });
 
     reader.registerChannelStream(FILE_REQUEST_CHANNEL, requestStream);
+  }
+
+  private void receiveContent(String name, int length, byte[] channelId) {
+    DataInputStream input = new DataInputStream();
+    Log.d(TAG, "receiveContent: try register = " + Arrays.toString(channelId));
+    reader.registerChannelStream(new Channel(channelId), input);
+
+    AtomicInteger n = new AtomicInteger();
+    input.setByteListener((byteIndex, b, unsigned) -> {
+      Log.d(TAG, "Receive = " + (n.incrementAndGet()) + " / " + length);
+      return false;
+    });
   }
 }

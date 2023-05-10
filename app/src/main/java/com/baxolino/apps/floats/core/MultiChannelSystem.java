@@ -47,6 +47,16 @@ public class MultiChannelSystem {
     return this;
   }
 
+  public MultiChannelSystem add(byte[] chunk, Priority priority) {
+    if (priority == Priority.NORMAL) {
+      // add it at the end
+      byteChunks.add(chunk);
+    } else if (priority == Priority.TOP) {
+      byteChunks.add(0, chunk);
+    }
+    return this;
+  }
+
   public void start() {
     Log.d("KRSystem", "start()");
     for (;;) {

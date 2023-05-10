@@ -2,10 +2,13 @@ package com.baxolino.apps.floats.core;
 
 import static com.baxolino.apps.floats.core.Config.CHUNK_SIZE;
 
+import android.util.Log;
+
 import com.baxolino.apps.floats.core.bytes.io.BitInputStream;
 import com.baxolino.apps.floats.core.bytes.io.DataInputStream;
 
 import java.io.InputStream;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -13,7 +16,7 @@ import java.util.concurrent.TimeUnit;
 
 public class MultiChannelStream {
 
-  private final HashMap<Byte, DataInputStream> channels = new HashMap<>();
+  private final HashMap<Channel, DataInputStream> channels = new HashMap<>();
 
   private final BitInputStream input;
 
@@ -35,7 +38,8 @@ public class MultiChannelStream {
     };
   }
 
-  public void registerChannelStream(byte channel, DataInputStream inputStream) {
+  public void registerChannelStream(Channel channel, DataInputStream inputStream) {
+    Log.d("KRSystem", "registerChannelStream: register stream = " + Arrays.toString(channel.bytes()));
     DataInputStream stream = channels.get(channel);
     if (stream != null)
       throw new IllegalStateException("Stream already registered = " + channel);
@@ -43,7 +47,7 @@ public class MultiChannelStream {
   }
 
 
-  public void forget(byte channel) {
+  public void forget(Channel channel) {
     channels.remove(channel);
   }
 
@@ -51,12 +55,13 @@ public class MultiChannelStream {
     ScheduledExecutorService service = Executors.newScheduledThreadPool(1);
     service.scheduleAtFixedRate(() -> {
       if (input.available() > 0) {
-        byte channel = (byte) input.read();
+        byte[] channel = new byte[Config.CHANNEL_SIZE];
+        input.read(channel);
 
         int blankSpots = input.readShort16();
         byte[] chunk = readChunk(blankSpots);
 
-        DataInputStream passStream = channels.get(channel);
+        DataInputStream passStream = channels.get(new Channel(channel));
 
         if (passStream != null) {
           DataInputStream.ByteListener listener = passStream.getByteListener();
@@ -66,6 +71,8 @@ public class MultiChannelStream {
               // break when listener returns true
               if (listener.onNewByteAvailable(i, chunk[i], chunk[i] & 0xff))
                 break;
+        } else {
+          Log.d("KRSystem", "Stream Not Found = " + Arrays.toString(channel));
         }
       }
     }, 0, 500, TimeUnit.MILLISECONDS);

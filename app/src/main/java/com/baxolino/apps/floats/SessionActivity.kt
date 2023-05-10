@@ -62,7 +62,8 @@ class SessionActivity : AppCompatActivity() {
             val fileLength = get(OpenableColumns.SIZE)
 
             Log.d(TAG, "Picked File $fileName of length $fileLength")
-            krSystem.requestFileTransfer(fileName, fileLength.toInt())
+            krSystem.requestFileTransfer(contentResolver.openInputStream(uri),
+                fileName, fileLength.toInt())
         }
     }
 
