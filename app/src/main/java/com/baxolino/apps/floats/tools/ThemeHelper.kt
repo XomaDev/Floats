@@ -8,6 +8,7 @@ import com.baxolino.apps.floats.HomeActivity
 import com.baxolino.apps.floats.MainActivity
 import com.baxolino.apps.floats.R
 import com.baxolino.apps.floats.SessionActivity
+import com.google.android.material.button.MaterialButton
 import com.google.android.material.color.DynamicColors
 
 object ThemeHelper {
@@ -65,6 +66,20 @@ object ThemeHelper {
             session.getColor(
                 com.google.android.material.R.color.material_dynamic_neutral_variant20
             )
+        )
+
+        val iconCard = session.findViewById<LinearLayout>(R.id.icon_card)
+
+        iconCard.backgroundTintList = ColorStateList.valueOf(
+            session.getColor(
+                com.google.android.material.R.color.material_dynamic_neutral_variant20
+            )
+        )
+
+        val cancelMark = session.findViewById<ImageView>(R.id.cancel_mark)
+
+        cancelMark.backgroundTintList = ColorStateList.valueOf(
+            variant60Color(session)
         )
     }
 
