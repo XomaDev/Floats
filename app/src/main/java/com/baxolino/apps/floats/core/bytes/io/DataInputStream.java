@@ -9,7 +9,7 @@ public class DataInputStream extends BitInputStream {
   }
 
   public interface ChunkListener {
-    void onNewChunksAvailable();
+    void onNewChunksAvailable(int total);
   }
 
 
@@ -39,7 +39,7 @@ public class DataInputStream extends BitInputStream {
   public void setChunkListener(ChunkListener listener) {
     this.listener = listener;
     if (listener != null && !reachedEOS)
-      listener.onNewChunksAvailable();
+      listener.onNewChunksAvailable(available);
   }
 
   public DataInputStream setByteListener(ByteListener listener) {
@@ -57,7 +57,7 @@ public class DataInputStream extends BitInputStream {
     reachedEOS = false;
 
     if (listener != null)
-      listener.onNewChunksAvailable();
+      listener.onNewChunksAvailable(available);
   }
 
   // removes the current chunk, this is mainly

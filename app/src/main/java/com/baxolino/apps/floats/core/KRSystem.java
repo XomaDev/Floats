@@ -24,12 +24,6 @@ public class KRSystem {
 
   private static final String TAG = "KRSystem";
 
-  public interface KnowListener {
-    void received(String name);
-
-    void timeout();
-  }
-
   enum KnowRequestState {
     NONE, SUCCESS, FAILED
   }
@@ -60,6 +54,17 @@ public class KRSystem {
     if (krSystem != null)
       return krSystem;
     return krSystem = new KRSystem(deviceName, floats);
+  }
+
+  public interface KnowListener {
+    void received(String name);
+
+    void timeout();
+  }
+
+  public interface FileRequestListener {
+    void request(String name, int length);
+    void update(int received, int total);
   }
 
   private final Random random;
@@ -215,7 +220,7 @@ public class KRSystem {
   // this looks for incoming file requests that contains
   // the file name followed by the file length
 
-  public void checkFileRequests() {
+  public void checkFileRequests(FileRequestListener listener) {
     ByteArrayOutputStream name = new ByteArrayOutputStream();
 
     DataInputStream requestStream = new DataInputStream();
@@ -231,7 +236,8 @@ public class KRSystem {
 
         Log.d(TAG, "Received File Request, name = " + name + " length = "
                 + lengthFile + " id = " + new String(requestId));
-        receiveContent(name.toString(), lengthFile, requestId);
+        listener.request(name.toString(), lengthFile);
+        receiveContent(listener, lengthFile, requestId);
         // reset the name array
         name.reset();
         requestStream.flushCurrent();
@@ -244,15 +250,11 @@ public class KRSystem {
     reader.registerChannelStream(FILE_REQUEST_CHANNEL, requestStream);
   }
 
-  private void receiveContent(String name, int length, byte[] channelId) {
+  private void receiveContent(FileRequestListener listener, int length, byte[] channelId) {
     DataInputStream input = new DataInputStream();
     Log.d(TAG, "receiveContent: try register = " + Arrays.toString(channelId));
-    reader.registerChannelStream(new Channel(channelId), input);
 
-    AtomicInteger n = new AtomicInteger();
-    input.setByteListener((byteIndex, b, unsigned) -> {
-      Log.d(TAG, "Receive = " + (n.incrementAndGet()) + " / " + length);
-      return false;
-    });
+    reader.registerChannelStream(new Channel(channelId), input);
+    input.setChunkListener(total -> listener.update(total, length));
   }
 }
