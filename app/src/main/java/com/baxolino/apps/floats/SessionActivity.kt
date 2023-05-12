@@ -28,6 +28,7 @@ class SessionActivity : AppCompatActivity() {
     private lateinit var fileSizeLabel: TextView
 
     private lateinit var progressLabel: TextView
+    private lateinit var transferSpeed: TextView
 
     private lateinit var progressBar: LinearProgressIndicator
 
@@ -61,6 +62,8 @@ class SessionActivity : AppCompatActivity() {
             fileSizeLabel = findViewById(R.id.file_size)
 
             progressLabel = findViewById(R.id.progress_label)
+            transferSpeed = findViewById(R.id.transfer_speed)
+
             progressBar = findViewById(R.id.progress_bar)
 
             handleFileRequests();
@@ -69,6 +72,8 @@ class SessionActivity : AppCompatActivity() {
 
     private fun handleFileRequests() {
         krSystem.checkFileRequests(object: KRSystem.FileRequestListener {
+            private var startTime: Long? = null
+
             override fun request(name: String, length: Int) {
                 runOnUiThread {
                     fileNameLabel.text = name.substring(0, name.lastIndexOf('.'))
@@ -76,6 +81,7 @@ class SessionActivity : AppCompatActivity() {
                         length.toLong()
                     )
                 }
+                startTime = System.currentTimeMillis()
             }
             override fun update(received: Int, total: Int) {
                 runOnUiThread {
@@ -83,6 +89,12 @@ class SessionActivity : AppCompatActivity() {
 
                     progressLabel.text = percent.toString()
                     progressBar.setProgress(percent, true)
+
+                    val difference = System.currentTimeMillis() - startTime!!
+                    if (difference > 1500) {
+                        val speed = received.div(difference.div(1000))
+                        transferSpeed.text = speed.toString()
+                    }
                 }
             }
         })
