@@ -92,8 +92,8 @@ class SessionActivity : AppCompatActivity() {
 
                     val difference = System.currentTimeMillis() - startTime!!
                     if (difference > 1500) {
-                        val speed = received.div(difference.div(1000))
-                        transferSpeed.text = speed.toString()
+                        val speed = Formatter.formatFileSize(applicationContext, received.div(difference.div(1000)))
+                        transferSpeed.text = "$speed / second"
                     }
                 }
             }

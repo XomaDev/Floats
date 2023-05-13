@@ -75,7 +75,7 @@ public class MultiChannelStream {
           Log.d("KRSystem", "Stream Not Found = " + Arrays.toString(channel));
         }
       }
-    }, 0, 500, TimeUnit.MILLISECONDS);
+    }, 0, 50, TimeUnit.MILLISECONDS);
   }
 
   private byte[] readChunk(int blankSpots) {
