@@ -4,7 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:layout_margin="25dp"
+    android:layout_margin="20dp"
     android:orientation="vertical"
     tools:context=".SessionActivity">
 
@@ -117,7 +117,7 @@
                         android:textStyle="bold" />
 
                     <LinearLayout
-                        android:id="@+id/ftype_card"
+                        android:id="@+id/cancel_card"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:background="@drawable/small_card">

@@ -60,7 +60,7 @@ object ThemeHelper {
             )
         )
 
-        val fileTypeCard = session.findViewById<LinearLayout>(R.id.ftype_card)
+        val fileTypeCard = session.findViewById<LinearLayout>(R.id.cancel_card)
 
         fileTypeCard.backgroundTintList = ColorStateList.valueOf(
             session.getColor(

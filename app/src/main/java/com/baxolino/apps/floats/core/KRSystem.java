@@ -15,7 +15,6 @@ import java.util.Random;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
 
 // know-response system class that manages communication
 // between two devices and let's each other know when the message
@@ -38,6 +37,7 @@ public class KRSystem {
 
   private static final Channel KNOW_REQUEST_CHANNEL = new Channel((byte) 1);
   private static final Channel FILE_REQUEST_CHANNEL = new Channel((byte) 2);
+  private static final Channel FILE_CANCEL_REQUEST_CHANNEL = new Channel((byte) 3);
 
   private KnowRequestState knowState = KnowRequestState.NONE;
 
@@ -73,6 +73,8 @@ public class KRSystem {
 
   private final MultiChannelStream reader;
   private final MultiChannelSystem writer;
+
+  private byte[] requestId;
 
   private KRSystem(String deviceName, FloatsBluetooth floats) {
     this.deviceName = deviceName;
@@ -175,7 +177,7 @@ public class KRSystem {
   }
 
   public void requestFileTransfer(InputStream input, String name, int length) throws IOException {
-    byte[] requestId = new byte[Config.FILE_NAME_LENGTH_SEPARATOR];
+    byte[] requestId = new byte[Config.CHANNEL_SIZE];
     random.nextBytes(requestId);
 
     // we send the file information before
@@ -202,6 +204,7 @@ public class KRSystem {
   }
 
   private void writeContentFromStream(byte[] channelId, InputStream input) {
+    Log.d(TAG, "writeContentFromStream: " + Arrays.toString(channelId));
     // divide the bytes into the sizes of each chunk
     // then send the bytes
     new Thread(() -> {
@@ -231,7 +234,7 @@ public class KRSystem {
         int lengthFile = requestStream.readInt32();
 
         // file request id, in form of bytes
-        byte[] requestId = new byte[Config.CHANNEL_SIZE];
+        requestId = new byte[Config.CHANNEL_SIZE];
         requestStream.read(requestId);
 
         Log.d(TAG, "Received File Request, name = " + name + " length = "
@@ -248,6 +251,7 @@ public class KRSystem {
     });
 
     reader.registerChannelStream(FILE_REQUEST_CHANNEL, requestStream);
+    checkCancelRequests();
   }
 
   private void receiveContent(FileRequestListener listener, int length, byte[] channelId) {
@@ -256,5 +260,36 @@ public class KRSystem {
 
     reader.registerChannelStream(new Channel(channelId), input);
     input.setChunkListener(total -> listener.update(total, length));
+  }
+
+  private void checkCancelRequests() {
+    DataInputStream input = new DataInputStream();
+    reader.registerChannelStream(FILE_CANCEL_REQUEST_CHANNEL, input);
+
+    input.setChunkListener(total -> {
+      byte[] requestId = new byte[Config.CHANNEL_SIZE];
+      input.read(requestId);
+
+      Log.d(TAG, "Request Cancel: " + Arrays.toString(requestId));
+
+      // remove the blank spots
+      input.flushCurrent();
+    });
+  }
+
+  public void cancelFileTransfer() throws IOException {
+    // send a message to stop transferring of the file
+    ChunkConstructor divider = new ChunkConstructor(FILE_CANCEL_REQUEST_CHANNEL.bytes(),
+            // send the file request id we want to cancel
+            requestId);
+    writer.add(
+            divider.divide(),
+            MultiChannelSystem.Priority.TOP
+    ).addRefillListener(() -> {
+      // add the next part of bytes
+      if (divider.pending()) {
+        writer.add(divider.divide(), MultiChannelSystem.Priority.TOP);
+      }
+    });
   }
 }

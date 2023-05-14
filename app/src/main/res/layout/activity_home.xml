@@ -4,7 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:layout_margin="25dp"
+    android:layout_margin="20dp"
     android:orientation="vertical"
     tools:context=".HomeActivity">
 
@@ -60,7 +60,7 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="25dp"
             android:fontFamily="@font/inter"
-            android:text="Samsung Galaxy A03s" />
+            android:text="**" />
 
         <ImageView
             android:id="@+id/qr_image"
@@ -70,8 +70,9 @@
 
         <TextView
             android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
+            android:layout_height="match_parent"
             android:layout_marginTop="25dp"
+            android:textAlignment="center"
             android:fontFamily="@font/inter"
             android:text="Scan the code above from another device to connect." />
 

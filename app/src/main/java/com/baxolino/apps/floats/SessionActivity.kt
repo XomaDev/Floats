@@ -1,12 +1,12 @@
 package com.baxolino.apps.floats
 
-import android.animation.ValueAnimator
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
 import android.provider.OpenableColumns
 import android.text.format.Formatter
 import android.util.Log
+import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
@@ -39,34 +39,40 @@ class SessionActivity : AppCompatActivity() {
 
         val isConnected = intent.hasExtra("deviceName")
 
-        if (isConnected) {
-            // or else we are just testing
-            val deviceName = intent.getStringExtra("deviceName")
+        if (!isConnected)
+            return
 
-            val label = findViewById<TextView>(R.id.label)
-            label.text = "Connected to $deviceName"
+        // or else we are just testing
+        val deviceName = intent.getStringExtra("deviceName")
 
-            val fabButton = findViewById<FloatingActionButton>(R.id.add_files)
+        val label = findViewById<TextView>(R.id.label)
+        label.text = "Connected to $deviceName"
 
-            fabButton.setOnClickListener {
-                fileActivityResult.launch(
-                    Intent.createChooser(
-                        Intent(Intent.ACTION_GET_CONTENT)
-                            .setType("*/*"), "Choose a file"
-                    )
+        val fabButton = findViewById<FloatingActionButton>(R.id.add_files)
+
+        fabButton.setOnClickListener {
+            fileActivityResult.launch(
+                Intent.createChooser(
+                    Intent(Intent.ACTION_GET_CONTENT)
+                        .setType("*/*"), "Choose a file"
                 )
-            }
-            krSystem = KRSystem.getInstance()
+            )
+        }
+        krSystem = KRSystem.getInstance()
 
-            fileNameLabel = findViewById(R.id.file_name)
-            fileSizeLabel = findViewById(R.id.file_size)
+        fileNameLabel = findViewById(R.id.file_name)
+        fileSizeLabel = findViewById(R.id.file_size)
 
-            progressLabel = findViewById(R.id.progress_label)
-            transferSpeed = findViewById(R.id.transfer_speed)
+        progressLabel = findViewById(R.id.progress_label)
+        transferSpeed = findViewById(R.id.transfer_speed)
 
-            progressBar = findViewById(R.id.progress_bar)
+        progressBar = findViewById(R.id.progress_bar)
 
-            handleFileRequests();
+        handleFileRequests()
+
+        val cancelBtn = findViewById<LinearLayout>(R.id.cancel_card)
+        cancelBtn.setOnClickListener {
+            krSystem.cancelFileTransfer();
         }
     }
 
