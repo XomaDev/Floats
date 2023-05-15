@@ -67,7 +67,7 @@ public class MultiChannelSystem {
           // we will check if there is any other
           // pending data after 1 second
           ScheduledExecutorService service = Executors.newScheduledThreadPool(1);
-          service.schedule(this::start, 1, TimeUnit.SECONDS);
+          service.schedule(this::start, 70, TimeUnit.MILLISECONDS);
           Log.d("KRSystem", "Restarting");
           break;
         }

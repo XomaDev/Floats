@@ -51,6 +51,7 @@
         </LinearLayout>
 
         <com.google.android.material.card.MaterialCardView
+            android:id="@+id/add_files_card"
             style="?attr/materialCardViewElevatedStyle"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -93,18 +94,12 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content">
 
-                    <LinearLayout
-                        android:id="@+id/icon_card"
+                    <ImageView
+                        android:layout_margin="5dp"
+                        android:id="@+id/img_icon"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:background="@drawable/small_card">
-                        <ImageView
-                            android:layout_margin="7dp"
-                            android:id="@+id/img_icon"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:background="@drawable/outline_image_24"/>
-                    </LinearLayout>
+                        android:background="@drawable/outline_image_24"/>
 
                     <TextView
                         android:id="@+id/file_name"
@@ -118,34 +113,27 @@
 
                     <LinearLayout
                         android:id="@+id/cancel_card"
+                        android:layout_gravity="center"
                         android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:background="@drawable/small_card">
-
-                        <LinearLayout
-                            android:layout_gravity="center"
+                        android:layout_marginStart="11dp"
+                        android:layout_marginEnd="11dp"
+                        android:layout_marginTop="5dp"
+                        android:layout_marginBottom="5dp"
+                        android:layout_height="wrap_content">
+                        <ImageView
+                            android:id="@+id/cancel_mark"
                             android:layout_width="wrap_content"
-                            android:layout_marginStart="11dp"
-                            android:layout_marginEnd="11dp"
-                            android:layout_marginTop="5dp"
-                            android:layout_marginBottom="5dp"
-                            android:layout_height="wrap_content">
-                            <ImageView
-                                android:id="@+id/cancel_mark"
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:background="@drawable/x_lg"/>
+                            android:layout_height="wrap_content"
+                            android:background="@drawable/x_lg"/>
 
-                            <TextView
-                                android:layout_marginStart="7dp"
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:fontFamily="@font/inter"
-                                android:text="Cancel"
-                                android:textColor="#FFFFFF"
-                                android:textAlignment="center"
-                                android:textSize="11sp" />
-                        </LinearLayout>
+                        <TextView
+                            android:layout_marginStart="7dp"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:fontFamily="@font/inter"
+                            android:text="Cancel"
+                            android:textAlignment="center"
+                            android:textSize="11sp" />
                     </LinearLayout>
                 </LinearLayout>
 

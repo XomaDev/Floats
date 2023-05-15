@@ -12,6 +12,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import com.baxolino.apps.floats.core.KRSystem
 import com.baxolino.apps.floats.tools.ThemeHelper
+import com.google.android.material.card.MaterialCardView
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.google.android.material.progressindicator.LinearProgressIndicator
 
@@ -72,7 +73,7 @@ class SessionActivity : AppCompatActivity() {
 
         val cancelBtn = findViewById<LinearLayout>(R.id.cancel_card)
         cancelBtn.setOnClickListener {
-            krSystem.cancelFileTransfer();
+            krSystem.cancelFileTransfer()
         }
     }
 
@@ -99,7 +100,7 @@ class SessionActivity : AppCompatActivity() {
                     val difference = System.currentTimeMillis() - startTime!!
                     if (difference > 1500) {
                         val speed = Formatter.formatFileSize(applicationContext, received.div(difference.div(1000)))
-                        transferSpeed.text = "$speed / second"
+                        transferSpeed.text = "$speed / sec"
                     }
                 }
             }
