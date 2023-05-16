@@ -47,18 +47,7 @@ public class MultiChannelSystem {
     return this;
   }
 
-  public MultiChannelSystem add(byte[] chunk, Priority priority) {
-    if (priority == Priority.NORMAL) {
-      // add it at the end
-      byteChunks.add(chunk);
-    } else if (priority == Priority.TOP) {
-      byteChunks.add(0, chunk);
-    }
-    return this;
-  }
-
   public void start() {
-    Log.d("KRSystem", "start()");
     for (;;) {
       if (write()) {
         postRefillListeners();
@@ -68,7 +57,6 @@ public class MultiChannelSystem {
           // pending data after 1 second
           ScheduledExecutorService service = Executors.newScheduledThreadPool(1);
           service.schedule(this::start, 70, TimeUnit.MILLISECONDS);
-          Log.d("KRSystem", "Restarting");
           break;
         }
       }

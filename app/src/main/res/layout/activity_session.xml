@@ -77,6 +77,36 @@
             android:text="Click on the plus icon to send files" />
 
 
+        <FrameLayout
+            android:layout_gravity="center"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content">
+            <com.google.android.material.progressindicator.CircularProgressIndicator
+                android:layout_width="wrap_content"
+                app:trackThickness="5dp"
+                app:trackCornerRadius="10dp"
+                app:indicatorSize="200dp"
+                android:progress="100"
+                android:indeterminate="true"
+                android:layout_height="wrap_content"/>
+
+            <ImageView
+                android:id="@+id/progress_img"
+                android:backgroundTint="@color/alt_variant_60"
+                android:layout_gravity="center"
+                android:layout_width="70dp"
+                android:layout_height="70dp"
+                android:background="@drawable/file_document_plus_outline"/>
+
+<!--            <TextView-->
+<!--                android:fontFamily="@font/inter"-->
+<!--                android:layout_gravity="center"-->
+<!--                android:layout_width="wrap_content"-->
+<!--                android:layout_height="wrap_content"-->
+<!--                android:text="Preparing"/>-->
+        </FrameLayout>
+
+
         <com.google.android.material.card.MaterialCardView
             style="?attr/materialCardViewElevatedStyle"
             android:layout_width="match_parent"

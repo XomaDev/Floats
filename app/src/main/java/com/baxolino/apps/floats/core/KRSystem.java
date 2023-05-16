@@ -1,20 +1,31 @@
 package com.baxolino.apps.floats.core;
 
+import android.content.Context;
+import android.net.wifi.WifiManager;
 import android.util.Log;
 
 import com.baxolino.apps.floats.FloatsBluetooth;
 import com.baxolino.apps.floats.core.bytes.ChunkConstructor;
 import com.baxolino.apps.floats.core.bytes.io.DataInputStream;
 import com.baxolino.apps.floats.core.bytes.io.BitOutputStream;
+import com.baxolino.apps.floats.core.http.HttpSystem;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.Arrays;
-import java.util.Random;
+import java.io.OutputStream;
+import java.net.InetAddress;
+import java.net.URL;
+import java.net.UnknownHostException;
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.Response;
 
 // know-response system class that manages communication
 // between two devices and let's each other know when the message
@@ -37,7 +48,6 @@ public class KRSystem {
 
   private static final Channel KNOW_REQUEST_CHANNEL = new Channel((byte) 1);
   private static final Channel FILE_REQUEST_CHANNEL = new Channel((byte) 2);
-  private static final Channel FILE_CANCEL_REQUEST_CHANNEL = new Channel((byte) 3);
 
   private KnowRequestState knowState = KnowRequestState.NONE;
 
@@ -49,11 +59,12 @@ public class KRSystem {
     throw new IllegalStateException("KR System Not Initialized");
   }
 
-  public static KRSystem getInstance(String deviceName,
-                                     FloatsBluetooth floats) {
+  public static KRSystem getInstance(Context context,
+                                     String deviceName,
+                                     FloatsBluetooth floats) throws UnknownHostException {
     if (krSystem != null)
       return krSystem;
-    return krSystem = new KRSystem(deviceName, floats);
+    return krSystem = new KRSystem(context, deviceName, floats);
   }
 
   public interface KnowListener {
@@ -64,26 +75,49 @@ public class KRSystem {
 
   public interface FileRequestListener {
     void request(String name, int length);
+
     void update(int received, int total);
   }
 
-  private final Random random;
+
 
   public final String deviceName;
 
   private final MultiChannelStream reader;
   private final MultiChannelSystem writer;
 
-  private byte[] requestId;
+  private final OkHttpClient client = new OkHttpClient();
 
-  private KRSystem(String deviceName, FloatsBluetooth floats) {
+
+  private final int deviceIntIp;
+
+  private final String deviceIp;
+  private String otherDeviceIp = null;
+
+  private KRSystem(Context context, String deviceName, FloatsBluetooth floats) throws UnknownHostException {
     this.deviceName = deviceName;
     reader = new MultiChannelStream(floats.getReadStream());
     writer = new MultiChannelSystem(floats.getWriteStream());
 
     reader.start();
     writer.start();
-    random = new Random(deviceName.hashCode());
+
+    WifiManager wifi = context.getSystemService(WifiManager.class);
+
+    deviceIntIp = wifi.getConnectionInfo().getIpAddress();
+    deviceIp = formatIp(deviceIntIp);
+
+    Log.d(TAG, "Device Ip = " + deviceIp);
+  }
+
+  private String formatIp(int intIp) throws UnknownHostException {
+    return InetAddress.getByAddress(
+                    ByteBuffer
+                            .allocate(Integer.BYTES)
+                            .order(ByteOrder.LITTLE_ENDIAN)
+                            .putInt(intIp)
+                            .array())
+            .getHostAddress();
   }
 
   public void postKnowRequest(String name, Runnable knowSuccessful, Runnable knowFailed) throws IOException {
@@ -94,6 +128,7 @@ public class KRSystem {
             new BitOutputStream()
                     .writeShort16((short) bytes.length)
                     .write(bytes)
+                    .writeInt32(deviceIntIp)
                     .toBytes());
     writer.add(
             divider.divide(),
@@ -105,19 +140,27 @@ public class KRSystem {
       }
     });
 
-    DataInputStream input = new DataInputStream()
-            .setByteListener((chunkIndex, b, unsigned) -> {
-              if (unsigned == KNOW_RESPONSE_INT) {
-                knowState = KnowRequestState.SUCCESS;
-                knowSuccessful.run();
-              } else {
-                // we received invalid message
-                knowState = KnowRequestState.FAILED;
-                knowFailed.run();
-              }
-              // true because we just care about the first byte
-              return true;
-            });
+    DataInputStream input = new DataInputStream();
+    input.setByteListener((chunkIndex, b, unsigned) -> {
+      if (unsigned == KNOW_RESPONSE_INT) {
+        input.skip(1);
+        try {
+          otherDeviceIp = formatIp(input.readInt32());
+          Log.d(TAG, "Received Other Device Ip = " + otherDeviceIp);
+        } catch (UnknownHostException e) {
+          throw new RuntimeException(e);
+        }
+
+        knowState = KnowRequestState.SUCCESS;
+        knowSuccessful.run();
+      } else {
+        // we received invalid message
+        knowState = KnowRequestState.FAILED;
+        knowFailed.run();
+      }
+      // true because we just care about the first byte
+      return true;
+    });
     reader.registerChannelStream(KNOW_REQUEST_CHANNEL, input);
 
     ScheduledExecutorService service = Executors.newScheduledThreadPool(1);
@@ -151,6 +194,13 @@ public class KRSystem {
         // we expected
         listener.timeout();
       } else {
+        try {
+          otherDeviceIp = formatIp(input.readInt32());
+          Log.d(TAG, "Received Other Device Id = " + otherDeviceIp);
+        } catch (UnknownHostException e) {
+          throw new RuntimeException(e);
+        }
+
         // @Important if we want to use same channel again
         input.flushCurrent();
 
@@ -163,6 +213,7 @@ public class KRSystem {
         ChunkConstructor divider = new ChunkConstructor(KNOW_REQUEST_CHANNEL.bytes(),
                 new BitOutputStream()
                         .write(KNOW_RESPONSE_INT)
+                        .writeInt32(deviceIntIp)
                         .toBytes());
         byte[][] divided;
         try {
@@ -176,9 +227,19 @@ public class KRSystem {
     }, KNOW_RECEIVE_TIMEOUT, TimeUnit.MILLISECONDS);
   }
 
-  public void requestFileTransfer(InputStream input, String name, int length) throws IOException {
-    byte[] requestId = new byte[Config.CHANNEL_SIZE];
-    random.nextBytes(requestId);
+  // TODO:
+  //  send the http server id
+  //  from where the receiver can download it
+
+  public void prepareHttpTransfer(String name, int fileLength, InputStream stream) throws IOException {
+    // this is a port where we use to transfer the
+    // files
+    int portTransfer = HttpSystem.initServer(stream);
+
+    requestFileTransfer(portTransfer, name, fileLength);
+  }
+
+  private void requestFileTransfer(int port, String name, int length) throws IOException {
 
     // we send the file information before
     // the content
@@ -187,7 +248,7 @@ public class KRSystem {
                     .write(name.getBytes())
                     .write(Config.FILE_NAME_LENGTH_SEPARATOR)
                     .writeInt32(length)
-                    .write(requestId)
+                    .writeInt32(port)
                     .toBytes());
 
     writer.add(
@@ -199,24 +260,6 @@ public class KRSystem {
         writer.add(divider.divide(), MultiChannelSystem.Priority.TOP);
       }
     });
-
-    divider.setCompleteListener(() -> writeContentFromStream(requestId, input));
-  }
-
-  private void writeContentFromStream(byte[] channelId, InputStream input) {
-    Log.d(TAG, "writeContentFromStream: " + Arrays.toString(channelId));
-    // divide the bytes into the sizes of each chunk
-    // then send the bytes
-    new Thread(() -> {
-      try {
-        while (input.available() > 0) {
-          byte[] chunk = ChunkConstructor.construct(channelId, input);
-          writer.add(chunk, MultiChannelSystem.Priority.NORMAL);
-        }
-      } catch (IOException e) {
-        throw new RuntimeException(e);
-      }
-    }).start();
   }
 
   // called when Session class is started
@@ -234,13 +277,16 @@ public class KRSystem {
         int lengthFile = requestStream.readInt32();
 
         // file request id, in form of bytes
-        requestId = new byte[Config.CHANNEL_SIZE];
-        requestStream.read(requestId);
+        int port = requestStream.readInt32();
 
         Log.d(TAG, "Received File Request, name = " + name + " length = "
-                + lengthFile + " id = " + new String(requestId));
+                + lengthFile + " port = " + port);
         listener.request(name.toString(), lengthFile);
-        receiveContent(listener, lengthFile, requestId);
+        try {
+          receiveContent(port, lengthFile, listener);
+        } catch (IOException e) {
+          throw new RuntimeException(e);
+        }
         // reset the name array
         name.reset();
         requestStream.flushCurrent();
@@ -251,45 +297,40 @@ public class KRSystem {
     });
 
     reader.registerChannelStream(FILE_REQUEST_CHANNEL, requestStream);
-    checkCancelRequests();
   }
 
-  private void receiveContent(FileRequestListener listener, int length, byte[] channelId) {
-    DataInputStream input = new DataInputStream();
-    Log.d(TAG, "receiveContent: try register = " + Arrays.toString(channelId));
 
-    reader.registerChannelStream(new Channel(channelId), input);
-    input.setChunkListener(total -> listener.update(total, length));
-  }
+  private void receiveContent(int port, int total, FileRequestListener listener) throws IOException {
+    try {
+      String urlString = "http://" + otherDeviceIp + ":" + port;
+      Log.d(TAG, "Receive Content = " + urlString);
+      URL url = new URL(urlString);
 
-  private void checkCancelRequests() {
-    DataInputStream input = new DataInputStream();
-    reader.registerChannelStream(FILE_CANCEL_REQUEST_CHANNEL, input);
+      Request request = new Request.Builder()
+              .url(url)
+              .build();
 
-    input.setChunkListener(total -> {
-      byte[] requestId = new byte[Config.CHANNEL_SIZE];
-      input.read(requestId);
-
-      Log.d(TAG, "Request Cancel: " + Arrays.toString(requestId));
-
-      // remove the blank spots
-      input.flushCurrent();
-    });
-  }
-
-  public void cancelFileTransfer() throws IOException {
-    // send a message to stop transferring of the file
-    ChunkConstructor divider = new ChunkConstructor(FILE_CANCEL_REQUEST_CHANNEL.bytes(),
-            // send the file request id we want to cancel
-            requestId);
-    writer.add(
-            divider.divide(),
-            MultiChannelSystem.Priority.TOP
-    ).addRefillListener(() -> {
-      // add the next part of bytes
-      if (divider.pending()) {
-        writer.add(divider.divide(), MultiChannelSystem.Priority.TOP);
+      try (Response response = client.newCall(request).execute()) {
+        Log.d(TAG, "receiveContent: " + response.code());
+        copy(total, listener, response.body().byteStream(), new ByteArrayOutputStream());
       }
-    });
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
   }
+
+  private void copy(int total, FileRequestListener listener, InputStream source, OutputStream output)
+          throws IOException {
+    byte[] buf = new byte[BUFFER_SIZE];
+    int written = 0;
+    int n;
+    while ((n = source.read(buf)) > 0) {
+      output.write(buf, 0, n);
+      written += n;
+      listener.update(written, total);
+    }
+  }
+
+  private static final int BUFFER_SIZE = 1 << 25;
+
 }

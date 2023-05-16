@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:orientation="vertical"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <!-- drawable/ellipse_3.xml -->
+    <com.google.android.material.progressindicator.CircularProgressIndicator
+        android:layout_width="145dp"
+        android:layout_height="127dp"
+        android:indeterminate="true"
+        app:indeterminateAnimationType="contiguous"
+        app:indicatorColor="@color/alt_variant_60"
+        app:indicatorSize="300dp" />
+
+</LinearLayout>

@@ -132,7 +132,7 @@ class HomeActivity : AppCompatActivity() {
     // creating connection with another device
     @SuppressLint("MissingPermission")
     fun establishedConnection(isServer: Boolean, device: BluetoothDevice?) {
-        krSystem = KRSystem.getInstance(deviceName, connector)
+        krSystem = KRSystem.getInstance(this, deviceName, connector)
 
         if (!isServer) {
             krSystem!!.postKnowRequest(deviceName, {

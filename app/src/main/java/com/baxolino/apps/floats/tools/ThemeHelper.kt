@@ -67,6 +67,15 @@ object ThemeHelper {
         cancelMark.backgroundTintList = ColorStateList.valueOf(
             variant60Color(session)
         )
+
+
+        val progress_img = session.findViewById<ImageView>(R.id.progress_img)
+
+        progress_img.backgroundTintList = ColorStateList.valueOf(
+            session.getColor(
+                com.google.android.material.R.color.material_dynamic_neutral_variant60
+            )
+        )
     }
 
     fun variant60Color(context: Context): Int {

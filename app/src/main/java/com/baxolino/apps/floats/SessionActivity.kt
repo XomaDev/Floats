@@ -6,13 +6,11 @@ import android.os.Bundle
 import android.provider.OpenableColumns
 import android.text.format.Formatter
 import android.util.Log
-import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import com.baxolino.apps.floats.core.KRSystem
 import com.baxolino.apps.floats.tools.ThemeHelper
-import com.google.android.material.card.MaterialCardView
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.google.android.material.progressindicator.LinearProgressIndicator
 
@@ -70,11 +68,6 @@ class SessionActivity : AppCompatActivity() {
         progressBar = findViewById(R.id.progress_bar)
 
         handleFileRequests()
-
-        val cancelBtn = findViewById<LinearLayout>(R.id.cancel_card)
-        cancelBtn.setOnClickListener {
-            krSystem.cancelFileTransfer()
-        }
     }
 
     private fun handleFileRequests() {
@@ -115,14 +108,22 @@ class SessionActivity : AppCompatActivity() {
             // no file has been picked
             return@registerForActivityResult
         val uri = it.data?.data
+        uri?.let {
+            prepareTransfer(uri)
+        }
+    }
 
-        uri?.apply {
+    private fun prepareTransfer(uri: Uri) {
+        uri.apply {
             val fileName = get(OpenableColumns.DISPLAY_NAME)
             val fileLength = get(OpenableColumns.SIZE)
 
             Log.d(TAG, "Picked File $fileName of length $fileLength")
-            krSystem.requestFileTransfer(contentResolver.openInputStream(uri),
-                fileName, fileLength.toInt())
+            krSystem.prepareHttpTransfer(
+                fileName,
+                fileLength.toInt(),
+                contentResolver.openInputStream(uri)
+            )
         }
     }
 

@@ -20,7 +20,7 @@ public class DataInputStream extends BitInputStream {
    */
 
   public interface ByteListener {
-    boolean onNewByteAvailable(int byteIndex, byte b, int unsigned);
+    boolean onNewByteAvailable(int byteIndex, byte b, int unsigned) ;
   }
 
   private ChunkListener listener;
@@ -42,9 +42,8 @@ public class DataInputStream extends BitInputStream {
       listener.onNewChunksAvailable(available);
   }
 
-  public DataInputStream setByteListener(ByteListener listener) {
+  public void setByteListener(ByteListener listener) {
     byteListener = listener;
-    return this;
   }
 
   public ByteListener getByteListener() {
