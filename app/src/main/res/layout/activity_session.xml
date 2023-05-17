@@ -16,25 +16,48 @@
 
         <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="wrap_content">
+            android:layout_height="wrap_content"
+            android:baselineAligned="false">
 
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:fontFamily="@font/inter"
-                android:text="S"
-                android:textSize="40sp"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toTopOf="parent" />
+            <LinearLayout
+                android:layout_weight="1"
 
-            <TextView
                 android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:fontFamily="@font/inter"
-                android:text="ESSION"
-                android:textSize="30sp"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toTopOf="parent" />
+                android:layout_height="wrap_content">
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:fontFamily="@font/inter"
+                    android:text="S"
+                    android:textSize="40sp"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toTopOf="parent" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:fontFamily="@font/inter"
+                    android:text="ESSION"
+                    android:textSize="30sp"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toTopOf="parent" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_gravity="center"
+                android:gravity="center"
+                android:layout_weight="1"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content">
+                <TextView
+                    android:id="@+id/transfer_speed"
+                    android:layout_gravity="center"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textSize="18sp"
+                    android:text="12 MBps"
+                    android:fontFamily="@font/inter"/>
+            </LinearLayout>
         </LinearLayout>
 
 
@@ -50,230 +73,94 @@
                 android:text="Connected to **" />
         </LinearLayout>
 
-        <com.google.android.material.card.MaterialCardView
-            android:id="@+id/add_files_card"
-            style="?attr/materialCardViewElevatedStyle"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="center"
-            android:layout_marginTop="25dp"
-            app:cardCornerRadius="50dp"
-            app:contentPadding="20dp">
-
-            <ImageView
-                android:id="@+id/image_add"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:background="@drawable/file_document_plus_outline"
-                android:backgroundTint="@color/alt_variant_60" />
-        </com.google.android.material.card.MaterialCardView>
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="center"
-            android:layout_marginTop="50dp"
-            android:fontFamily="@font/inter"
-            android:text="Click on the plus icon to send files" />
-
 
         <FrameLayout
+            android:layout_marginTop="25dp"
             android:layout_gravity="center"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content">
             <com.google.android.material.progressindicator.CircularProgressIndicator
                 android:layout_width="wrap_content"
-                app:trackThickness="5dp"
+                app:trackThickness="8dp"
                 app:trackCornerRadius="10dp"
+                android:id="@+id/progress_bar"
                 app:indicatorSize="200dp"
-                android:progress="100"
-                android:indeterminate="true"
+                android:progress="0"
                 android:layout_height="wrap_content"/>
 
-            <ImageView
-                android:id="@+id/progress_img"
-                android:backgroundTint="@color/alt_variant_60"
+
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/add_files_card"
+                style="?attr/materialCardViewElevatedStyle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
                 android:layout_gravity="center"
-                android:layout_width="70dp"
-                android:layout_height="70dp"
-                android:background="@drawable/file_document_plus_outline"/>
+                app:cardCornerRadius="360dp"
+                app:contentPadding="70dp">
 
-<!--            <TextView-->
-<!--                android:fontFamily="@font/inter"-->
-<!--                android:layout_gravity="center"-->
-<!--                android:layout_width="wrap_content"-->
-<!--                android:layout_height="wrap_content"-->
-<!--                android:text="Preparing"/>-->
-        </FrameLayout>
-
-
-        <com.google.android.material.card.MaterialCardView
-            style="?attr/materialCardViewElevatedStyle"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="25dp"
-            app:contentPadding="20dp">
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:orientation="vertical">
-
-                <LinearLayout
-                    android:gravity="center"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content">
-
-                    <ImageView
-                        android:layout_margin="5dp"
-                        android:id="@+id/img_icon"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:background="@drawable/outline_image_24"/>
-
-                    <TextView
-                        android:id="@+id/file_name"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginStart="10dp"
-                        android:layout_weight=".5"
-                        android:fontFamily="@font/inter"
-                        android:text="Kitty"
-                        android:textStyle="bold" />
-
-                    <LinearLayout
-                        android:id="@+id/cancel_card"
-                        android:layout_gravity="center"
-                        android:layout_width="wrap_content"
-                        android:layout_marginStart="11dp"
-                        android:layout_marginEnd="11dp"
-                        android:layout_marginTop="5dp"
-                        android:layout_marginBottom="5dp"
-                        android:layout_height="wrap_content">
-                        <ImageView
-                            android:id="@+id/cancel_mark"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:background="@drawable/x_lg"/>
-
-                        <TextView
-                            android:layout_marginStart="7dp"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:fontFamily="@font/inter"
-                            android:text="Cancel"
-                            android:textAlignment="center"
-                            android:textSize="11sp" />
-                    </LinearLayout>
-                </LinearLayout>
-
-                <LinearLayout
-                    android:translationY="10dp"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content">
-                    <TextView
-                        android:id="@+id/progress_label"
-                        android:layout_marginTop="10dp"
-                        android:fontFamily="@font/inter"
-                        android:textStyle="bold"
-                        android:textSize="24sp"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="0"/>
-
-                    <TextView
-                        android:layout_marginStart="1dp"
-                        android:textSize="12sp"
-                        android:layout_gravity="center"
-                        android:layout_width="wrap_content"
-                        android:fontFamily="@font/inter"
-                        android:textStyle="bold"
-                        android:layout_height="wrap_content"
-                        android:text="%"/>
-                </LinearLayout>
-
-
-                <com.google.android.material.progressindicator.LinearProgressIndicator
-                    android:id="@+id/progress_bar"
-                    app:hideAnimationBehavior="inward"
-                    app:trackThickness="5dp"
+                <ImageView
+                    android:id="@+id/image_add"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="15dp"
-                    android:progress="0"
-                    app:trackCornerRadius="10dp" />
+                    android:background="@drawable/file_earmark_zip"
+                    android:backgroundTint="@color/alt_variant_60" />
 
-                <LinearLayout
-                    android:layout_marginTop="25dp"
-                    android:layout_width="match_parent"
+
+            </com.google.android.material.card.MaterialCardView>
+
+        </FrameLayout>
+
+        <TextView
+            android:layout_gravity="center"
+            android:fontFamily="@font/inter"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Hold to cancel"/>
+
+        <com.google.android.material.card.MaterialCardView
+            android:layout_marginTop="30dp"
+            app:contentPadding="10dp"
+            app:strokeWidth="0dp"
+            android:layout_gravity="center"
+            app:cardElevation="1dp"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content">
+            <LinearLayout
+                android:gravity="center"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal">
+                <TextView
+                    android:id="@+id/file_name"
+                    android:layout_margin="10dp"
+
+                    android:fontFamily="@font/inter"
+                    android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:orientation="horizontal"
-                    android:baselineAligned="false">
-                    <LinearLayout
-                        android:gravity="center"
-                        android:layout_weight="1"
+                    android:text="drawing.png"/>
+
+                <FrameLayout
+                    android:layout_marginStart="20dp"
+                    android:layout_marginTop="10dp"
+                    android:layout_marginBottom="10dp"
+                    android:layout_marginEnd="10dp"
+
+                    android:id="@+id/speed_label_frame"
+                    android:layout_gravity="center"
+                    app:strokeWidth="0dp"
+                    android:background="@drawable/dotted_border"
+                    android:padding="10dp"
+                    app:cardElevation="1dp"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content">
+                    <TextView
+                        android:id="@+id/file_size"
+
+                        android:fontFamily="@font/inter"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:orientation="vertical">
-                        <TextView
-                            android:id="@+id/file_size"
-                            android:fontFamily="@font/inter"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="2.5 MB"/>
-                        <TextView
-                            android:fontFamily="@font/inter"
-                            android:textSize="12sp"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="Size"/>
-                    </LinearLayout>
-
-                    <LinearLayout
-                        android:gravity="center"
-                        android:layout_weight="1"
-
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:orientation="vertical">
-                        <TextView
-                            android:fontFamily="@font/inter"
-
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="JPEG"/>
-                        <TextView
-                            android:fontFamily="@font/inter"
-                            android:textSize="12sp"
-
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="Format"/>
-                    </LinearLayout>
-
-                    <LinearLayout
-                        android:gravity="center"
-                        android:layout_weight="1"
-
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:orientation="vertical">
-                        <TextView
-                            android:id="@+id/transfer_speed"
-                            android:fontFamily="@font/inter"
-
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="NaN"/>
-                        <TextView
-                            android:fontFamily="@font/inter"
-                            android:textSize="12sp"
-
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="Speed"/>
-                    </LinearLayout>
-                </LinearLayout>
+                        android:text="45.7 MB"/>
+                </FrameLayout>
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
     </LinearLayout>
