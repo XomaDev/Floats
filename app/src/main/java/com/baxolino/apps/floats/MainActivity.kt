@@ -26,12 +26,12 @@ import com.baxolino.apps.floats.tools.ThemeHelper
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        if (true) {
-            startActivity(
-                Intent(this, SessionActivity::class.java)
-            )
-            return
-        }
+//        if (true) {
+//            startActivity(
+//                Intent(this, SessionActivity::class.java)
+//            )
+//            return
+//        }
         if (hasStorageAccess()) {
             startActivity(
                 Intent(this, HomeActivity::class.java)

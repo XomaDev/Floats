@@ -4,7 +4,7 @@ import android.content.Context;
 import android.net.wifi.WifiManager;
 import android.util.Log;
 
-import com.baxolino.apps.floats.FloatsBluetooth;
+import com.baxolino.apps.floats.NsdFloats;
 import com.baxolino.apps.floats.core.bytes.ChunkConstructor;
 import com.baxolino.apps.floats.core.bytes.io.DataInputStream;
 import com.baxolino.apps.floats.core.bytes.io.BitOutputStream;
@@ -42,8 +42,8 @@ public class KRSystem {
   // a success code sent back by know-request receiver
   private static final byte KNOW_RESPONSE_INT = 1;
 
-  private static final int KNOW_RECEIVE_TIMEOUT = 2000;
-  private static final int KNOW_RECEIVE_BACK_TIMEOUT = 6000;
+  private static final int KNOW_RECEIVE_TIMEOUT = 1000;
+  private static final int KNOW_RECEIVE_BACK_TIMEOUT = 3000;
 
 
   private static final Channel KNOW_REQUEST_CHANNEL = new Channel((byte) 1);
@@ -61,7 +61,7 @@ public class KRSystem {
 
   public static KRSystem getInstance(Context context,
                                      String deviceName,
-                                     FloatsBluetooth floats) throws UnknownHostException {
+                                     NsdFloats floats) throws UnknownHostException {
     if (krSystem != null)
       return krSystem;
     return krSystem = new KRSystem(context, deviceName, floats);
@@ -91,13 +91,12 @@ public class KRSystem {
 
   private final int deviceIntIp;
 
-  private final String deviceIp;
   private String otherDeviceIp = null;
 
-  private KRSystem(Context context, String deviceName, FloatsBluetooth floats) throws UnknownHostException {
+  private KRSystem(Context context, String deviceName, NsdFloats floats) throws UnknownHostException {
     this.deviceName = deviceName;
-    reader = new MultiChannelStream(floats.getReadStream());
-    writer = new MultiChannelSystem(floats.getWriteStream());
+    reader = new MultiChannelStream(floats.input);
+    writer = new MultiChannelSystem(floats.output);
 
     reader.start();
     writer.start();
@@ -105,9 +104,7 @@ public class KRSystem {
     WifiManager wifi = context.getSystemService(WifiManager.class);
 
     deviceIntIp = wifi.getConnectionInfo().getIpAddress();
-    deviceIp = formatIp(deviceIntIp);
-
-    Log.d(TAG, "Device Ip = " + deviceIp);
+    Log.d(TAG, "Device Ip = " + formatIp(deviceIntIp));
   }
 
   private String formatIp(int intIp) throws UnknownHostException {
@@ -281,9 +278,8 @@ public class KRSystem {
 
         Log.d(TAG, "Received File Request, name = " + name + " length = "
                 + lengthFile + " port = " + port);
-        listener.request(name.toString(), lengthFile);
         try {
-          receiveContent(port, lengthFile, listener);
+          receiveContent(name.toString(), port, lengthFile, listener);
         } catch (IOException e) {
           throw new RuntimeException(e);
         }
@@ -300,7 +296,10 @@ public class KRSystem {
   }
 
 
-  private void receiveContent(int port, int total, FileRequestListener listener) throws IOException {
+  private void receiveContent(
+          String fileName,
+          int port, int total,
+          FileRequestListener listener) throws IOException {
     try {
       String urlString = "http://" + otherDeviceIp + ":" + port;
       Log.d(TAG, "Receive Content = " + urlString);
@@ -311,7 +310,9 @@ public class KRSystem {
               .build();
 
       try (Response response = client.newCall(request).execute()) {
-        Log.d(TAG, "receiveContent: " + response.code());
+        // we call it here so that the speed measuring
+        // is proper
+        listener.request(fileName, total);
         copy(total, listener, response.body().byteStream(), new ByteArrayOutputStream());
       }
     } catch (Exception e) {
@@ -331,6 +332,6 @@ public class KRSystem {
     }
   }
 
-  private static final int BUFFER_SIZE = 1 << 25;
+  private static final int BUFFER_SIZE = 1 << 20;
 
 }

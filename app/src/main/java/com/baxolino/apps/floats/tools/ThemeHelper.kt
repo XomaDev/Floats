@@ -2,15 +2,16 @@ package com.baxolino.apps.floats.tools
 
 import android.content.Context
 import android.content.res.ColorStateList
+import android.graphics.Color
+import android.graphics.drawable.GradientDrawable
+import android.widget.FrameLayout
 import android.widget.ImageView
-import android.widget.LinearLayout
 import com.baxolino.apps.floats.HomeActivity
 import com.baxolino.apps.floats.MainActivity
 import com.baxolino.apps.floats.R
 import com.baxolino.apps.floats.SessionActivity
-import com.google.android.material.button.MaterialButton
-import com.google.android.material.card.MaterialCardView
 import com.google.android.material.color.DynamicColors
+
 
 object ThemeHelper {
 
@@ -53,29 +54,22 @@ object ThemeHelper {
             )
         )
 
-        val imgIcon = session.findViewById<ImageView>(R.id.img_icon)
-
-        imgIcon.backgroundTintList = ColorStateList.valueOf(
-            session.getColor(
-                com.google.android.material.R.color.material_dynamic_neutral_variant50
-            )
-        )
-
-
-        val cancelMark = session.findViewById<ImageView>(R.id.cancel_mark)
-
-        cancelMark.backgroundTintList = ColorStateList.valueOf(
-            variant60Color(session)
-        )
+//        val labelFrame = session.findViewById<FrameLayout>(R.id.dotted_label_frame)
+//        val drawable = labelFrame.background as GradientDrawable
+//        drawable.mutate()
+//
+//        drawable.setStroke(2, session.getColor(
+//            com.google.android.material.R.color.material_dynamic_primary80
+//        ), 6f, 7f)
 
 
-        val progress_img = session.findViewById<ImageView>(R.id.progress_img)
+        val speedLabelFrame = session.findViewById<FrameLayout>(R.id.speed_label_frame)
+        val drawableSpeed = speedLabelFrame.background as GradientDrawable
+        drawableSpeed.mutate()
 
-        progress_img.backgroundTintList = ColorStateList.valueOf(
-            session.getColor(
-                com.google.android.material.R.color.material_dynamic_neutral_variant60
-            )
-        )
+        drawableSpeed.setStroke(2, session.getColor(
+            com.google.android.material.R.color.material_dynamic_neutral_variant40
+        ), 6f, 7f)
     }
 
     fun variant60Color(context: Context): Int {

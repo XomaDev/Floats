@@ -50,11 +50,12 @@ class HomeActivity : AppCompatActivity() {
 
     private lateinit var adapter: BluetoothAdapter
     private lateinit var deviceName: String
-    private val connector = FloatsBluetooth(this)
 
     private var krSystem: KRSystem? = null
 
     private var alertDialog: AlertDialog? = null
+
+    private lateinit var nsdFloats: NsdFloats
 
     @SuppressLint("HardwareIds")
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -79,18 +80,25 @@ class HomeActivity : AppCompatActivity() {
 
         val scanButton = findViewById<MaterialButton>(R.id.scanButton)
 
+        // creating the instance will register
+        // NSD service
+        nsdFloats = NsdFloats.getInstance(this, deviceName)!!
+
         if (intent.hasExtra("address") && PermissionHelper.canAccessBluetooth(this)) {
             // we are back from the qr scan activity
             // and we can connect to that bluetooth device from the address
-            val address = intent.getStringExtra("address")
-            connect(address!!)
+            val name = intent.getStringExtra("address")
+
+            // initiates nsd discovery and tries to find
+            // the device with the {name}
+            nsdFloats.discover(name!!)
         } else {
             scanButton.setOnClickListener {
+                nsdFloats
                 startActivity(
                     Intent(this, ScanActivity::class.java)
                 )
             }
-            connector.acceptConnection(adapter)
         }
     }
 
@@ -106,33 +114,12 @@ class HomeActivity : AppCompatActivity() {
         }
     }
 
-    @SuppressLint("MissingPermission")
-    private fun connect(name: String) {
-        var remoteDevice: BluetoothDevice? = null
 
-        for (device in adapter.bondedDevices) {
-            if (device.name == name) {
-                remoteDevice = device
-                break
-            }
-        }
-
-        if (remoteDevice != null) {
-            alertDialog = MaterialAlertDialogBuilder(this, R.style.FloatsCustomDialogTheme)
-                .setTitle("Connection")
-                .setMessage("Requesting connection to ${remoteDevice.name}")
-                .show()
-            connector.requestConnection(remoteDevice)
-        } else {
-            Log.d(TAG, "Did not find device $name")
-        }
-    }
-
-    // called from FloatsBluetooth.kt class after
+    // called from NsdFloats.java class after
     // creating connection with another device
     @SuppressLint("MissingPermission")
-    fun establishedConnection(isServer: Boolean, device: BluetoothDevice?) {
-        krSystem = KRSystem.getInstance(this, deviceName, connector)
+    fun deviceConnected(isServer: Boolean, device: String?) {
+        krSystem = KRSystem.getInstance(this, deviceName, nsdFloats)
 
         if (!isServer) {
             krSystem!!.postKnowRequest(deviceName, {
@@ -143,14 +130,14 @@ class HomeActivity : AppCompatActivity() {
                     alertDialog?.apply {
                         dismiss()
                     }
-                    informConnection(device!!.name)
+                    informConnection(device!!)
                 }
             }, {
                 Log.d(TAG, "Server failed to respond to KR")
                 runOnUiThread {
                     Toast.makeText(this,
-                        "${device!!.name} did not respond to request.",
-                        Toast.LENGTH_SHORT).show();
+                        "$device did not respond to request.",
+                        Toast.LENGTH_SHORT).show()
                 }
             })
         } else {

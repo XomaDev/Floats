@@ -12,7 +12,7 @@ import androidx.appcompat.app.AppCompatActivity
 import com.baxolino.apps.floats.core.KRSystem
 import com.baxolino.apps.floats.tools.ThemeHelper
 import com.google.android.material.floatingactionbutton.FloatingActionButton
-import com.google.android.material.progressindicator.LinearProgressIndicator
+import com.google.android.material.progressindicator.CircularProgressIndicator
 
 
 class SessionActivity : AppCompatActivity() {
@@ -25,11 +25,11 @@ class SessionActivity : AppCompatActivity() {
 
     private lateinit var fileNameLabel: TextView
     private lateinit var fileSizeLabel: TextView
-
+//
     private lateinit var progressLabel: TextView
     private lateinit var transferSpeed: TextView
 
-    private lateinit var progressBar: LinearProgressIndicator
+    private lateinit var progressBar: CircularProgressIndicator
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -62,7 +62,7 @@ class SessionActivity : AppCompatActivity() {
         fileNameLabel = findViewById(R.id.file_name)
         fileSizeLabel = findViewById(R.id.file_size)
 
-        progressLabel = findViewById(R.id.progress_label)
+//        progressLabel = findViewById(R.id.progress_label)
         transferSpeed = findViewById(R.id.transfer_speed)
 
         progressBar = findViewById(R.id.progress_bar)
@@ -81,19 +81,19 @@ class SessionActivity : AppCompatActivity() {
                         length.toLong()
                     )
                 }
-                startTime = System.currentTimeMillis()
+                startTime = System.nanoTime()
             }
             override fun update(received: Int, total: Int) {
                 runOnUiThread {
                     val percent = (received.toFloat().div(total) * 100).toInt()
 
-                    progressLabel.text = percent.toString()
+//                    progressLabel.text = percent.toString()
                     progressBar.setProgress(percent, true)
 
-                    val difference = System.currentTimeMillis() - startTime!!
+                    val difference = (System.nanoTime() - startTime!!).div(1_000_000)
                     if (difference > 1500) {
                         val speed = Formatter.formatFileSize(applicationContext, received.div(difference.div(1000)))
-                        transferSpeed.text = "$speed / sec"
+                        transferSpeed.text = "${speed}ps"
                     }
                 }
             }

@@ -11,7 +11,7 @@ import java.net.InetSocketAddress;
 
 public class HttpSystem {
 
-  private static final int BUFFER_SIZE = 1 << 25;
+  private static final int BUFFER_SIZE = 1 << 20;
 
   public static int initServer(InputStream input) throws IOException {
     int port = SocketUtils.findAvailableTcpPort();
@@ -27,6 +27,9 @@ public class HttpSystem {
       OutputStream response = httpExchange.getResponseBody();
 
       copy(input, response);
+
+      input.close();
+      response.close();
     });
     server.setExecutor(null);
     server.start();
