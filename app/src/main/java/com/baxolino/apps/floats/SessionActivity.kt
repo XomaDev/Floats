@@ -71,7 +71,7 @@ class SessionActivity : AppCompatActivity() {
     }
 
     private fun handleFileRequests() {
-        krSystem.checkFileRequests(object: KRSystem.FileRequestListener {
+        krSystem.checkFileRequests(this, object: KRSystem.FileRequestListener {
             private var startTime: Long? = null
 
             override fun request(name: String, length: Int) {
@@ -119,7 +119,8 @@ class SessionActivity : AppCompatActivity() {
             val fileLength = get(OpenableColumns.SIZE)
 
             Log.d(TAG, "Picked File $fileName of length $fileLength")
-            krSystem.prepareHttpTransfer(
+            krSystem.prepareNsdTransfer(
+                applicationContext,
                 fileName,
                 fileLength.toInt(),
                 contentResolver.openInputStream(uri)

@@ -4,28 +4,29 @@ import android.content.Context;
 import android.net.wifi.WifiManager;
 import android.util.Log;
 
+import androidx.annotation.NonNull;
+
 import com.baxolino.apps.floats.NsdFloats;
+import com.baxolino.apps.floats.NsdInterface;
 import com.baxolino.apps.floats.core.bytes.ChunkConstructor;
+import com.baxolino.apps.floats.core.bytes.io.ByteIo;
 import com.baxolino.apps.floats.core.bytes.io.DataInputStream;
 import com.baxolino.apps.floats.core.bytes.io.BitOutputStream;
-import com.baxolino.apps.floats.core.http.HttpSystem;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
 import java.net.InetAddress;
-import java.net.URL;
 import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.zip.GZIPInputStream;
+import java.util.zip.GZIPOutputStream;
 
 import okhttp3.OkHttpClient;
-import okhttp3.Request;
-import okhttp3.Response;
 
 // know-response system class that manages communication
 // between two devices and let's each other know when the message
@@ -78,7 +79,6 @@ public class KRSystem {
 
     void update(int received, int total);
   }
-
 
 
   public final String deviceName;
@@ -228,15 +228,41 @@ public class KRSystem {
   //  send the http server id
   //  from where the receiver can download it
 
-  public void prepareHttpTransfer(String name, int fileLength, InputStream stream) throws IOException {
-    // this is a port where we use to transfer the
-    // files
-    int portTransfer = HttpSystem.initServer(stream);
+  public void prepareNsdTransfer(Context context,
+                                 String name,
+                                 int fileLength,
+                                 InputStream fileInput
+  ) throws IOException {
+    NsdInterface nsdInterface = new NsdInterface(context) {
+      @Override
+      public void accepted() {
+        Log.d(TAG, "Accepted Transfer Request");
+        try {
+          GZIPOutputStream gZipOut = new GZIPOutputStream(output, ByteIo.BUFFER_SIZE);
+          // output is a field in NsdInterface
+          ByteIo.copy(fileInput, gZipOut);
 
-    requestFileTransfer(portTransfer, name, fileLength);
+          fileInput.close();
+
+          gZipOut.finish();
+          gZipOut.close();
+        } catch (IOException e) {
+          throw new RuntimeException(e);
+        }
+      }
+
+      // below method not called since we are not the one
+      // requesting connection
+      @Override
+      public void connected(@NonNull String serviceName) { }
+    };
+    nsdInterface.registerService(name);
+    nsdInterface.initializeServerSocket();
+
+    requestFileTransfer(name, fileLength);
   }
 
-  private void requestFileTransfer(int port, String name, int length) throws IOException {
+  private void requestFileTransfer(String name, int length) throws IOException {
 
     // we send the file information before
     // the content
@@ -245,7 +271,6 @@ public class KRSystem {
                     .write(name.getBytes())
                     .write(Config.FILE_NAME_LENGTH_SEPARATOR)
                     .writeInt32(length)
-                    .writeInt32(port)
                     .toBytes());
 
     writer.add(
@@ -263,7 +288,7 @@ public class KRSystem {
   // this looks for incoming file requests that contains
   // the file name followed by the file length
 
-  public void checkFileRequests(FileRequestListener listener) {
+  public void checkFileRequests(Context context, FileRequestListener listener) {
     ByteArrayOutputStream name = new ByteArrayOutputStream();
 
     DataInputStream requestStream = new DataInputStream();
@@ -273,13 +298,12 @@ public class KRSystem {
         requestStream.skip(chunkIndex + 1);
         int lengthFile = requestStream.readInt32();
 
-        // file request id, in form of bytes
-        int port = requestStream.readInt32();
 
         Log.d(TAG, "Received File Request, name = " + name + " length = "
-                + lengthFile + " port = " + port);
+                + lengthFile);
+        listener.request(name.toString(), lengthFile);
         try {
-          receiveContent(name.toString(), port, lengthFile, listener);
+          receiveContent(context, name.toString(), lengthFile, listener);
         } catch (IOException e) {
           throw new RuntimeException(e);
         }
@@ -297,41 +321,33 @@ public class KRSystem {
 
 
   private void receiveContent(
+          Context context,
           String fileName,
-          int port, int total,
+          int total,
           FileRequestListener listener) throws IOException {
-    try {
-      String urlString = "http://" + otherDeviceIp + ":" + port;
-      Log.d(TAG, "Receive Content = " + urlString);
-      URL url = new URL(urlString);
 
-      Request request = new Request.Builder()
-              .url(url)
-              .build();
+    NsdInterface nsdInterface = new NsdInterface(context) {
 
-      try (Response response = client.newCall(request).execute()) {
-        // we call it here so that the speed measuring
-        // is proper
-        listener.request(fileName, total);
-        copy(total, listener, response.body().byteStream(), new ByteArrayOutputStream());
+      // below method not called since we are the one
+      // accepting connection
+      @Override
+      public void accepted() { }
+
+      @Override
+      public void connected(@NonNull String serviceName) {
+        Log.d(TAG, "Prepared for receiving");
+        ByteArrayOutputStream received = new ByteArrayOutputStream();
+        try {
+          GZIPInputStream gZipInput = new GZIPInputStream(input, ByteIo.BUFFER_SIZE);
+          // input is a field in NsdInterface
+          ByteIo.copy(listener::update, total, gZipInput, received);
+
+          gZipInput.close();
+        } catch (IOException e) {
+          throw new RuntimeException(e);
+        }
       }
-    } catch (Exception e) {
-      e.printStackTrace();
-    }
+    };
+    nsdInterface.discover(fileName);
   }
-
-  private void copy(int total, FileRequestListener listener, InputStream source, OutputStream output)
-          throws IOException {
-    byte[] buf = new byte[BUFFER_SIZE];
-    int written = 0;
-    int n;
-    while ((n = source.read(buf)) > 0) {
-      output.write(buf, 0, n);
-      written += n;
-      listener.update(written, total);
-    }
-  }
-
-  private static final int BUFFER_SIZE = 1 << 20;
-
 }

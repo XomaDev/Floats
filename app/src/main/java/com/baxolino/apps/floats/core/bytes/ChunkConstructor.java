@@ -14,16 +14,11 @@ import java.io.InputStream;
 
 public class ChunkConstructor {
 
-    public interface DivisionComplete {
-        void onComplete() ;
-    }
-
     private static final String TAG = "ChunkDivider";
 
     private final byte[] channel;
     private final InputStream input;
 
-    private DivisionComplete listener = null;
 
     public ChunkConstructor(byte[] channel, byte[] text) {
         this(channel, new ByteArrayInputStream(text));
@@ -34,14 +29,7 @@ public class ChunkConstructor {
         this.input = input;
     }
 
-    public void setCompleteListener(DivisionComplete listener) throws IOException {
-        this.listener = listener;
-        if (listener != null && !pending())
-            listener.onComplete();
-    }
-
     public boolean pending() throws IOException {
-        Log.d("KRSystem", "Available = " + input.available());
         return input.available() > 0;
     }
 
@@ -64,8 +52,6 @@ public class ChunkConstructor {
 
             chunks[i] = construct(channel, input);
         }
-        if (!pending() && listener != null)
-            listener.onComplete();
         return chunks;
     }
 
