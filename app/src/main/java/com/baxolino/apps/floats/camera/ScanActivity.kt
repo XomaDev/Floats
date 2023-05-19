@@ -12,7 +12,6 @@ import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.view.PreviewView
 import androidx.core.content.ContextCompat
 import com.baxolino.apps.floats.HomeActivity
-import com.baxolino.apps.floats.MainActivity
 import com.baxolino.apps.floats.R
 
 

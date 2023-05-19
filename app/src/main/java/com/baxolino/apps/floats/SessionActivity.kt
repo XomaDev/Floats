@@ -8,9 +8,11 @@ import android.text.format.Formatter
 import android.util.Log
 import android.widget.TextView
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import com.baxolino.apps.floats.core.KRSystem
 import com.baxolino.apps.floats.tools.ThemeHelper
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.google.android.material.progressindicator.CircularProgressIndicator
 
@@ -25,11 +27,12 @@ class SessionActivity : AppCompatActivity() {
 
     private lateinit var fileNameLabel: TextView
     private lateinit var fileSizeLabel: TextView
-//
-    private lateinit var progressLabel: TextView
+
     private lateinit var transferSpeed: TextView
 
     private lateinit var progressBar: CircularProgressIndicator
+
+    private var awaitingConnectionDialog: AlertDialog? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -62,7 +65,6 @@ class SessionActivity : AppCompatActivity() {
         fileNameLabel = findViewById(R.id.file_name)
         fileSizeLabel = findViewById(R.id.file_size)
 
-//        progressLabel = findViewById(R.id.progress_label)
         transferSpeed = findViewById(R.id.transfer_speed)
 
         progressBar = findViewById(R.id.progress_bar)
@@ -74,32 +76,47 @@ class SessionActivity : AppCompatActivity() {
         krSystem.checkFileRequests(this, object: KRSystem.FileRequestListener {
             private var startTime: Long? = null
 
-            override fun request(name: String, length: Int) {
-                runOnUiThread {
-                    fileNameLabel.text = name.substring(0, name.lastIndexOf('.'))
-                    fileSizeLabel.text = Formatter.formatShortFileSize(applicationContext,
-                        length.toLong()
-                    )
-                }
+            override fun requested(name: String, length: Int) {
+                runOnUiThread { onTransferRequested(name, length) }
                 startTime = System.nanoTime()
             }
+
+            override fun started() {
+                runOnUiThread { awaitingConnectionDialog?.dismiss() }
+            }
+
             override fun update(received: Int, total: Int) {
                 runOnUiThread {
-                    val percent = (received.toFloat().div(total) * 100).toInt()
-
-//                    progressLabel.text = percent.toString()
-                    progressBar.setProgress(percent, true)
-
-                    val difference = (System.nanoTime() - startTime!!).div(1_000_000)
-                    if (difference > 1500) {
-                        val speed = Formatter.formatFileSize(applicationContext, received.div(difference.div(1000)))
-                        transferSpeed.text = "${speed}ps"
-                    }
+                    onUpdateInfoRequired(startTime!!, received, total)
                 }
             }
         })
     }
 
+    private fun onTransferRequested(name: String, length: Int) {
+        fileNameLabel.text = name.substring(0, name.lastIndexOf('.'))
+        fileSizeLabel.text = Formatter.formatShortFileSize(applicationContext,
+            length.toLong()
+        )
+
+        awaitingConnectionDialog = MaterialAlertDialogBuilder(this, R.style.FloatsCustomDialogTheme)
+            .setTitle("Awaiting")
+            .setMessage(getString(R.string.awaiting_transfer_text))
+            .show()
+    }
+
+    private fun onUpdateInfoRequired(startTime: Long, received: Int, total: Int) {
+        progressBar.setProgress(
+            // formula: received / total * 100 = progress
+            (received.toFloat().div(total) * 100
+                    ).toInt(), true)
+
+        val difference = (System.nanoTime() - startTime).div(1_000_000)
+        if (difference <= 1500)
+            return
+        val speed = Formatter.formatFileSize(applicationContext, received.div(difference.div(1000)))
+        transferSpeed.text = "${speed}ps"
+    }
 
     private var fileActivityResult = registerForActivityResult(
         ActivityResultContracts.StartActivityForResult()

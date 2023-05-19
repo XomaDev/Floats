@@ -26,8 +26,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 
-import okhttp3.OkHttpClient;
-
 // know-response system class that manages communication
 // between two devices and let's each other know when the message
 // is delivered
@@ -60,7 +58,7 @@ public class KRSystem {
     throw new IllegalStateException("KR System Not Initialized");
   }
 
-  public static KRSystem getInstance(Context context,
+  public static @NonNull KRSystem getInstance(Context context,
                                      String deviceName,
                                      NsdFloats floats) throws UnknownHostException {
     if (krSystem != null)
@@ -75,7 +73,9 @@ public class KRSystem {
   }
 
   public interface FileRequestListener {
-    void request(String name, int length);
+    void requested(String name, int length);
+
+    void started();
 
     void update(int received, int total);
   }
@@ -86,7 +86,6 @@ public class KRSystem {
   private final MultiChannelStream reader;
   private final MultiChannelSystem writer;
 
-  private final OkHttpClient client = new OkHttpClient();
 
 
   private final int deviceIntIp;
@@ -246,6 +245,8 @@ public class KRSystem {
 
           gZipOut.finish();
           gZipOut.close();
+
+          unregister();
         } catch (IOException e) {
           throw new RuntimeException(e);
         }
@@ -301,7 +302,7 @@ public class KRSystem {
 
         Log.d(TAG, "Received File Request, name = " + name + " length = "
                 + lengthFile);
-        listener.request(name.toString(), lengthFile);
+        listener.requested(name.toString(), lengthFile);
         try {
           receiveContent(context, name.toString(), lengthFile, listener);
         } catch (IOException e) {
@@ -326,6 +327,9 @@ public class KRSystem {
           int total,
           FileRequestListener listener) throws IOException {
 
+    // TODO:
+    //  implement notifiers, say waiting for connection
+    //  in a dialog
     NsdInterface nsdInterface = new NsdInterface(context) {
 
       // below method not called since we are the one
@@ -336,6 +340,8 @@ public class KRSystem {
       @Override
       public void connected(@NonNull String serviceName) {
         Log.d(TAG, "Prepared for receiving");
+        listener.started();
+
         ByteArrayOutputStream received = new ByteArrayOutputStream();
         try {
           GZIPInputStream gZipInput = new GZIPInputStream(input, ByteIo.BUFFER_SIZE);
@@ -343,6 +349,8 @@ public class KRSystem {
           ByteIo.copy(listener::update, total, gZipInput, received);
 
           gZipInput.close();
+
+          detach();
         } catch (IOException e) {
           throw new RuntimeException(e);
         }

@@ -23,7 +23,7 @@ abstract class NsdInterface constructor(context: Context) {
 
   private val nsdManager: NsdManager = context.getSystemService(NsdManager::class.java)
 
-  val localPort: Int = SocketUtils.findAvailableTcpPort()
+  private val localPort: Int = SocketUtils.findAvailableTcpPort()
 
   private var discoveryListener: NsdManager.DiscoveryListener? = null
   private lateinit var mService: NsdServiceInfo
@@ -57,6 +57,16 @@ abstract class NsdInterface constructor(context: Context) {
     override fun onUnregistrationFailed(serviceInfo: NsdServiceInfo, errorCode: Int) {
       // Unregistration failed. Put debugging code here to determine why.
       Log.d(TAG, "onUnregistrationFailed: $errorCode")
+    }
+  }
+
+  fun unregister() {
+    nsdManager.unregisterService(registrationListener)
+  }
+
+  fun detach() {
+    discoveryListener?.let {
+      nsdManager.stopServiceDiscovery(it)
     }
   }
 
@@ -118,7 +128,7 @@ abstract class NsdInterface constructor(context: Context) {
         if (serviceName.startsWith(NAME_PREFIX)) {
           val device = serviceName.substring(NAME_PREFIX.length)
 
-          Log.d(TAG, "Found Device = " + device + " port " + service.port)
+          Log.d(TAG, "Found Service = " + device + " port " + service.port)
           if (device == requestName) {
             Log.d(TAG, "Requesting Connection")
             requestConnection(requestName, service)
@@ -166,10 +176,9 @@ abstract class NsdInterface constructor(context: Context) {
 
         Log.d(TAG, "onServiceResolved: host = $host")
 
-        val socket: Socket
         try {
           Log.d(TAG, "Connecting $host on $port")
-          socket = Socket(host, port)
+          val socket = Socket(host, port)
           socket.keepAlive = true
 
 

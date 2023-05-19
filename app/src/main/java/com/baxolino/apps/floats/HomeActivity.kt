@@ -105,15 +105,13 @@ class HomeActivity : AppCompatActivity() {
   // creating connection with another device
 
   fun deviceConnected(isServer: Boolean, device: String?) {
-    krSystem = KRSystem.getInstance(this, deviceName, nsdFloats)
+    val krSystem = KRSystem.getInstance(this, deviceName, nsdFloats)
 
     if (!isServer) {
-      krSystem!!.postKnowRequest(deviceName, {
+      krSystem.postKnowRequest(deviceName, {
         // client received know-request
         Log.d(TAG, "Know Request Successful")
-        runOnUiThread {
-          informConnection(device!!)
-        }
+        runOnUiThread { informConnection(device!!) }
       }, {
         Log.d(TAG, "Server failed to respond to KR")
         runOnUiThread {
@@ -125,16 +123,19 @@ class HomeActivity : AppCompatActivity() {
         }
       })
     } else {
-      Log.d(TAG, "establishedConnection: waiting")
-      krSystem!!.readKnowRequest(object : KnowListener {
+      krSystem.readKnowRequest(object : KnowListener {
         override fun received(name: String) {
-          runOnUiThread {
-            informConnection(name)
-          }
+          runOnUiThread { informConnection(name) }
         }
 
         override fun timeout() {
-          Log.d(TAG, "Client failed to send KR")
+          runOnUiThread {
+            Toast.makeText(
+              applicationContext,
+              "Client failed to respond to know request.",
+              Toast.LENGTH_SHORT
+            ).show()
+          }
         }
       })
     }
