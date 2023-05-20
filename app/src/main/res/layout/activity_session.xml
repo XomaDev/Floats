@@ -75,6 +75,7 @@
 
 
         <FrameLayout
+            android:id="@+id/progress_frame"
             android:layout_marginTop="25dp"
             android:layout_gravity="center"
             android:layout_width="wrap_content"

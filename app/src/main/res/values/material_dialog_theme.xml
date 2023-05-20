@@ -4,6 +4,7 @@
         <item name="materialAlertDialogTitleTextStyle">@style/FloatsDialogTitleText</item>
         <item name="materialAlertDialogBodyTextStyle">@style/FloatsDialogText</item>
         <item name="buttonBarPositiveButtonStyle">@style/FloatsDialogButton</item>
+        <item name="buttonBarNegativeButtonStyle">@style/FloatsDialogButton</item>
     </style>
 
     <style name="FloatsDialogTitleText" parent="@style/MaterialAlertDialog.Material3.Title.Text">

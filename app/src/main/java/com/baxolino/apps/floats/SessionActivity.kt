@@ -1,11 +1,13 @@
 package com.baxolino.apps.floats
 
+import android.content.DialogInterface
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
 import android.provider.OpenableColumns
 import android.text.format.Formatter
 import android.util.Log
+import android.widget.FrameLayout
 import android.widget.TextView
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
@@ -70,6 +72,12 @@ class SessionActivity : AppCompatActivity() {
         progressBar = findViewById(R.id.progress_bar)
 
         handleFileRequests()
+
+        val frameProgress = findViewById<FrameLayout>(R.id.progress_frame)
+        frameProgress.setOnLongClickListener {
+            Log.d(TAG, "Cancelling transfer")
+            return@setOnLongClickListener true
+        }
     }
 
     private fun handleFileRequests() {
@@ -125,21 +133,34 @@ class SessionActivity : AppCompatActivity() {
             // no file has been picked
             return@registerForActivityResult
         val uri = it.data?.data
-        uri?.let {
-            prepareTransfer(uri)
+
+        uri?.apply {
+            val fileName = get(OpenableColumns.DISPLAY_NAME)
+            val fileLength = get(OpenableColumns.SIZE).toInt()
+
+            Log.d(TAG, "Picked File $fileName of length $fileLength")
+
+            askConfirmationDialog(uri, fileName, fileLength)
         }
     }
 
-    private fun prepareTransfer(uri: Uri) {
-        uri.apply {
-            val fileName = get(OpenableColumns.DISPLAY_NAME)
-            val fileLength = get(OpenableColumns.SIZE)
+    private fun askConfirmationDialog(uri: Uri, fileName: String, fileLength: Int) {
+        MaterialAlertDialogBuilder(this, R.style.FloatsCustomDialogTheme)
+            .setTitle("Confirm")
+            .setMessage("Are you sure you want to send the file $fileName of size " +
+                    "${Formatter.formatFileSize(applicationContext, fileLength.toLong())}?")
 
-            Log.d(TAG, "Picked File $fileName of length $fileLength")
+            .setPositiveButton("Proceed") { _, _ -> prepareTransfer(uri, fileName, fileLength) }
+            .setNegativeButton("Cancel") { dialog, _ -> dialog.dismiss() }
+            .show()
+    }
+
+    private fun prepareTransfer(uri: Uri, fileName: String, fileLength: Int) {
+        uri.apply {
             krSystem.prepareNsdTransfer(
                 applicationContext,
                 fileName,
-                fileLength.toInt(),
+                fileLength,
                 contentResolver.openInputStream(uri)
             )
         }
