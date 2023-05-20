@@ -41,8 +41,6 @@ class SessionActivity : AppCompatActivity() {
 
   private var awaitingConnectionDialog: AlertDialog? = null
 
-  private var fileRequestId: Int? = null
-
   override fun onCreate(savedInstanceState: Bundle?) {
     super.onCreate(savedInstanceState)
     setContentView(R.layout.activity_session)
@@ -114,7 +112,7 @@ class SessionActivity : AppCompatActivity() {
   private fun cancelFileTransfer(receiver: FileReceiver) {
     Toast.makeText(
       applicationContext,
-      "File transfer was cancelled by the user", Toast.LENGTH_LONG
+      getString(R.string.transfer_cancelled_receiver), Toast.LENGTH_LONG
     ).show()
 
     receiver.cancel()
@@ -185,15 +183,23 @@ class SessionActivity : AppCompatActivity() {
                 "${Formatter.formatFileSize(applicationContext, fileLength.toLong())}?"
       )
 
-      .setPositiveButton("Proceed") { _, _ -> prepareTransfer(uri, fileName, fileLength) }
+      .setPositiveButton("Proceed") { _, _ -> beginNsdTransfer(uri, fileName, fileLength) }
       .setNegativeButton("Cancel") { dialog, _ -> dialog.dismiss() }
       .show()
   }
 
-  private fun prepareTransfer(uri: Uri, fileName: String, fileLength: Int) {
+  private fun beginNsdTransfer(uri: Uri, fileName: String, fileLength: Int) {
     val request = FileRequest(
       contentResolver.openInputStream(uri), fileName, fileLength
     )
+    request.setCancelListener {
+      runOnUiThread {
+        Toast.makeText(
+          applicationContext,
+          getString(R.string.transfer_canceled_sender), Toast.LENGTH_LONG
+        ).show()
+      }
+    }
     system.execute(applicationContext, request)
   }
 

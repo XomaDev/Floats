@@ -22,6 +22,10 @@ import java.util.zip.GZIPOutputStream;
 
 public class FileRequest {
 
+  public interface CancelListener {
+    void cancelled(int reason);
+  }
+
   private static final String TAG = "FileRequest";
 
   private final InputStream fileInput;
@@ -32,10 +36,16 @@ public class FileRequest {
 
   private boolean cancelled = false;
 
+  private CancelListener cancelListener;
+
   public FileRequest(InputStream fileInput, String fileName, int fileLength) {
     this.fileInput = fileInput;
     this.fileName = fileName;
     this.fileLength = fileLength;
+  }
+
+  public void setCancelListener(CancelListener listener) {
+    cancelListener = listener;
   }
 
   public void execute(Context context, MultiChannelSystem writer) {
@@ -107,16 +117,16 @@ public class FileRequest {
     service.scheduleAtFixedRate(() -> {
       try {
         if (input.available() > 0) {
-          int code = input.read();
+
+          cancelled = true;
+          Log.d(TAG, "lookCancelRequests: Transfer was cancelled");
 
           // receiver sends a cancel code before it completely cuts off
           // the connection in few ms
-          if (code == Reasons.REASON_CANCELED) {
-            // was cancelled by the receiving user
-            cancelled = true;
-            Log.d(TAG, "lookCancelRequests: Transfer was cancelled");
-          } else if (code == Reasons.REASON_DISCONNECT) {
-            // the connection was disconnected
+          int reason = input.read();
+
+          if (cancelListener != null) {
+            cancelListener.cancelled(reason);
           }
         }
       } catch (IOException e) {
