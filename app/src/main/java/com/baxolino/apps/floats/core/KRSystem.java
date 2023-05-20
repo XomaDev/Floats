@@ -9,7 +9,6 @@ import android.util.Log;
 import androidx.annotation.NonNull;
 
 import com.baxolino.apps.floats.NsdFloats;
-import com.baxolino.apps.floats.NsdInterface;
 import com.baxolino.apps.floats.core.bytes.files.FileRequest;
 import com.baxolino.apps.floats.core.bytes.files.RequestHandler;
 import com.baxolino.apps.floats.core.bytes.io.BitOutputStream;
@@ -19,8 +18,6 @@ import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
-import java.util.HashMap;
-import java.util.Random;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -68,27 +65,6 @@ public class KRSystem {
     void timeout();
   }
 
-  public interface FileRequestListener {
-    void requested(int requestId, String name, int length);
-
-    void started();
-
-    void update(int received, int total);
-
-    void interupted();
-  }
-
-  private final Random random;
-
-  /**
-   * Maintains the list of NSD interfaces which are currently used
-   * to transfer file contents, maintains their Ids along with objects
-   * <p>
-   * We maintain a hashmap just in-case we need to use multiple interfaces
-   * in the future
-   */
-  private final HashMap<Integer, NsdInterface> pendingTransfers = new HashMap<>();
-
   public final String deviceName;
 
   private final MultiChannelStream reader;
@@ -100,7 +76,6 @@ public class KRSystem {
   private String otherDeviceIp = null;
 
   private KRSystem(Context context, String deviceName, NsdFloats floats) throws UnknownHostException {
-    random = new Random(deviceName.hashCode());
     this.deviceName = deviceName;
 
     reader = new MultiChannelStream(floats.input);
@@ -224,9 +199,5 @@ public class KRSystem {
 
   public void register(RequestHandler handler) {
     handler.setReader(reader);
-  }
-
-  public void abortNsdTransfer()  {
-    // TODO
   }
 }
