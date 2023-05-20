@@ -11,6 +11,9 @@ import com.baxolino.apps.floats.NsdInterface;
 import com.baxolino.apps.floats.core.bytes.io.DummyOutputStream;
 
 import java.io.IOException;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 import java.util.zip.GZIPInputStream;
 
 public class FileReceiver {
@@ -25,6 +28,10 @@ public class FileReceiver {
     void update(int received);
   }
 
+  public interface FinishedListener {
+    void finished();
+  }
+
   public final String name;
   public final int length;
 
@@ -32,6 +39,10 @@ public class FileReceiver {
 
   private StartedListener startListener;
   private UpdateListener updateListener;
+
+  private FinishedListener finishedListener;
+
+  private boolean cancelled = false;
 
   public long startTime;
 
@@ -48,6 +59,32 @@ public class FileReceiver {
 
   public void setUpdateListener(UpdateListener listener) {
     updateListener = listener;
+  }
+
+  public void setFinishedListener(FinishedListener listener) {
+    finishedListener = listener;
+  }
+
+  public void cancel() {
+    // a simple cancel message to stop sending
+    // more data
+    new Thread(() -> {
+      try {
+        service.output.write(Reasons.REASON_CANCELED);
+      } catch (IOException e) {
+        e.printStackTrace();
+      }
+    }).start();
+
+    ScheduledExecutorService service = Executors.newScheduledThreadPool(1);
+    service.schedule(() -> {
+      // setting this property first will cause
+      // interruption when the sender writes data,
+
+      // then it'll check for any messages in it's input stream
+      // and there we'll post a code with a reason
+      cancelled = true;
+    }, 60, TimeUnit.MILLISECONDS);
   }
 
   public void receive(Context context) {
@@ -82,7 +119,7 @@ public class FileReceiver {
     byte[] buffer = new byte[BUFFER_SIZE];
     int n, received = 0;
 
-    while ((n = zipInput.read(buffer)) > 0) {
+    while (!cancelled && (n = zipInput.read(buffer)) > 0) {
       output.write(buffer, 0, n);
       received += n;
       updateListener.update(received);
@@ -90,5 +127,7 @@ public class FileReceiver {
 
     zipInput.close();
     service.detach();
+
+    finishedListener.finished();
   }
 }

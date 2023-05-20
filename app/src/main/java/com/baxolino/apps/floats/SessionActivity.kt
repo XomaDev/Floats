@@ -3,6 +3,7 @@ package com.baxolino.apps.floats
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
+import android.os.Handler
 import android.provider.OpenableColumns
 import android.text.format.Formatter
 import android.util.Log
@@ -14,6 +15,7 @@ import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import com.baxolino.apps.floats.core.bytes.files.FileRequest
 import com.baxolino.apps.floats.core.KRSystem
+import com.baxolino.apps.floats.core.bytes.files.FileReceiver
 import com.baxolino.apps.floats.core.bytes.files.RequestHandler
 import com.baxolino.apps.floats.tools.ThemeHelper
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
@@ -35,6 +37,7 @@ class SessionActivity : AppCompatActivity() {
   private lateinit var transferSpeed: TextView
 
   private lateinit var progressBar: CircularProgressIndicator
+  private lateinit var frameProgress: FrameLayout
 
   private var awaitingConnectionDialog: AlertDialog? = null
 
@@ -77,37 +80,53 @@ class SessionActivity : AppCompatActivity() {
 
     lookForFileRequests()
 
-    val frameProgress = findViewById<FrameLayout>(R.id.progress_frame)
-
-    frameProgress.setOnLongClickListener {
-      Log.d(TAG, "Cancelling transfer")
-      Toast.makeText(
-        applicationContext,
-        "File transfer was cancelled by the user", Toast.LENGTH_LONG
-      ).show()
-      fileRequestId?.let { system.abortNsdTransfer() }
-
-      // do a reverse progress bar animation
-      progressBar.setProgress(0, true)
-      return@setOnLongClickListener true
-    }
+    frameProgress = findViewById(R.id.progress_frame)
   }
 
   private fun lookForFileRequests() {
     val listener = RequestHandler.RequestsListener {
+      val receiver = it
       runOnUiThread { onTransferRequested(it.name, it.length) }
 
       it.setStartListener {
-        runOnUiThread { awaitingConnectionDialog?.dismiss() }
+        runOnUiThread {
+          awaitingConnectionDialog?.dismiss()
+
+          frameProgress.setOnLongClickListener {
+            cancelFileTransfer(receiver)
+            return@setOnLongClickListener true
+          }
+        }
       }
       it.setUpdateListener { received ->
         runOnUiThread {
           onUpdateInfoRequired(it.startTime, received, it.length)
         }
       }
+      it.setFinishedListener {
+        frameProgress.setOnLongClickListener(null)
+      }
       it.receive(applicationContext)
     }
     system.register(RequestHandler(listener))
+  }
+
+  private fun cancelFileTransfer(receiver: FileReceiver) {
+    Toast.makeText(
+      applicationContext,
+      "File transfer was cancelled by the user", Toast.LENGTH_LONG
+    ).show()
+
+    receiver.cancel()
+
+    // TODO:
+    //  when we really implement the saving mechanism
+    //  we will have to delete the temp file or the half saved file
+
+    Handler(mainLooper).postDelayed({
+      // reverse progress animation
+      progressBar.setProgress(0, true)
+    }, 80)
   }
 
   private fun onTransferRequested(name: String, length: Int) {
@@ -133,7 +152,8 @@ class SessionActivity : AppCompatActivity() {
     val difference = (System.currentTimeMillis() - startTime)
     if (difference == 0L)
       return
-    val speed = Formatter.formatFileSize(applicationContext,
+    val speed = Formatter.formatFileSize(
+      applicationContext,
       received.toFloat().div(difference.toFloat().div(1000f)).toLong()
     )
     transferSpeed.text = "${speed}ps"

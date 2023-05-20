@@ -14,6 +14,10 @@ import com.baxolino.apps.floats.core.bytes.io.BitOutputStream;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.SocketException;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 import java.util.zip.GZIPOutputStream;
 
 public class FileRequest {
@@ -25,6 +29,8 @@ public class FileRequest {
   private final int fileLength;
 
   private NsdInterface service = null;
+
+  private boolean cancelled = false;
 
   public FileRequest(InputStream fileInput, String fileName, int fileLength) {
     this.fileInput = fileInput;
@@ -39,6 +45,8 @@ public class FileRequest {
         // the other device found the service and now is connected
         try {
           Log.d(TAG, "accepted()");
+
+          lookCancelRequests();
           writeFileContents(fileInput);
         } catch (IOException e) {
           throw new RuntimeException(e);
@@ -69,14 +77,51 @@ public class FileRequest {
 
     byte[] buffer = new byte[BUFFER_SIZE];
     int n;
-    while ((n = fileInput.read(buffer)) > 0)
-      zipOutputStream.write(buffer, 0, n);
+    while (!cancelled && (n = fileInput.read(buffer)) > 0) {
+      try {
+        zipOutputStream.write(buffer, 0, n);
+      } catch (SocketException e) {
+        // BrokenPipe: this error is thrown when the receiver abruptly
+        // closes the connection, we have few ms before the client is fully closed
+        Log.d(TAG, "Failed while writing, available = " + service.input.read());
+        cancelled = true;
+        break;
+      }
+    }
 
     fileInput.close();
 
-    zipOutputStream.finish();
-    zipOutputStream.close();
+    // without this check, it will throw SocketException
+    if (!cancelled) {
+      zipOutputStream.finish();
+      zipOutputStream.close();
+    }
 
     service.unregister();
+  }
+
+  private void lookCancelRequests() {
+    InputStream input = service.input;
+
+    ScheduledExecutorService service = Executors.newScheduledThreadPool(1);
+    service.scheduleAtFixedRate(() -> {
+      try {
+        if (input.available() > 0) {
+          int code = input.read();
+
+          // receiver sends a cancel code before it completely cuts off
+          // the connection in few ms
+          if (code == Reasons.REASON_CANCELED) {
+            // was cancelled by the receiving user
+            cancelled = true;
+            Log.d(TAG, "lookCancelRequests: Transfer was cancelled");
+          } else if (code == Reasons.REASON_DISCONNECT) {
+            // the connection was disconnected
+          }
+        }
+      } catch (IOException e) {
+        throw new RuntimeException(e);
+      }
+    }, 0, 20, TimeUnit.MILLISECONDS);
   }
 }
