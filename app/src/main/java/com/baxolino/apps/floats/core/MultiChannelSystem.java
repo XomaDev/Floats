@@ -1,56 +1,29 @@
 package com.baxolino.apps.floats.core;
 
-import android.util.Log;
-
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
 public class MultiChannelSystem {
 
-  public enum Priority {
-    NORMAL, TOP
-  }
-
-  public interface ChannelStatusListener {
-    void onNeedRefill() throws IOException;
-  }
-
   private final OutputStream stream;
 
-  private final ArrayList<byte[]> byteChunks = new ArrayList<>();
-
-  private final ArrayList<ChannelStatusListener> listeners = new ArrayList<>();
+  private final ArrayList<ByteChunk> byteChunks = new ArrayList<>();
 
   public MultiChannelSystem(OutputStream stream) {
     this.stream = stream;
   }
 
-  public void addRefillListener(ChannelStatusListener listener) {
-    listeners.add(listener);
-  }
-
-  public MultiChannelSystem add(byte[][] chunks, Priority priority) {
-    List<byte[]> bytes = Arrays.asList(chunks);
-
-    if (priority == Priority.NORMAL) {
-      // add it at the end
-      byteChunks.addAll(bytes);
-    } else if (priority == Priority.TOP) {
-      byteChunks.addAll(0, bytes);
-    }
-    return this;
+  public void add(Channel channel, byte[] bytes) {
+    byteChunks.add(new ByteChunk(channel, bytes));
   }
 
   public void start() {
     for (;;) {
       if (write()) {
-        postRefillListeners();
         // tries to write again
         if (write()) {
           // we will check if there is any other
@@ -63,27 +36,38 @@ public class MultiChannelSystem {
     }
   }
 
-  private void postRefillListeners() {
-    try {
-      for (ChannelStatusListener listener : listeners) {
-        listener.onNeedRefill();
-      }
-    } catch (IOException e) {
-      throw new RuntimeException(e);
-    }
-  }
 
   private boolean write() {
     if (byteChunks.isEmpty())
       return true;
-    byte[] poll = byteChunks.remove(0);
-    if (poll != null) {
-      try {
-        stream.write(poll);
-      } catch (IOException e) {
-        throw new RuntimeException(e);
-      }
+    ByteChunk chunk = byteChunks.remove(0);
+    try {
+      stream.write(chunk.channel.bytes());
+      int blankSpots = Config.CHUNK_SIZE - chunk.bytes.length;
+      if (blankSpots < 0)
+        throw new RuntimeException("Bytes are more than chunk limit.");
+
+      stream.write(blankSpots >> 8);
+      stream.write(blankSpots);
+
+      stream.write(chunk.bytes);
+
+      while (blankSpots-- > 0)
+        stream.write(0);
+    } catch (IOException e) {
+      throw new RuntimeException(e);
     }
-    return poll == null;
+    return false;
+  }
+
+  static class ByteChunk {
+
+    private final Channel channel;
+    private final byte[] bytes;
+
+    public ByteChunk(Channel channel, byte[] bytes) {
+      this.channel = channel;
+      this.bytes = bytes;
+    }
   }
 }

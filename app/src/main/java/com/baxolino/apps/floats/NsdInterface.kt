@@ -21,6 +21,13 @@ abstract class NsdInterface constructor(context: Context) {
     private const val TAG = "NsdInterface"
   }
 
+  enum class State {
+    NORMAL, CANCELLED
+  }
+
+
+  var state = State.NORMAL
+
   private val nsdManager: NsdManager = context.getSystemService(NsdManager::class.java)
 
   private val localPort: Int = SocketUtils.findAvailableTcpPort()
@@ -70,7 +77,7 @@ abstract class NsdInterface constructor(context: Context) {
     }
   }
 
-  fun initializeServerSocket() {
+  private fun initializeServerSocket() {
     // this basically allows any incoming request
     // to connect to the server
 
@@ -104,6 +111,7 @@ abstract class NsdInterface constructor(context: Context) {
     nsdManager.registerService(
       serviceInfo, NsdManager.PROTOCOL_DNS_SD, registrationListener
     )
+    initializeServerSocket()
   }
 
   /**

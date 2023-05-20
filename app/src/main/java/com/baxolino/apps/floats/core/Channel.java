@@ -1,10 +1,11 @@
 package com.baxolino.apps.floats.core;
 
-import android.util.Log;
-
 import java.util.Arrays;
 
 public class Channel {
+
+  public static final Channel KNOW_REQUEST_CHANNEL = new Channel((byte) 1);
+  public static final Channel FILE_REQUEST_CHANNEL = new Channel((byte) 2);
 
   private final byte[] channel;
 

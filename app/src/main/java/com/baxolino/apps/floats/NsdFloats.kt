@@ -18,7 +18,6 @@ class NsdFloats(private val home: HomeActivity, name: String): NsdInterface(home
 
   init {
     registerService(name)
-    initializeServerSocket()
   }
 
   override fun accepted() {

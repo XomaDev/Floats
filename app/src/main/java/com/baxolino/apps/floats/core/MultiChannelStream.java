@@ -69,7 +69,7 @@ public class MultiChannelStream {
           if (listener != null)
             for (int i = 0, len = CHUNK_SIZE - blankSpots; i < len; i++)
               // break when listener returns true
-              if (listener.onNewByteAvailable(i, chunk[i], chunk[i] & 0xff))
+              if (listener.onNewByteAvailable(chunk[i]))
                 break;
         } else {
           Log.d("KRSystem", "Stream Not Found = " + Arrays.toString(channel));

@@ -8,22 +8,15 @@ public class DataInputStream extends BitInputStream {
     super(null);
   }
 
-  public interface ChunkListener {
-    void onNewChunksAvailable(int total);
-  }
 
 
   /**
    * Called when there is a new byte available;
-   * unsigned byte is the unsigned form of the byte
-   * eval (b & 0xff) == unsigned
    */
 
   public interface ByteListener {
-    boolean onNewByteAvailable(int byteIndex, byte b, int unsigned) ;
+    boolean onNewByteAvailable(byte b) ;
   }
-
-  private ChunkListener listener;
 
   private ByteListener byteListener = null;
 
@@ -35,12 +28,6 @@ public class DataInputStream extends BitInputStream {
 
   private int available = 0;
 
-
-  public void setChunkListener(ChunkListener listener) {
-    this.listener = listener;
-    if (listener != null && !reachedEOS)
-      listener.onNewChunksAvailable(available);
-  }
 
   public void setByteListener(ByteListener listener) {
     byteListener = listener;
@@ -54,9 +41,6 @@ public class DataInputStream extends BitInputStream {
     available += bytes.length;
     chunks.add(new Chunk(bytes));
     reachedEOS = false;
-
-    if (listener != null)
-      listener.onNewChunksAvailable(available);
   }
 
   // removes the current chunk, this is mainly
