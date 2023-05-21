@@ -17,7 +17,7 @@ public class MultiChannelSystem {
     this.stream = stream;
   }
 
-  public void add(Channel channel, byte[] bytes) {
+  public void write(Channel channel, byte[] bytes) {
     byteChunks.add(new ByteChunk(channel, bytes));
   }
 

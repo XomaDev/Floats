@@ -1,5 +1,6 @@
 package com.baxolino.apps.floats.core;
 
+import static com.baxolino.apps.floats.core.Channel.ALIVE_CHECKS_CHANNEL;
 import static com.baxolino.apps.floats.core.Channel.KNOW_REQUEST_CHANNEL;
 
 import android.content.Context;
@@ -21,6 +22,7 @@ import java.nio.ByteOrder;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
 
 // know-response system class that manages communication
 // between two devices and let's each other know when the message
@@ -39,6 +41,8 @@ public class KRSystem {
 
   private static final int KNOW_RECEIVE_TIMEOUT = 1000;
   private static final int KNOW_RECEIVE_BACK_TIMEOUT = 3000;
+
+  private static final int ALIVE_CHECKS_MAXIMUM_TIMEOUT = 1500 * 10;
 
 
   private KnowRequestState knowState = KnowRequestState.NONE;
@@ -108,7 +112,7 @@ public class KRSystem {
             .write(bytes)
             .writeInt32(deviceIntIp)
             .toBytes();
-    writer.add(KNOW_REQUEST_CHANNEL, content);
+    writer.write(KNOW_REQUEST_CHANNEL, content);
 
     DataInputStream input = new DataInputStream();
     input.setByteListener((b) -> {
@@ -180,13 +184,44 @@ public class KRSystem {
         // now we have to send a request back
         // saying received
 
-        writer.add(KNOW_REQUEST_CHANNEL, new BitOutputStream()
+        writer.write(KNOW_REQUEST_CHANNEL, new BitOutputStream()
                 .write(KNOW_RESPONSE_INT)
                 .writeInt32(deviceIntIp)
                 .toBytes());
       }
       reader.forget(KNOW_REQUEST_CHANNEL);
     }, KNOW_RECEIVE_TIMEOUT, TimeUnit.MILLISECONDS);
+  }
+
+  public void startPeriodicAliveChecks() {
+    // TODO:
+    //  check what or does app lifecycle affect these things
+    ScheduledExecutorService service = Executors.newScheduledThreadPool(2);
+    byte[] bytes = new byte[] { 0 };
+
+    // the sending part
+    service.scheduleAtFixedRate(() ->
+            writer.write(ALIVE_CHECKS_CHANNEL, bytes), 0, 1, TimeUnit.SECONDS);
+
+    // the receiving part
+
+    AtomicLong lastSignaled = new AtomicLong(System.currentTimeMillis());
+
+    DataInputStream aliveInputs = new DataInputStream();
+    aliveInputs.setByteListener(b -> {
+      lastSignaled.set(System.currentTimeMillis());
+      return false;
+    });
+    reader.registerChannelStream(ALIVE_CHECKS_CHANNEL, aliveInputs);
+
+    service.scheduleAtFixedRate(() -> {
+      long gap = System.currentTimeMillis() - lastSignaled.get();
+      Log.d(TAG, "Checks " + gap);
+      if (gap > ALIVE_CHECKS_MAXIMUM_TIMEOUT) {
+        Log.d(TAG, "Lost Connection");
+        service.shutdownNow();
+      }
+    }, 0, 2, TimeUnit.SECONDS);
   }
 
   public void execute(Context context, FileRequest fileRequest) {

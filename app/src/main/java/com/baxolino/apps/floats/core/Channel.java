@@ -7,6 +7,8 @@ public class Channel {
   public static final Channel KNOW_REQUEST_CHANNEL = new Channel((byte) 1);
   public static final Channel FILE_REQUEST_CHANNEL = new Channel((byte) 2);
 
+  public static final Channel ALIVE_CHECKS_CHANNEL = new Channel((byte) 3);
+
   private final byte[] channel;
 
   public Channel(byte[] channel) {

@@ -1,5 +1,7 @@
 package com.baxolino.apps.floats
 
+import android.app.Activity
+import android.app.Application
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
@@ -79,6 +81,7 @@ class SessionActivity : AppCompatActivity() {
     lookForFileRequests()
 
     frameProgress = findViewById(R.id.progress_frame)
+    system.startPeriodicAliveChecks()
   }
 
   private fun lookForFileRequests() {

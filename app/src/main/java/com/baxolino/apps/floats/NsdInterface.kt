@@ -21,12 +21,6 @@ abstract class NsdInterface constructor(context: Context) {
     private const val TAG = "NsdInterface"
   }
 
-  enum class State {
-    NORMAL, CANCELLED
-  }
-
-
-  var state = State.NORMAL
 
   private val nsdManager: NsdManager = context.getSystemService(NsdManager::class.java)
 

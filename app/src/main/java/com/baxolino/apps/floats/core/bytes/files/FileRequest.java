@@ -79,7 +79,7 @@ public class FileRequest {
             .writeInt32(fileNameBytes.length)
             .write(fileNameBytes)
             .toBytes();
-    writer.add(FILE_REQUEST_CHANNEL, requestData);
+    writer.write(FILE_REQUEST_CHANNEL, requestData);
   }
 
   private void writeFileContents(InputStream fileInput) throws IOException {
