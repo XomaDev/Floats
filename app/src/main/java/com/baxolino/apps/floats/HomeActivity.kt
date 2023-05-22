@@ -1,8 +1,6 @@
 package com.baxolino.apps.floats
 
 import android.annotation.SuppressLint
-import android.app.Activity
-import android.app.Application.ActivityLifecycleCallbacks
 import android.bluetooth.BluetoothAdapter
 import android.bluetooth.BluetoothManager
 import android.content.Intent
@@ -30,7 +28,6 @@ import com.github.alexzhirkevich.customqrgenerator.vector.style.QrVectorFrameSha
 import com.github.alexzhirkevich.customqrgenerator.vector.style.QrVectorPixelShape
 import com.github.alexzhirkevich.customqrgenerator.vector.style.QrVectorShapes
 import com.google.android.material.button.MaterialButton
-import kotlin.random.Random
 
 
 @ExperimentalGetImage
@@ -90,16 +87,31 @@ class HomeActivity : AppCompatActivity() {
         )
       }
     }
+
+    val deviceIdRecentConnection = findViewById<TextView>(R.id.recent_device_id_label)
+    val otherRecentDeviceId = nsdFloats.retrieveSavedDevice()
+
+    deviceIdRecentConnection.text = otherRecentDeviceId
+
+    val recentConnectionStatus = findViewById<TextView>(R.id.recent_connection_status)
+    nsdFloats.registerAvailabilityListener(otherRecentDeviceId, object: NsdInterface.ServiceAvailableListener {
+      override fun available() {
+        runOnUiThread { recentConnectionStatus.text = "Online" }
+      }
+
+      override fun disappeared() {
+        runOnUiThread { recentConnectionStatus.text = "Offline" }
+      }
+    })
   }
 
   private fun getDeviceName(): String {
-    val name = Settings.Global.getString(
+    return Settings.Global.getString(
       contentResolver,
       if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N_MR1)
         Settings.Global.DEVICE_NAME
       else "bluetooth_name"
     )
-    return "$name #${Random.nextInt()}"
   }
 
 
@@ -127,6 +139,10 @@ class HomeActivity : AppCompatActivity() {
     } else {
       krSystem.readKnowRequest(object : KnowListener {
         override fun received(name: String) {
+          // save the device name here so that the user
+          // can quick connect to it later
+          nsdFloats.saveConnectedDevice(name)
+
           runOnUiThread { informConnection(name) }
         }
 

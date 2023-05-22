@@ -48,42 +48,117 @@
         </LinearLayout>
     </LinearLayout>
 
-    <LinearLayout
+    <ScrollView
+        android:orientation="vertical"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:gravity="center"
-        android:orientation="vertical">
-
-        <TextView
-            android:id="@+id/device_label"
-            android:layout_width="wrap_content"
+        android:layout_height="wrap_content">
+        <LinearLayout
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="25dp"
-            android:fontFamily="@font/inter"
-            android:text="**" />
+            android:orientation="vertical">
 
-        <ImageView
-            android:id="@+id/qr_image"
-            android:layout_width="300dp"
-            android:layout_height="300dp"
-            android:backgroundTint="@color/alt_variant_60" />
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:orientation="vertical">
 
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="match_parent"
-            android:layout_marginTop="25dp"
-            android:textAlignment="center"
-            android:fontFamily="@font/inter"
-            android:text="Scan the code above from another device to connect." />
+                <TextView
+                    android:id="@+id/device_label"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="25dp"
+                    android:fontFamily="@font/inter"
+                    android:text="**" />
 
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/scanButton"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="25dp"
-            android:fontFamily="@font/inter"
-            android:text="Scan from another device"
-            app:icon="@drawable/qr_code_scan" />
+                <ImageView
+                    android:id="@+id/qr_image"
+                    android:layout_width="300dp"
+                    android:layout_height="300dp"
+                    android:backgroundTint="@color/alt_variant_60" />
 
-    </LinearLayout>
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="match_parent"
+                    android:layout_marginTop="25dp"
+                    android:textAlignment="center"
+                    android:fontFamily="@font/inter"
+                    android:text="Scan the code above from another device to connect." />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/scanButton"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="25dp"
+                    android:fontFamily="@font/inter"
+                    android:text="Scan from another device"
+                    app:icon="@drawable/qr_code_scan" />
+
+                <com.google.android.material.card.MaterialCardView
+                    android:layout_marginTop="65dp"
+                    app:strokeWidth="1dp"
+                    android:id="@+id/device_status"
+                    app:contentPadding="15dp"
+                    app:cardCornerRadius="12dp"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content">
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:baselineAligned="false">
+                        <LinearLayout
+                            android:layout_width="wrap_content"
+                            android:orientation="vertical"
+                            android:layout_height="wrap_content">
+                            <TextView
+                                android:id="@+id/recent_device_id_label"
+                                android:textColor="?android:attr/colorEdgeEffect"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:textSize="14sp"
+                                android:fontFamily="@font/inter"
+                                android:text="Kumaraswamy (Samsung A03s)"/>
+
+                            <TextView
+                                android:layout_marginTop="5dp"
+                                android:gravity="start"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:fontFamily="@font/inter"
+                                android:textSize="11sp"
+                                android:text="Tap to connect"/>
+                        </LinearLayout>
+
+                        <LinearLayout
+                            android:gravity="end"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight=".5">
+                            <com.google.android.material.card.MaterialCardView
+                                app:strokeWidth="0dp"
+                                android:id="@+id/outline_status_card"
+                                app:cardBackgroundColor="#FFFFFF"
+                                app:cardCornerRadius="4dp"
+
+                                app:contentPaddingLeft="17dp"
+                                app:contentPaddingRight="17dp"
+                                app:contentPaddingTop="7dp"
+                                app:contentPaddingBottom="7dp"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content">
+                                <TextView
+                                    android:id="@+id/recent_connection_status"
+                                    android:textColor="?android:attr/colorEdgeEffect"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:fontFamily="@font/inter"
+                                    android:textSize="12sp"
+                                    android:text="Offline"/>
+                            </com.google.android.material.card.MaterialCardView>
+                        </LinearLayout>
+                    </LinearLayout>
+                </com.google.android.material.card.MaterialCardView>
+            </LinearLayout>
+        </LinearLayout>
+    </ScrollView>
 </LinearLayout>

@@ -4,4 +4,11 @@
     <color name="white">#FFFFFFFF</color>
 
     <color name="alt_variant_60">#907DB1</color>
+    <color name="alt_variant_dark">#907DB1</color>
+
+<!--    mtrl_card_view_foreground-->
+    <color name="card_view_background">#141C1B1F</color>
+
+<!--    mtrl_card_view_ripple-->
+    <color name="card_view_background_varient">#336750A4</color>
 </resources>

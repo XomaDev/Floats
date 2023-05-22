@@ -8,6 +8,7 @@ import android.widget.ImageView
 import com.baxolino.apps.floats.HomeActivity
 import com.baxolino.apps.floats.R
 import com.baxolino.apps.floats.SessionActivity
+import com.google.android.material.card.MaterialCardView
 import com.google.android.material.color.DynamicColors
 
 
@@ -31,6 +32,36 @@ object ThemeHelper {
                 com.google.android.material.R.color.material_dynamic_neutral_variant60
             )
         )
+
+//        val deviceStatusCard = homeActivity.findViewById<MaterialCardView>(R.id.device_status)
+//        deviceStatusCard.backgroundTintList = ColorStateList.valueOf(
+//            homeActivity.getColor(
+//                com.google.android.material.R.color.material_dynamic_neutral_variant20
+//            )
+//        )
+//
+//        val frameStatusCard = homeActivity.findViewById<MaterialCardView>(R.id.outline_status_card)
+//        frameStatusCard.backgroundTintList = ColorStateList.valueOf(
+//            homeActivity.getColor(
+//                com.google.android.material.R.color.material_dynamic_neutral_variant10
+//            )
+//        )
+
+
+        val deviceStatusCard = homeActivity.findViewById<MaterialCardView>(R.id.device_status)
+        deviceStatusCard.backgroundTintList = ColorStateList.valueOf(
+            homeActivity.getColor(
+                R.color.card_view_background
+            )
+        )
+
+        val frameStatusCard = homeActivity.findViewById<MaterialCardView>(R.id.outline_status_card)
+        frameStatusCard.backgroundTintList = ColorStateList.valueOf(
+            homeActivity.getColor(
+                R.color.mtr_card_varient_background
+            )
+        )
+
     }
 
     fun themeOfSessionActivity(session: SessionActivity) {

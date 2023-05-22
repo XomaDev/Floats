@@ -2,6 +2,7 @@ package com.baxolino.apps.floats
 
 import android.annotation.SuppressLint
 import android.content.Context
+import android.content.SharedPreferences
 import android.net.nsd.NsdManager
 import android.net.nsd.NsdServiceInfo
 import android.util.Log
@@ -27,7 +28,19 @@ abstract class NsdInterface constructor(context: Context) {
   private val localPort: Int = SocketUtils.findAvailableTcpPort()
 
   private var discoveryListener: NsdManager.DiscoveryListener? = null
+
   private lateinit var mService: NsdServiceInfo
+  private var mPreferences: SharedPreferences = context.getSharedPreferences(TAG, Context.MODE_PRIVATE)
+
+  // when we find a device, we will save it here, and also
+  // remove it when we are unable to find it anymore
+
+  interface ServiceAvailableListener {
+    fun available()
+    fun disappeared()
+  }
+
+  private val serviceListeners = HashMap<String, ServiceAvailableListener>()
 
   @JvmField
   var input: InputStream? = null
@@ -59,6 +72,10 @@ abstract class NsdInterface constructor(context: Context) {
       // Unregistration failed. Put debugging code here to determine why.
       Log.d(TAG, "onUnregistrationFailed: $errorCode")
     }
+  }
+
+  fun registerAvailabilityListener(name: String, listener: ServiceAvailableListener) {
+    serviceListeners[name] = listener
   }
 
   fun unregister() {
@@ -108,6 +125,10 @@ abstract class NsdInterface constructor(context: Context) {
     initializeServerSocket()
   }
 
+  init {
+    discover("")
+  }
+
   /**
    * Starts service discovery and connects to %requestName%
    * if found
@@ -116,6 +137,9 @@ abstract class NsdInterface constructor(context: Context) {
    */
 
   fun discover(requestName: String) {
+    // stop old discovery, (if any)
+    detach()
+
     discoveryListener = object : NsdManager.DiscoveryListener {
       // Called as soon as service discovery begins.
       override fun onDiscoveryStarted(regType: String) {
@@ -131,9 +155,15 @@ abstract class NsdInterface constructor(context: Context) {
           val device = serviceName.substring(NAME_PREFIX.length)
 
           Log.d(TAG, "Found Service = " + device + " port " + service.port)
+
+          val listener = serviceListeners[device]
+          Log.d(TAG, "onServiceFound: " + listener)
+          listener?.apply { available() }
+
           if (device == requestName) {
             Log.d(TAG, "Requesting Connection")
             requestConnection(requestName, service)
+            return
           }
         }
       }
@@ -142,6 +172,14 @@ abstract class NsdInterface constructor(context: Context) {
         // When the network service is no longer available.
         // Internal bookkeeping code goes here.
         Log.e(TAG, "service lost: $service")
+        val serviceName = service.serviceName
+
+        if (serviceName.startsWith(NAME_PREFIX)) {
+          val device = serviceName.substring(NAME_PREFIX.length)
+
+          val listener = serviceListeners[device]
+          listener?.apply { disappeared() }
+        }
       }
 
       override fun onDiscoveryStopped(serviceType: String) {
@@ -189,13 +227,25 @@ abstract class NsdInterface constructor(context: Context) {
 
           Log.d(TAG, "######## Connection Was Established")
 
+          saveConnectedDevice(requestName)
           connected(requestName)
+
           Log.e(TAG, "Resolve Succeeded. $mService port $port")
         } catch (io: IOException) {
           Log.d(TAG, "Failed To Connect")
         }
       }
     })
+  }
+
+  // will also be called from outside the class
+  fun saveConnectedDevice(name: String) {
+    mPreferences.edit().putString("device", name)
+      .apply()
+  }
+
+  fun retrieveSavedDevice() : String {
+    return mPreferences.getString("device", "")!!
   }
 
   abstract fun accepted()
