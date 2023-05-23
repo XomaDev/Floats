@@ -1,7 +1,5 @@
 package com.baxolino.apps.floats
 
-import android.app.Activity
-import android.app.Application
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
@@ -12,13 +10,14 @@ import android.util.Log
 import android.widget.FrameLayout
 import android.widget.TextView
 import android.widget.Toast
+import androidx.activity.OnBackPressedCallback
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
-import com.baxolino.apps.floats.core.bytes.files.FileRequest
+import com.baxolino.apps.floats.core.files.FileRequest
 import com.baxolino.apps.floats.core.KRSystem
-import com.baxolino.apps.floats.core.bytes.files.FileReceiver
-import com.baxolino.apps.floats.core.bytes.files.RequestHandler
+import com.baxolino.apps.floats.core.files.FileReceiver
+import com.baxolino.apps.floats.core.files.RequestHandler
 import com.baxolino.apps.floats.tools.ThemeHelper
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.floatingactionbutton.FloatingActionButton
@@ -82,6 +81,17 @@ class SessionActivity : AppCompatActivity() {
 
     frameProgress = findViewById(R.id.progress_frame)
     system.startPeriodicAliveChecks()
+
+    val onBackPressedCallback = object : OnBackPressedCallback(true) {
+      override fun handleOnBackPressed() {
+        // if we do not do this, when back button is pressed, it'll open
+        // home activity that'll cause problems
+        moveTaskToBack(true)
+      }
+    }
+    // TODO:
+    //  when connection is lost open back Home Activity
+    onBackPressedDispatcher.addCallback(this, onBackPressedCallback)
   }
 
   private fun lookForFileRequests() {

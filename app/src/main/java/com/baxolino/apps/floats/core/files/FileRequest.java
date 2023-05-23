@@ -1,4 +1,4 @@
-package com.baxolino.apps.floats.core.bytes.files;
+package com.baxolino.apps.floats.core.files;
 
 import static com.baxolino.apps.floats.core.Channel.FILE_REQUEST_CHANNEL;
 import static com.baxolino.apps.floats.core.Config.BUFFER_SIZE;
@@ -49,6 +49,8 @@ public class FileRequest {
   }
 
   public void execute(Context context, MultiChannelSystem writer) {
+    // TODO:
+    //  implement this system into a foreground service
     service = new NsdInterface(context) {
       @Override
       public void accepted() {

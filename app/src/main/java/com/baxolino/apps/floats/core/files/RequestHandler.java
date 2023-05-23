@@ -1,4 +1,4 @@
-package com.baxolino.apps.floats.core.bytes.files;
+package com.baxolino.apps.floats.core.files;
 
 import com.baxolino.apps.floats.core.Channel;
 import com.baxolino.apps.floats.core.MultiChannelStream;

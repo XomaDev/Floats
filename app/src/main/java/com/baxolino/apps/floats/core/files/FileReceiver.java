@@ -1,4 +1,4 @@
-package com.baxolino.apps.floats.core.bytes.files;
+package com.baxolino.apps.floats.core.files;
 
 import static com.baxolino.apps.floats.core.Config.BUFFER_SIZE;
 

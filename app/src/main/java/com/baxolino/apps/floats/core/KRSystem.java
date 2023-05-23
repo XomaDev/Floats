@@ -10,8 +10,8 @@ import android.util.Log;
 import androidx.annotation.NonNull;
 
 import com.baxolino.apps.floats.NsdFloats;
-import com.baxolino.apps.floats.core.bytes.files.FileRequest;
-import com.baxolino.apps.floats.core.bytes.files.RequestHandler;
+import com.baxolino.apps.floats.core.files.FileRequest;
+import com.baxolino.apps.floats.core.files.RequestHandler;
 import com.baxolino.apps.floats.core.bytes.io.BitOutputStream;
 import com.baxolino.apps.floats.core.bytes.io.DataInputStream;
 
@@ -55,11 +55,16 @@ public class KRSystem {
     throw new IllegalStateException("KR System Not Initialized");
   }
 
+  public static KRSystem getInstanceUnsafe() {
+    return krSystem;
+  }
+
   public static @NonNull KRSystem getInstance(Context context,
                                      String deviceName,
                                      NsdFloats floats) throws UnknownHostException {
-    if (krSystem != null)
-      return krSystem;
+    // TODO:
+    //  update the streams accordingly, this may cause side effectd
+    //  take a look into it tomorrow, please!
     return krSystem = new KRSystem(context, deviceName, floats);
   }
 
@@ -73,7 +78,6 @@ public class KRSystem {
 
   private final MultiChannelStream reader;
   private final MultiChannelSystem writer;
-
 
   private final int deviceIntIp;
 

@@ -25,6 +25,7 @@ class NsdFloats(private val home: HomeActivity, name: String): NsdInterface(home
   }
 
   override fun connected(serviceName: String) {
+    saveConnectedDevice(serviceName)
     home.deviceConnected(false, serviceName)
   }
 }

@@ -33,20 +33,6 @@ object ThemeHelper {
             )
         )
 
-//        val deviceStatusCard = homeActivity.findViewById<MaterialCardView>(R.id.device_status)
-//        deviceStatusCard.backgroundTintList = ColorStateList.valueOf(
-//            homeActivity.getColor(
-//                com.google.android.material.R.color.material_dynamic_neutral_variant20
-//            )
-//        )
-//
-//        val frameStatusCard = homeActivity.findViewById<MaterialCardView>(R.id.outline_status_card)
-//        frameStatusCard.backgroundTintList = ColorStateList.valueOf(
-//            homeActivity.getColor(
-//                com.google.android.material.R.color.material_dynamic_neutral_variant10
-//            )
-//        )
-
 
         val deviceStatusCard = homeActivity.findViewById<MaterialCardView>(R.id.device_status)
         deviceStatusCard.backgroundTintList = ColorStateList.valueOf(
@@ -73,15 +59,6 @@ object ThemeHelper {
                 com.google.android.material.R.color.material_dynamic_neutral_variant50
             )
         )
-
-//        val labelFrame = session.findViewById<FrameLayout>(R.id.dotted_label_frame)
-//        val drawable = labelFrame.background as GradientDrawable
-//        drawable.mutate()
-//
-//        drawable.setStroke(2, session.getColor(
-//            com.google.android.material.R.color.material_dynamic_primary80
-//        ), 6f, 7f)
-
 
         val speedLabelFrame = session.findViewById<FrameLayout>(R.id.speed_label_frame)
         val drawableSpeed = speedLabelFrame.background as GradientDrawable
