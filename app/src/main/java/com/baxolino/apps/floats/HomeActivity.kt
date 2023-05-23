@@ -28,6 +28,7 @@ import com.github.alexzhirkevich.customqrgenerator.vector.style.QrVectorFrameSha
 import com.github.alexzhirkevich.customqrgenerator.vector.style.QrVectorPixelShape
 import com.github.alexzhirkevich.customqrgenerator.vector.style.QrVectorShapes
 import com.google.android.material.button.MaterialButton
+import com.google.android.material.card.MaterialCardView
 
 
 @ExperimentalGetImage
@@ -94,15 +95,54 @@ class HomeActivity : AppCompatActivity() {
     deviceIdRecentConnection.text = otherRecentDeviceId
 
     val recentConnectionStatus = findViewById<TextView>(R.id.recent_connection_status)
+    val deviceStatusCard = findViewById<MaterialCardView>(R.id.device_status)
+
     nsdFloats.registerAvailabilityListener(otherRecentDeviceId, object: NsdInterface.ServiceAvailableListener {
       override fun available() {
-        runOnUiThread { recentConnectionStatus.text = "Online" }
+        runOnUiThread {
+          recentConnectionStatus.text = "Online"
+
+          deviceStatusCard.setOnClickListener {
+            Toast.makeText(applicationContext,
+              "Connecting", Toast.LENGTH_SHORT).show()
+
+            nsdFloats.discover(deviceIdRecentConnection.text.toString())
+          }
+        }
       }
 
       override fun disappeared() {
-        runOnUiThread { recentConnectionStatus.text = "Offline" }
+        runOnUiThread {
+          recentConnectionStatus.text = "Offline"
+          deviceStatusCard.setOnClickListener(null)
+        }
       }
     })
+
+
+    val krSystem = KRSystem.getInstanceUnsafe()
+
+    krSystem?.let {
+      krSystem.readKnowRequest(object : KnowListener {
+        override fun received(name: String) {
+          // save the device name here so that the user
+          // can quick connect to it later
+          nsdFloats.saveConnectedDevice(name)
+
+          runOnUiThread { informConnection(name) }
+        }
+
+        override fun timeout() {
+          runOnUiThread {
+            Toast.makeText(
+              applicationContext,
+              "Client failed to send to know request. [1]",
+              Toast.LENGTH_SHORT
+            ).show()
+          }
+        }
+      })
+    }
   }
 
   private fun getDeviceName(): String {
@@ -121,7 +161,9 @@ class HomeActivity : AppCompatActivity() {
   fun deviceConnected(isServer: Boolean, device: String?) {
     val krSystem = KRSystem.getInstance(this, deviceName, nsdFloats)
 
+    Log.d(TAG, "deviceConnected()")
     if (!isServer) {
+      Log.d(TAG, "deviceConnected: Posting Request")
       krSystem.postKnowRequest(deviceName, {
         // client received know-request
         Log.d(TAG, "Know Request Successful")
@@ -150,7 +192,7 @@ class HomeActivity : AppCompatActivity() {
           runOnUiThread {
             Toast.makeText(
               applicationContext,
-              "Client failed to respond to know request.",
+              "Client failed to send to know request.",
               Toast.LENGTH_SHORT
             ).show()
           }
