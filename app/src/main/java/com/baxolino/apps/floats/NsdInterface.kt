@@ -154,7 +154,7 @@ abstract class NsdInterface constructor(context: Context) {
         if (serviceName.startsWith(NAME_PREFIX)) {
           val device = serviceName.substring(NAME_PREFIX.length)
 
-          Log.d(TAG, "Found Service = " + device + " port " + service.port)
+          Log.d(TAG, "Found Service = " + device + " port " + service.port + " needs $requestName")
 
           val listener = serviceListeners[device]
           Log.d(TAG, "onServiceFound: " + listener)
@@ -227,7 +227,6 @@ abstract class NsdInterface constructor(context: Context) {
 
           Log.d(TAG, "######## Connection Was Established")
 
-          saveConnectedDevice(requestName)
           connected(requestName)
 
           Log.e(TAG, "Resolve Succeeded. $mService port $port")
