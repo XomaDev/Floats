@@ -22,6 +22,7 @@ import com.baxolino.apps.floats.tools.ThemeHelper
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.google.android.material.progressindicator.CircularProgressIndicator
+import java.io.File
 
 
 class SessionActivity : AppCompatActivity() {
@@ -203,16 +204,19 @@ class SessionActivity : AppCompatActivity() {
 
   private fun beginNsdTransfer(uri: Uri, fileName: String, fileLength: Int) {
     val request = FileRequest(
-      contentResolver.openInputStream(uri), fileName, fileLength
+      uri, fileName, fileLength
     )
-    request.setCancelListener {
-      runOnUiThread {
-        Toast.makeText(
-          applicationContext,
-          getString(R.string.transfer_canceled_sender), Toast.LENGTH_LONG
-        ).show()
-      }
-    }
+    // TODO:
+    //  since we have pushed the mechanism to background we will need to do it
+    //  another way
+//    request.setCancelListener {
+//      runOnUiThread {
+//        Toast.makeText(
+//          applicationContext,
+//          getString(R.string.transfer_canceled_sender), Toast.LENGTH_LONG
+//        ).show()
+//      }
+//    }
     system.execute(applicationContext, request)
   }
 
