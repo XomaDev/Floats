@@ -11,7 +11,13 @@ import androidx.work.CoroutineWorker
 import androidx.work.ForegroundInfo
 import androidx.work.WorkerParameters
 import com.baxolino.apps.floats.NsdInterface
-import com.baxolino.apps.floats.core.bytes.io.BitOutputStream
+import com.baxolino.apps.floats.core.Config
+import java.io.FileInputStream
+import java.io.InputStream
+import java.net.SocketException
+import java.util.concurrent.Executors
+import java.util.concurrent.TimeUnit
+import java.util.zip.GZIPOutputStream
 
 class FileRequestWorker(context: Context, parameters: WorkerParameters) :
   CoroutineWorker(context, parameters) {
@@ -26,18 +32,14 @@ class FileRequestWorker(context: Context, parameters: WorkerParameters) :
     // the file we will be uploading during the connection
     val file = inputData.getString("file") ?: return Result.failure()
     val fileName = inputData.getString("file_name") ?: return Result.failure()
-    val fileLength = inputData.getInt("file_length", -1)
-
-    if (fileLength == -1)
-      return Result.failure()
 
     setForeground(createForegroundInfo(file.hashCode()))
-    requestNsdTransfer(file, fileName, fileLength)
+    requestNsdTransfer(file, fileName)
 
     return Result.success()
   }
 
-  private fun requestNsdTransfer(file: String, fileName: String, fileLength: Int) {
+  private fun requestNsdTransfer(file: String, fileName: String) {
     // TODO:
     //  the information that will be sent to the receiver will happen
     //  before we initiate the transfer and will likely be moved to KRSystem
@@ -46,6 +48,8 @@ class FileRequestWorker(context: Context, parameters: WorkerParameters) :
       override fun accepted() {
         // the other device found the service and now is connected
         Log.d(TAG, "accepted()")
+        lookForAbortRequests()
+        uploadFileContents(file)
       }
 
       override fun connected(serviceName: String) {
@@ -56,17 +60,46 @@ class FileRequestWorker(context: Context, parameters: WorkerParameters) :
     // register as the name of the file
     nsdService.registerService(fileName)
 
-    val fileNameBytes = fileName.toByteArray()
-
-    val requestData = BitOutputStream()
-      .writeInt32(fileLength)
-      .writeInt32(fileNameBytes.size)
-      .write(fileNameBytes)
-      .toBytes()
-
     // TODO:
     //  bring in the functionalities of FileRequest class over here
     //  and lets make it happen
+  }
+
+  private fun uploadFileContents(file: String) {
+    val input = FileInputStream(file)
+
+    val zipOutputStream = GZIPOutputStream(nsdService.output)
+
+    val buffer = ByteArray(Config.BUFFER_SIZE)
+    var n: Int
+    while (input.read(buffer).also { n = it } > 0) {
+      try {
+        zipOutputStream.write(buffer, 0, n)
+      } catch (e: SocketException) {
+        // BrokenPipe: this error is thrown when the receiver abruptly
+        // closes the connection, we have few ms before the client is fully closed
+        Log.d(TAG, "Failed while uploading file contents")
+        break
+      }
+    }
+
+    input.close()
+
+    zipOutputStream.finish()
+    zipOutputStream.close()
+
+    nsdService.unregister()
+  }
+
+  private fun lookForAbortRequests() {
+    val input: InputStream = nsdService.input
+    val service = Executors.newScheduledThreadPool(1)
+    service.scheduleAtFixedRate({
+      if (input.available() > 0) {
+        Log.d(TAG, "Transfer was cancelled")
+        service.shutdownNow()
+      }
+    }, 0, 20, TimeUnit.MILLISECONDS)
   }
 
   private fun createForegroundInfo(notificationId: Int): ForegroundInfo {

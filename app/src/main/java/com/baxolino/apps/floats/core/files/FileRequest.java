@@ -7,6 +7,10 @@ import android.content.Context;
 import android.util.Log;
 
 import androidx.annotation.NonNull;
+import androidx.work.Data;
+import androidx.work.OneTimeWorkRequest;
+import androidx.work.WorkManager;
+import androidx.work.WorkRequest;
 
 import com.baxolino.apps.floats.NsdInterface;
 import com.baxolino.apps.floats.core.MultiChannelSystem;
@@ -49,6 +53,37 @@ public class FileRequest {
   }
 
   public void execute(Context context, MultiChannelSystem writer) {
+    byte[] fileNameBytes = fileName.getBytes();
+
+    byte[] requestData = new BitOutputStream()
+            .writeInt32(fileLength)
+            .writeInt32(fileNameBytes.length)
+            .write(fileNameBytes)
+            .toBytes();
+    writer.write(FILE_REQUEST_CHANNEL, requestData);
+
+
+    // convert uri to file
+    String file = "...";
+    String fileName = "...";
+
+    WorkRequest myWork = new OneTimeWorkRequest(
+            new OneTimeWorkRequest.Builder(FileRequestWorker.class)
+                    .setInputData(
+                            new Data.Builder()
+                                    .putString("file", file)
+                                    .putString("file_name", file)
+                                    .build()
+                    )
+    );
+    WorkManager.getInstance(context).enqueue(myWork);
+
+
+    if (true) {
+      // we are testing FileRequestWorker that's why
+      return;
+    }
+
     // TODO:
     //  implement this system into a foreground service
     service = new NsdInterface(context) {
@@ -72,16 +107,6 @@ public class FileRequest {
     };
     // register as the name of the file
     service.registerService(fileName);
-
-
-    byte[] fileNameBytes = fileName.getBytes();
-
-    byte[] requestData = new BitOutputStream()
-            .writeInt32(fileLength)
-            .writeInt32(fileNameBytes.length)
-            .write(fileNameBytes)
-            .toBytes();
-    writer.write(FILE_REQUEST_CHANNEL, requestData);
   }
 
   private void writeFileContents(InputStream fileInput) throws IOException {

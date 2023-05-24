@@ -42,11 +42,9 @@ abstract class NsdInterface constructor(context: Context) {
 
   private val serviceListeners = HashMap<String, ServiceAvailableListener>()
 
-  @JvmField
-  var input: InputStream? = null
+  lateinit var input: InputStream
 
-  @JvmField
-  var output: OutputStream? = null
+  lateinit var output: OutputStream
 
   private val registrationListener: NsdManager.RegistrationListener = object :
     NsdManager.RegistrationListener {
