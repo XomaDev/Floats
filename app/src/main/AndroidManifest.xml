@@ -57,6 +57,10 @@
         <service android:name=".core.files.FileRequestService"
             android:process=":doraemon"
             android:exported="false"/>
+
+        <service android:name=".core.files.FileReceiveService"
+            android:process=":pickachu"
+            android:exported="false"/>
     </application>
 
 </manifest>

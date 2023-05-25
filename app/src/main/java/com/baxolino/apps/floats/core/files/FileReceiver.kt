@@ -1,133 +1,119 @@
-package com.baxolino.apps.floats.core.files;
+package com.baxolino.apps.floats.core.files
 
-import static com.baxolino.apps.floats.core.Config.BUFFER_SIZE;
+import android.content.Context
+import android.content.Intent
+import android.os.Build
+import android.util.Log
+import com.baxolino.apps.floats.NsdInterface
+import java.io.IOException
+import java.util.concurrent.Executors
+import java.util.concurrent.TimeUnit
+import java.util.zip.GZIPInputStream
 
-import android.content.Context;
-import android.util.Log;
-
-import androidx.annotation.NonNull;
-
-import com.baxolino.apps.floats.NsdInterface;
-import com.baxolino.apps.floats.core.bytes.io.DummyOutputStream;
-
-import java.io.IOException;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
-import java.util.zip.GZIPInputStream;
-
-public class FileReceiver {
-
-  private static final String TAG = "FileReceiver";
-
-  public interface StartedListener {
-    void started();
+class FileReceiver internal constructor(val name: String, val length: Int) {
+  interface StartedListener {
+    fun started()
   }
 
-  public interface UpdateListener {
-    void update(int received);
+  interface UpdateListener {
+    fun update(received: Int)
   }
 
-  public interface FinishedListener {
-    void finished();
+  interface FinishedListener {
+    fun finished()
   }
 
-  public final String name;
-  public final int length;
+  private var service: NsdInterface? = null
+  private var startListener: StartedListener? = null
+  private var updateListener: UpdateListener? = null
+  private var finishedListener: FinishedListener? = null
+  private var cancelled = false
 
-  private NsdInterface service;
+  var startTime: Long = 0
 
-  private StartedListener startListener;
-  private UpdateListener updateListener;
-
-  private FinishedListener finishedListener;
-
-  private boolean cancelled = false;
-
-  public long startTime;
-
-  FileReceiver(String name, int length) {
-    this.name = name;
-    this.length = length;
+  fun setStartListener(listener: StartedListener) {
+    Log.d(TAG, "setStartListener: called")
+    startListener = listener
+    Log.d(TAG, "setStartListener: set")
   }
 
-  public void setStartListener(StartedListener listener) {
-    Log.d(TAG, "setStartListener: called");
-    startListener = listener;
-    Log.d(TAG, "setStartListener: set");
+  fun setUpdateListener(listener: UpdateListener?) {
+    updateListener = listener
   }
 
-  public void setUpdateListener(UpdateListener listener) {
-    updateListener = listener;
+  fun setFinishedListener(listener: FinishedListener?) {
+    finishedListener = listener
   }
 
-  public void setFinishedListener(FinishedListener listener) {
-    finishedListener = listener;
-  }
-
-  public void cancel() {
+  fun cancel() {
     // a simple cancel message to stop sending
     // more data
-    new Thread(() -> {
+    Thread {
       try {
-        service.output.write(Reasons.REASON_CANCELED);
-      } catch (IOException e) {
-        e.printStackTrace();
+        service!!.output.write(Reasons.REASON_CANCELED)
+      } catch (e: IOException) {
+        e.printStackTrace()
       }
-    }).start();
-
-    ScheduledExecutorService service = Executors.newScheduledThreadPool(1);
-    service.schedule(() -> {
+    }.start()
+    val service = Executors.newScheduledThreadPool(1)
+    service.schedule({
       // setting this property first will cause
       // interruption when the sender writes data,
 
       // then it'll check for any messages in it's input stream
       // and there we'll post a code with a reason
-      cancelled = true;
-    }, 60, TimeUnit.MILLISECONDS);
+      cancelled = true
+    }, 60, TimeUnit.MILLISECONDS)
   }
 
-  public void receive(Context context) {
-    Log.d(TAG, "Receiving");
-    service = new NsdInterface(context) {
-      @Override
-      public void accepted() {
-        // method not called since we are the one
-        // accepting connection
-      }
+  fun receive(context: Context) {
+    Log.d(TAG, "Receiving")
 
-      @Override
-      public void connected(@NonNull String serviceName) {
-        Log.d(TAG, "Connected");
-        startListener.started();
-        startTime = System.currentTimeMillis();
+    val service = Intent(context, FileReceiveService::class.java)
+      .putExtra("file_receive", name)
+      .putExtra("file_length", length)
 
-        try {
-          receiveContents();
-        } catch (IOException e) {
-          throw new RuntimeException(e);
-        }
-      }
-    };
-    service.discover(name);
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
+      context.startForegroundService(service)
+    else context.startService(service)
+
+//    service = object : NsdInterface(context!!) {
+//      override fun accepted() {
+//        // method not called since we are the one
+//        // accepting connection
+//      }
+//
+//      override fun connected(serviceName: String) {
+//        Log.d(TAG, "Connected")
+//        startListener!!.started()
+//        startTime = System.currentTimeMillis()
+//        try {
+//          receiveContents()
+//        } catch (e: IOException) {
+//          throw RuntimeException(e)
+//        }
+//      }
+//    }
+//    service.discover(name)
   }
 
-  private void receiveContents() throws IOException {
-    DummyOutputStream output = new DummyOutputStream();
-    GZIPInputStream zipInput = new GZIPInputStream(service.input, BUFFER_SIZE);
+//  private fun receiveContents() {
+//    val output = DummyOutputStream()
+//    val zipInput = GZIPInputStream(service!!.input, Config.BUFFER_SIZE)
+//    val buffer = ByteArray(Config.BUFFER_SIZE)
+//    var n: Int
+//    var received = 0
+//    while (!cancelled && zipInput.read(buffer).also { n = it } > 0) {
+//      output.write(buffer, 0, n)
+//      received += n
+//      updateListener!!.update(received)
+//    }
+//    zipInput.close()
+//    service!!.detach()
+//    finishedListener!!.finished()
+//  }
 
-    byte[] buffer = new byte[BUFFER_SIZE];
-    int n, received = 0;
-
-    while (!cancelled && (n = zipInput.read(buffer)) > 0) {
-      output.write(buffer, 0, n);
-      received += n;
-      updateListener.update(received);
-    }
-
-    zipInput.close();
-    service.detach();
-
-    finishedListener.finished();
+  companion object {
+    private const val TAG = "FileReceiver"
   }
 }

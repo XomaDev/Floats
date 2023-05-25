@@ -22,7 +22,6 @@ import com.baxolino.apps.floats.tools.ThemeHelper
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.google.android.material.progressindicator.CircularProgressIndicator
-import java.io.File
 
 
 class SessionActivity : AppCompatActivity() {
@@ -100,24 +99,24 @@ class SessionActivity : AppCompatActivity() {
       val receiver = it
       runOnUiThread { onTransferRequested(it.name, it.length) }
 
-      it.setStartListener {
-        runOnUiThread {
-          awaitingConnectionDialog?.dismiss()
-
-          frameProgress.setOnLongClickListener {
-            cancelFileTransfer(receiver)
-            return@setOnLongClickListener true
-          }
-        }
-      }
-      it.setUpdateListener { received ->
-        runOnUiThread {
-          onUpdateInfoRequired(it.startTime, received, it.length)
-        }
-      }
-      it.setFinishedListener {
-        frameProgress.setOnLongClickListener(null)
-      }
+//      it.setStartListener {
+//        runOnUiThread {
+//          awaitingConnectionDialog?.dismiss()
+//
+//          frameProgress.setOnLongClickListener {
+//            cancelFileTransfer(receiver)
+//            return@setOnLongClickListener true
+//          }
+//        }
+//      }
+//      it.setUpdateListener { received ->
+//        runOnUiThread {
+//          onUpdateInfoRequired(it.startTime, received, it.length)
+//        }
+//      }
+//      it.setFinishedListener {
+//        frameProgress.setOnLongClickListener(null)
+//      }
       it.receive(applicationContext)
     }
     system.register(RequestHandler(listener))
