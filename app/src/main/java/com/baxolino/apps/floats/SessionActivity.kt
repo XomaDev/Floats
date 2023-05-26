@@ -125,14 +125,14 @@ class SessionActivity : AppCompatActivity() {
           }
         }
       }
-//      it.setUpdateListener { received ->
-//        runOnUiThread {
-//          onUpdateInfoRequired(it.startTime, received, it.length)
-//        }
-//      }
-//      it.setFinishedListener {
-//        frameProgress.setOnLongClickListener(null)
-//      }
+      it.setUpdateListener {
+        runOnUiThread {
+          onUpdateInfoRequired(it.startTime, it.received, it.length)
+        }
+      }
+      it.setFinishedListener {
+        frameProgress.setOnLongClickListener(null)
+      }
       it.receive(this)
     }
     system.register(RequestHandler(listener))

@@ -1,48 +1,42 @@
 package com.baxolino.apps.floats.core.files
 
-import android.content.Context
 import android.content.Intent
 import android.os.Build
+import android.os.Handler
+import android.os.Looper
+import android.os.Message
+import android.os.Messenger
 import android.util.Log
-import androidx.lifecycle.Observer
 import com.baxolino.apps.floats.NsdInterface
 import com.baxolino.apps.floats.SessionActivity
 import java.io.IOException
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 
+
 class FileReceiver internal constructor(val name: String, val length: Int) {
-  interface StartedListener {
-    fun started()
-  }
-
-  interface UpdateListener {
-    fun update(received: Int)
-  }
-
-  interface FinishedListener {
-    fun finished()
-  }
 
   private var service: NsdInterface? = null
 
   private lateinit var startListener: () -> Unit
 
-  private var updateListener: UpdateListener? = null
-  private var finishedListener: FinishedListener? = null
+  private lateinit var updateListener: () -> Unit
+  private lateinit var finishedListener: () -> Unit
+
   private var cancelled = false
 
-  var startTime: Long = 0
+  var startTime = 0L
+  var received = 0
 
   fun setStartListener(listener: () -> Unit) {
     startListener = listener
   }
 
-  fun setUpdateListener(listener: UpdateListener?) {
+  fun setUpdateListener(listener: () -> Unit) {
     updateListener = listener
   }
 
-  fun setFinishedListener(listener: FinishedListener?) {
+  fun setFinishedListener(listener: () -> Unit) {
     finishedListener = listener
   }
 
@@ -67,61 +61,41 @@ class FileReceiver internal constructor(val name: String, val length: Int) {
     }, 60, TimeUnit.MILLISECONDS)
   }
 
-  fun receive(session: SessionActivity) {
-    Log.d(TAG, "Receiving")
+  class EventHandler(private val receiver: FileReceiver) : Handler(Looper.getMainLooper()) {
+    override fun handleMessage(message: Message) {
+      receiver.apply {
+        when (message.what) {
+          0 -> {
+            // "started" message
+            startTime = message.data.getLong("time")
+            startListener.invoke()
+          }
+          1 -> {
+            // "update" message
+            received = message.arg1
+            updateListener.invoke()
+          }
+          2 -> {
+            // "finished" message
+            finishedListener.invoke()
+          }
+        }
+      }
+    }
+  }
 
+  private val handler = EventHandler(this)
+
+  fun receive(session: SessionActivity) {
     val service = Intent(session, FileReceiveService::class.java)
       .putExtra("file_receive", name)
       .putExtra("file_length", length)
+      .putExtra("handler", Messenger(handler))
 
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
       session.startForegroundService(service)
     else session.startService(service)
-
-    Log.d(TAG, "receive: registering")
-    FileReceiveService.START_BUS.observe(
-      session
-    ) {
-      Log.d(TAG, "Started receiving")
-      session.runOnUiThread(startListener)
-    }
-    Log.d(TAG, "receive: later invoked")
-
-//    service = object : NsdInterface(context!!) {
-//      override fun accepted() {
-//        // method not called since we are the one
-//        // accepting connection
-//      }
-//
-//      override fun connected(serviceName: String) {
-//        Log.d(TAG, "Connected")
-//        startListener!!.started()
-//        startTime = System.currentTimeMillis()
-//        try {
-//          receiveContents()
-//        } catch (e: IOException) {
-//          throw RuntimeException(e)
-//        }
-//      }
-//    }
-//    service.discover(name)
   }
-
-//  private fun receiveContents() {
-//    val output = DummyOutputStream()
-//    val zipInput = GZIPInputStream(service!!.input, Config.BUFFER_SIZE)
-//    val buffer = ByteArray(Config.BUFFER_SIZE)
-//    var n: Int
-//    var received = 0
-//    while (!cancelled && zipInput.read(buffer).also { n = it } > 0) {
-//      output.write(buffer, 0, n)
-//      received += n
-//      updateListener!!.update(received)
-//    }
-//    zipInput.close()
-//    service!!.detach()
-//    finishedListener!!.finished()
-//  }
 
   companion object {
     private const val TAG = "FileReceiver"

@@ -6,6 +6,7 @@ import android.app.Service
 import android.content.Intent
 import android.net.Uri
 import android.os.Build
+import android.os.Handler
 import android.os.IBinder
 import android.util.Log
 import android.widget.Toast
@@ -113,9 +114,12 @@ class FileRequestService : Service() {
   }
 
   private fun onComplete() {
-    Toast.makeText(
-      this, "File was transferred",
-      Toast.LENGTH_LONG).show()
+    Handler(mainLooper).post {
+      Toast.makeText(
+        this, "File was transferred",
+        Toast.LENGTH_LONG
+      ).show()
+    }
 
     // inform the user completion and stop the foreground service
     stopForeground(STOP_FOREGROUND_REMOVE)

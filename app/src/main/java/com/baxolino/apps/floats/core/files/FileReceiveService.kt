@@ -7,6 +7,8 @@ import android.app.Service
 import android.content.Intent
 import android.os.Build
 import android.os.IBinder
+import android.os.Message
+import android.os.Messenger
 import android.util.Log
 import android.widget.Toast
 import androidx.annotation.RequiresApi
@@ -25,13 +27,12 @@ class FileReceiveService : Service() {
 
     private const val NOTIF_CHANNEL_ID = "I/O Transmission"
     private const val NOTIF_CHANNEL_NAME = "File Transfer"
-
-    val START_BUS = MutableLiveData<StartEvent>()
   }
 
   private lateinit var notificationManager: NotificationManager
 
   private lateinit var nsdService: NsdInterface
+  private lateinit var messenger: Messenger
 
   private var notificationId: Int = 7
   private var fileLength = 0
@@ -46,6 +47,12 @@ class FileReceiveService : Service() {
       // this should not happen
       return START_NOT_STICKY
     }
+    messenger = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+      intent.getParcelableExtra("handler", Messenger::class.java)!!
+    } else {
+      intent.getParcelableExtra("handler")!!
+    }
+
     notificationManager = getSystemService(NotificationManager::class.java) as
             NotificationManager
 
@@ -72,13 +79,14 @@ class FileReceiveService : Service() {
   }
 
   private fun receiveContents() {
-    Log.d(TAG, "Has active listeners ${START_BUS.hasActiveObservers()})")
+    // send a message that receive is started through code 0
+    messenger.send(
+      Message.obtain().apply {
+        what = 0
+        data.putLong("time", System.currentTimeMillis())
+      }
+    )
 
-    if (START_BUS.hasActiveObservers()) {
-      START_BUS.postValue(StartEvent(
-        System.currentTimeMillis()
-      ))
-    }
     val output = DummyOutputStream()
     val zipInput = GZIPInputStream(nsdService.input, Config.BUFFER_SIZE)
     val buffer = ByteArray(Config.BUFFER_SIZE)
@@ -88,7 +96,14 @@ class FileReceiveService : Service() {
     while (zipInput.read(buffer).also { n = it } > 0) {
       output.write(buffer, 0, n)
       received += n
+
       notificationManager.notify(notificationId, buildNotification(received))
+      messenger.send(
+        Message.obtain().apply {
+          what = 1
+          arg1 = received
+        }
+      )
     }
     zipInput.close()
     nsdService.detach()
@@ -97,10 +112,11 @@ class FileReceiveService : Service() {
   }
 
   private fun onComplete() {
-    Toast.makeText(
-      this, "File was received",
-      Toast.LENGTH_LONG
-    ).show()
+    messenger.send(
+      Message.obtain().apply {
+        what = 2
+      }
+    )
 
     // inform the user completion and stop the foreground service
     stopForeground(STOP_FOREGROUND_REMOVE)
