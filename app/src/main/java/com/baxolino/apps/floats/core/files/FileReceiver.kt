@@ -4,11 +4,12 @@ import android.content.Context
 import android.content.Intent
 import android.os.Build
 import android.util.Log
+import androidx.lifecycle.Observer
 import com.baxolino.apps.floats.NsdInterface
+import com.baxolino.apps.floats.SessionActivity
 import java.io.IOException
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
-import java.util.zip.GZIPInputStream
 
 class FileReceiver internal constructor(val name: String, val length: Int) {
   interface StartedListener {
@@ -24,17 +25,17 @@ class FileReceiver internal constructor(val name: String, val length: Int) {
   }
 
   private var service: NsdInterface? = null
-  private var startListener: StartedListener? = null
+
+  private lateinit var startListener: () -> Unit
+
   private var updateListener: UpdateListener? = null
   private var finishedListener: FinishedListener? = null
   private var cancelled = false
 
   var startTime: Long = 0
 
-  fun setStartListener(listener: StartedListener) {
-    Log.d(TAG, "setStartListener: called")
+  fun setStartListener(listener: () -> Unit) {
     startListener = listener
-    Log.d(TAG, "setStartListener: set")
   }
 
   fun setUpdateListener(listener: UpdateListener?) {
@@ -66,16 +67,25 @@ class FileReceiver internal constructor(val name: String, val length: Int) {
     }, 60, TimeUnit.MILLISECONDS)
   }
 
-  fun receive(context: Context) {
+  fun receive(session: SessionActivity) {
     Log.d(TAG, "Receiving")
 
-    val service = Intent(context, FileReceiveService::class.java)
+    val service = Intent(session, FileReceiveService::class.java)
       .putExtra("file_receive", name)
       .putExtra("file_length", length)
 
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
-      context.startForegroundService(service)
-    else context.startService(service)
+      session.startForegroundService(service)
+    else session.startService(service)
+
+    Log.d(TAG, "receive: registering")
+    FileReceiveService.START_BUS.observe(
+      session
+    ) {
+      Log.d(TAG, "Started receiving")
+      session.runOnUiThread(startListener)
+    }
+    Log.d(TAG, "receive: later invoked")
 
 //    service = object : NsdInterface(context!!) {
 //      override fun accepted() {

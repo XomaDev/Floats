@@ -14,6 +14,8 @@ import androidx.activity.OnBackPressedCallback
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleRegistry
 import com.baxolino.apps.floats.core.files.FileRequest
 import com.baxolino.apps.floats.core.KRSystem
 import com.baxolino.apps.floats.core.files.FileReceiver
@@ -42,9 +44,13 @@ class SessionActivity : AppCompatActivity() {
 
   private var awaitingConnectionDialog: AlertDialog? = null
 
+  private val registry = LifecycleRegistry(this)
+
   override fun onCreate(savedInstanceState: Bundle?) {
     super.onCreate(savedInstanceState)
     setContentView(R.layout.activity_session)
+    registry.handleLifecycleEvent(Lifecycle.Event.ON_CREATE)
+
     ThemeHelper.themeOfSessionActivity(this)
 
     val isConnected = intent.hasExtra("deviceName")
@@ -94,21 +100,31 @@ class SessionActivity : AppCompatActivity() {
     onBackPressedDispatcher.addCallback(this, onBackPressedCallback)
   }
 
+  override fun onPause() {
+    super.onPause()
+    registry.handleLifecycleEvent(Lifecycle.Event.ON_PAUSE)
+  }
+
+  override fun onResume() {
+    super.onResume()
+    registry.handleLifecycleEvent(Lifecycle.Event.ON_RESUME)
+  }
+
   private fun lookForFileRequests() {
     val listener = RequestHandler.RequestsListener {
       val receiver = it
       runOnUiThread { onTransferRequested(it.name, it.length) }
 
-//      it.setStartListener {
-//        runOnUiThread {
-//          awaitingConnectionDialog?.dismiss()
-//
-//          frameProgress.setOnLongClickListener {
-//            cancelFileTransfer(receiver)
-//            return@setOnLongClickListener true
-//          }
-//        }
-//      }
+      it.setStartListener {
+        runOnUiThread {
+          awaitingConnectionDialog?.dismiss()
+
+          frameProgress.setOnLongClickListener {
+            cancelFileTransfer(receiver)
+            return@setOnLongClickListener true
+          }
+        }
+      }
 //      it.setUpdateListener { received ->
 //        runOnUiThread {
 //          onUpdateInfoRequired(it.startTime, received, it.length)
@@ -117,7 +133,7 @@ class SessionActivity : AppCompatActivity() {
 //      it.setFinishedListener {
 //        frameProgress.setOnLongClickListener(null)
 //      }
-      it.receive(applicationContext)
+      it.receive(this)
     }
     system.register(RequestHandler(listener))
   }

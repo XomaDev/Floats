@@ -27,6 +27,8 @@ class FileRequestService : Service() {
 
 
   override fun onStartCommand(intent: Intent, flags: Int, startId: Int): Int {
+    Log.d(TAG, "onStartCommand()")
+
     val uri = Uri.parse(intent.getStringExtra("file_uri"))
     val fileName = intent.getStringExtra("file_name")
 
