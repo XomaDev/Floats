@@ -10,14 +10,11 @@ import android.os.IBinder
 import android.os.Message
 import android.os.Messenger
 import android.util.Log
-import android.widget.Toast
 import androidx.annotation.RequiresApi
 import androidx.core.app.NotificationCompat
-import androidx.lifecycle.MutableLiveData
 import com.baxolino.apps.floats.NsdInterface
 import com.baxolino.apps.floats.core.Config
 import com.baxolino.apps.floats.core.bytes.io.DummyOutputStream
-import com.baxolino.apps.floats.core.files.events.StartEvent
 import java.util.zip.GZIPInputStream
 
 class FileReceiveService : Service() {
