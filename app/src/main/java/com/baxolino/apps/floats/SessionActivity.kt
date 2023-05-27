@@ -149,7 +149,7 @@ class SessionActivity : AppCompatActivity() {
   }
 
   private fun onTransferRequested(name: String, length: Int) {
-    fileNameLabel.text = shortifyFileName(name)
+    fileNameLabel.text = name.toShortDisplayName()
     fileSizeLabel.text = Formatter.formatShortFileSize(
       applicationContext,
       length.toLong()
@@ -161,19 +161,19 @@ class SessionActivity : AppCompatActivity() {
       .show()
   }
 
-  private fun shortifyFileName(name: String): String {
+  private fun String.toShortDisplayName(): String {
     // we limit the file name to certain characters
     // but while also displaying the file type
     val maximumChars = 12
 
-    val dotIndex = name.indexOf('.')
+    val dotIndex = indexOf('.')
     var fileName = if (dotIndex != -1) {
-      name.substring(0, dotIndex)
+      substring(0, dotIndex)
     } else {
-      name
+      this
     }
     val fileType = if (dotIndex != -1) {
-      name.substring(dotIndex)
+      substring(dotIndex)
     } else {
       ""
     }
