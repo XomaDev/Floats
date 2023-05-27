@@ -14,9 +14,11 @@ import android.os.Message
 import android.os.Messenger
 import android.text.format.Formatter
 import android.util.Log
+import android.widget.RemoteViews
 import androidx.annotation.RequiresApi
 import androidx.core.app.NotificationCompat
 import com.baxolino.apps.floats.NsdInterface
+import com.baxolino.apps.floats.R
 import com.baxolino.apps.floats.core.Config
 import com.baxolino.apps.floats.core.bytes.io.DummyOutputStream
 import java.util.concurrent.Executors
@@ -50,6 +52,8 @@ class FileReceiveService : Service() {
   private var notificationId: Int = 7
   private var fileLength = 0
 
+  private var fileNameShort = ""
+
   private var timeStart = 0L
   private var cancelled = false
 
@@ -57,6 +61,8 @@ class FileReceiveService : Service() {
 
   override fun onStartCommand(intent: Intent, flags: Int, startId: Int): Int {
     val fileName = intent.getStringExtra("file_receive")!!
+    fileNameShort = FileNameUtil.toShortDisplayName(fileName)
+
     fileLength = intent.getIntExtra("file_length", -1)
 
     if (fileLength == -1) {
@@ -128,7 +134,6 @@ class FileReceiveService : Service() {
   }
 
   private fun onUpdateInfoNeeded(received: Int) {
-    notificationManager.notify(notificationId, buildNotification(received))
 
     val progress = (received.toFloat().div(fileLength) * 100).toInt()
     var speed = ""
@@ -138,9 +143,14 @@ class FileReceiveService : Service() {
     if (difference != 0L) {
       speed = Formatter.formatFileSize(
         applicationContext,
-        received.toFloat().div(difference.toFloat().div(1000f)).toLong()
+        received.toFloat().div(difference.toFloat()
+          .div(1000f)).toLong()
       )
     }
+    notificationManager.notify(
+      notificationId,
+      createNotification(received, speed)
+    )
 
     // this sends the progress and transfer speed
     // to the activity
@@ -193,23 +203,28 @@ class FileReceiveService : Service() {
       createChannel()
     }
 
-    val notification = buildNotification(0)
+    val notification = createNotification(0, "")
     Log.d(TAG, "Notif = $notificationId")
     startForeground(notificationId, notification)
   }
 
-  private fun buildNotification(progress: Int): Notification {
-    return NotificationCompat.Builder(
-      applicationContext,
-      NOTIF_CHANNEL_ID
+  private fun createNotification(progress: Int, speed: String): Notification {
+    // Get the layouts to use in the custom notification
+    val removeLayout = RemoteViews(packageName, R.layout.layout_custom_progress)
+    removeLayout.setProgressBar(
+      R.id.progress_notification,
+      fileLength, progress, false
     )
-      .setContentTitle("Receiving file")
-      .setContentText("Receiving in progress")
-      .setSmallIcon(android.R.drawable.ic_menu_save)
-      .setProgress(fileLength, progress, false)
+
+    removeLayout.setTextViewText(R.id.filename_notification, fileNameShort)
+    if (speed.isNotEmpty())
+      removeLayout.setTextViewText(R.id.speed_notification, speed + "ps")
+
+    return NotificationCompat.Builder(this, NOTIF_CHANNEL_ID)
+      .setSmallIcon(R.mipmap.ic_launcher)
+      .setStyle(NotificationCompat.DecoratedCustomViewStyle())
+      .setCustomContentView(removeLayout)
       .setOngoing(true)
-      // Add the cancel action to the notification which can
-      // be used to cancel the worker
       .build()
   }
 

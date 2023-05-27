@@ -16,6 +16,7 @@ import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import com.baxolino.apps.floats.core.files.FileRequest
 import com.baxolino.apps.floats.core.KRSystem
+import com.baxolino.apps.floats.core.files.FileNameUtil
 import com.baxolino.apps.floats.core.files.FileReceiver
 import com.baxolino.apps.floats.core.files.RequestHandler
 import com.baxolino.apps.floats.tools.ThemeHelper
@@ -149,7 +150,7 @@ class SessionActivity : AppCompatActivity() {
   }
 
   private fun onTransferRequested(name: String, length: Int) {
-    fileNameLabel.text = name.toShortDisplayName()
+    fileNameLabel.text = FileNameUtil.toShortDisplayName(name)
     fileSizeLabel.text = Formatter.formatShortFileSize(
       applicationContext,
       length.toLong()
@@ -159,28 +160,6 @@ class SessionActivity : AppCompatActivity() {
       .setTitle("Awaiting")
       .setMessage(getString(R.string.awaiting_transfer_text))
       .show()
-  }
-
-  private fun String.toShortDisplayName(): String {
-    // we limit the file name to certain characters
-    // but while also displaying the file type
-    val maximumChars = 12
-
-    val dotIndex = indexOf('.')
-    var fileName = if (dotIndex != -1) {
-      substring(0, dotIndex)
-    } else {
-      this
-    }
-    val fileType = if (dotIndex != -1) {
-      substring(dotIndex)
-    } else {
-      ""
-    }
-    if (fileName.length > maximumChars) {
-      fileName = fileName.substring(0, maximumChars) + "..."
-    }
-    return fileName + fileType
   }
 
   private var fileActivityResult = registerForActivityResult(
