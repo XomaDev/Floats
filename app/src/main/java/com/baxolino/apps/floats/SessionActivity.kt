@@ -119,6 +119,11 @@ class SessionActivity : AppCompatActivity() {
       }
       it.setFinishedListener {
         frameProgress.setOnLongClickListener(null)
+
+        runOnUiThread {
+          fileNameLabel.text = "No files being received"
+          fileSizeLabel.text = "(> ^_^)>"
+        }
       }
       it.receive(this)
     }
@@ -144,7 +149,7 @@ class SessionActivity : AppCompatActivity() {
   }
 
   private fun onTransferRequested(name: String, length: Int) {
-    fileNameLabel.text = name
+    fileNameLabel.text = shortifyFileName(name)
     fileSizeLabel.text = Formatter.formatShortFileSize(
       applicationContext,
       length.toLong()
@@ -154,6 +159,28 @@ class SessionActivity : AppCompatActivity() {
       .setTitle("Awaiting")
       .setMessage(getString(R.string.awaiting_transfer_text))
       .show()
+  }
+
+  private fun shortifyFileName(name: String): String {
+    // we limit the file name to certain characters
+    // but while also displaying the file type
+    val maximumChars = 12
+
+    val dotIndex = name.indexOf('.')
+    var fileName = if (dotIndex != -1) {
+      name.substring(0, dotIndex)
+    } else {
+      name
+    }
+    val fileType = if (dotIndex != -1) {
+      name.substring(dotIndex)
+    } else {
+      ""
+    }
+    if (fileName.length > maximumChars) {
+      fileName = fileName.substring(0, maximumChars) + "..."
+    }
+    return fileName + fileType
   }
 
   private var fileActivityResult = registerForActivityResult(

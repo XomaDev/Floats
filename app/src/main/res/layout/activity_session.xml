@@ -55,7 +55,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:textSize="18sp"
-                    android:text="12 MBps"
+                    android:text="--"
                     android:fontFamily="@font/inter"/>
             </LinearLayout>
         </LinearLayout>
@@ -138,7 +138,7 @@
                     android:fontFamily="@font/inter"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="drawing.png"/>
+                    android:text="No files being received"/>
 
                 <FrameLayout
                     android:layout_marginStart="20dp"
@@ -160,7 +160,7 @@
                         android:fontFamily="@font/inter"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="45.7 MB"/>
+                        android:text="(> ^_^)>"/>
                 </FrameLayout>
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
