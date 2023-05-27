@@ -14,8 +14,6 @@ import androidx.activity.OnBackPressedCallback
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
-import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.LifecycleRegistry
 import com.baxolino.apps.floats.core.files.FileRequest
 import com.baxolino.apps.floats.core.KRSystem
 import com.baxolino.apps.floats.core.files.FileReceiver
@@ -37,19 +35,16 @@ class SessionActivity : AppCompatActivity() {
   private lateinit var fileNameLabel: TextView
   private lateinit var fileSizeLabel: TextView
 
-  private lateinit var transferSpeed: TextView
+  private lateinit var transferSpeedText: TextView
 
   private lateinit var progressBar: CircularProgressIndicator
   private lateinit var frameProgress: FrameLayout
 
   private var awaitingConnectionDialog: AlertDialog? = null
 
-  private val registry = LifecycleRegistry(this)
-
   override fun onCreate(savedInstanceState: Bundle?) {
     super.onCreate(savedInstanceState)
     setContentView(R.layout.activity_session)
-    registry.handleLifecycleEvent(Lifecycle.Event.ON_CREATE)
 
     ThemeHelper.themeOfSessionActivity(this)
 
@@ -79,7 +74,7 @@ class SessionActivity : AppCompatActivity() {
     fileNameLabel = findViewById(R.id.file_name)
     fileSizeLabel = findViewById(R.id.file_size)
 
-    transferSpeed = findViewById(R.id.transfer_speed)
+    transferSpeedText = findViewById(R.id.transfer_speed)
 
     progressBar = findViewById(R.id.progress_bar)
 
@@ -100,16 +95,6 @@ class SessionActivity : AppCompatActivity() {
     onBackPressedDispatcher.addCallback(this, onBackPressedCallback)
   }
 
-  override fun onPause() {
-    super.onPause()
-    registry.handleLifecycleEvent(Lifecycle.Event.ON_PAUSE)
-  }
-
-  override fun onResume() {
-    super.onResume()
-    registry.handleLifecycleEvent(Lifecycle.Event.ON_RESUME)
-  }
-
   private fun lookForFileRequests() {
     val listener = RequestHandler.RequestsListener {
       val receiver = it
@@ -127,7 +112,9 @@ class SessionActivity : AppCompatActivity() {
       }
       it.setUpdateListener {
         runOnUiThread {
-          onUpdateInfoRequired(it.startTime, it.received, it.length)
+          progressBar.setProgress(it.progress, true)
+          if (it.transferSpeed.isNotEmpty())
+            transferSpeedText.text = "${it.transferSpeed}ps"
         }
       }
       it.setFinishedListener {
@@ -144,7 +131,7 @@ class SessionActivity : AppCompatActivity() {
       getString(R.string.transfer_cancelled_receiver), Toast.LENGTH_LONG
     ).show()
 
-    receiver.cancel()
+    receiver.cancel(this)
 
     // TODO:
     //  when we really implement the saving mechanism
@@ -167,23 +154,6 @@ class SessionActivity : AppCompatActivity() {
       .setTitle("Awaiting")
       .setMessage(getString(R.string.awaiting_transfer_text))
       .show()
-  }
-
-  private fun onUpdateInfoRequired(startTime: Long, received: Int, total: Int) {
-    progressBar.setProgress(
-      // formula: received / total * 100 = progress
-      (received.toFloat().div(total) * 100
-              ).toInt(), true
-    )
-
-    val difference = (System.currentTimeMillis() - startTime)
-    if (difference == 0L)
-      return
-    val speed = Formatter.formatFileSize(
-      applicationContext,
-      received.toFloat().div(difference.toFloat().div(1000f)).toLong()
-    )
-    transferSpeed.text = "${speed}ps"
   }
 
   private var fileActivityResult = registerForActivityResult(
@@ -221,17 +191,6 @@ class SessionActivity : AppCompatActivity() {
     val request = FileRequest(
       uri, fileName, fileLength
     )
-    // TODO:
-    //  since we have pushed the mechanism to background we will need to do it
-    //  another way
-//    request.setCancelListener {
-//      runOnUiThread {
-//        Toast.makeText(
-//          applicationContext,
-//          getString(R.string.transfer_canceled_sender), Toast.LENGTH_LONG
-//        ).show()
-//      }
-//    }
     system.execute(applicationContext, request)
   }
 

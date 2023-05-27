@@ -1,22 +1,16 @@
 package com.baxolino.apps.floats.core.files
 
+import android.content.Context
 import android.content.Intent
 import android.os.Build
 import android.os.Handler
 import android.os.Looper
 import android.os.Message
 import android.os.Messenger
-import android.util.Log
-import com.baxolino.apps.floats.NsdInterface
 import com.baxolino.apps.floats.SessionActivity
-import java.io.IOException
-import java.util.concurrent.Executors
-import java.util.concurrent.TimeUnit
 
 
 class FileReceiver internal constructor(val name: String, val length: Int) {
-
-  private var service: NsdInterface? = null
 
   private lateinit var startListener: () -> Unit
 
@@ -26,7 +20,10 @@ class FileReceiver internal constructor(val name: String, val length: Int) {
   private var cancelled = false
 
   var startTime = 0L
-  var received = 0
+  var progress = 0
+
+  // formatted transfer speed like 7 Mb(ps)
+  var transferSpeed = ""
 
   fun setStartListener(listener: () -> Unit) {
     startListener = listener
@@ -40,26 +37,15 @@ class FileReceiver internal constructor(val name: String, val length: Int) {
     finishedListener = listener
   }
 
-  fun cancel() {
-    // a simple cancel message to stop sending
-    // more data
-    Thread {
-      try {
-        service!!.output.write(Reasons.REASON_CANCELED)
-      } catch (e: IOException) {
-        e.printStackTrace()
-      }
-    }.start()
-    val service = Executors.newScheduledThreadPool(1)
-    service.schedule({
-      // setting this property first will cause
-      // interruption when the sender writes data,
+  fun cancel(context: Context) {
+    cancelled = true
 
-      // then it'll check for any messages in it's input stream
-      // and there we'll post a code with a reason
-      cancelled = true
-    }, 60, TimeUnit.MILLISECONDS)
+    context.sendBroadcast(Intent()
+      .apply {
+        action = FileReceiveService.CANCEL_REQUEST_ACTION
+      })
   }
+
 
   class EventHandler(private val receiver: FileReceiver) : Handler(Looper.getMainLooper()) {
     override fun handleMessage(message: Message) {
@@ -72,7 +58,9 @@ class FileReceiver internal constructor(val name: String, val length: Int) {
           }
           1 -> {
             // "update" message
-            received = message.arg1
+            progress = message.arg1
+            transferSpeed = message.data.getString("speed", "")
+
             updateListener.invoke()
           }
           2 -> {

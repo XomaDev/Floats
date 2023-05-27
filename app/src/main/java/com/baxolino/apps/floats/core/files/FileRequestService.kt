@@ -25,7 +25,7 @@ class FileRequestService : Service() {
   private lateinit var notificationManager: NotificationManager
 
   private lateinit var nsdService: NsdInterface
-
+  private var cancelled = false
 
   override fun onStartCommand(intent: Intent, flags: Int, startId: Int): Int {
     Log.d(TAG, "onStartCommand()")
@@ -92,8 +92,8 @@ class FileRequestService : Service() {
     val zipOutputStream = GZIPOutputStream(nsdService.output)
 
     val buffer = ByteArray(Config.BUFFER_SIZE)
-    var n: Int
-    while (input.read(buffer).also { n = it } > 0) {
+    var n = 0
+    while (!cancelled && input.read(buffer).also { n = it } > 0) {
       try {
         zipOutputStream.write(buffer, 0, n)
       } catch (e: SocketException) {
@@ -106,8 +106,10 @@ class FileRequestService : Service() {
 
     input.close()
 
-    zipOutputStream.finish()
-    zipOutputStream.close()
+    if (!cancelled) {
+      zipOutputStream.finish()
+      zipOutputStream.close()
+    }
 
     nsdService.unregister()
     onComplete()
@@ -115,10 +117,17 @@ class FileRequestService : Service() {
 
   private fun onComplete() {
     Handler(mainLooper).post {
-      Toast.makeText(
-        this, "File was transferred",
-        Toast.LENGTH_LONG
-      ).show()
+      if (cancelled) {
+        Toast.makeText(
+          this, "File transfer was cancelled.",
+          Toast.LENGTH_LONG
+        ).show()
+      } else {
+        Toast.makeText(
+          this, "File was transferred",
+          Toast.LENGTH_LONG
+        ).show()
+      }
     }
 
     // inform the user completion and stop the foreground service
@@ -132,6 +141,7 @@ class FileRequestService : Service() {
     service.scheduleAtFixedRate({
       if (input.available() > 0) {
         Log.d(TAG, "Transfer was cancelled")
+        cancelled = true
         service.shutdownNow()
       }
     }, 0, 20, TimeUnit.MILLISECONDS)
