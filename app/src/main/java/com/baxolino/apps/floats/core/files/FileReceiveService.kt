@@ -158,7 +158,7 @@ class FileReceiveService : Service() {
     // send a cancel request to the sender
     Thread {
       // service operators on the main thread
-      nsdService.output.write(Reasons.REASON_CANCELED)
+      nsdService.output.write(0)
     }.start()
     val executor = Executors.newScheduledThreadPool(1)
 
@@ -183,6 +183,7 @@ class FileReceiveService : Service() {
 
   private fun unregisterWithStop() {
     stopForeground(STOP_FOREGROUND_REMOVE)
+
     unregisterReceiver(cancelRequestReceiver)
   }
 

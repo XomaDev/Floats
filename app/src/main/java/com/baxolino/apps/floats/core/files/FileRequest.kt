@@ -32,6 +32,7 @@ class FileRequest(
     val service = Intent(context, FileRequestService::class.java)
       .putExtra("file_uri", fileInput.toString())
       .putExtra("file_name", fileName)
+      .putExtra("file_length", fileLength)
 
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
       context.startForegroundService(service)

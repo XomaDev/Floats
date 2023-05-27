@@ -1,5 +1,6 @@
 package com.baxolino.apps.floats.core.files
 
+import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.Service
@@ -25,6 +26,10 @@ class FileRequestService : Service() {
   private lateinit var notificationManager: NotificationManager
 
   private lateinit var nsdService: NsdInterface
+
+  private var fileLength = 0
+  private var notificationId: Int = 8
+
   private var cancelled = false
 
   override fun onStartCommand(intent: Intent, flags: Int, startId: Int): Int {
@@ -32,10 +37,12 @@ class FileRequestService : Service() {
 
     val uri = Uri.parse(intent.getStringExtra("file_uri"))
     val fileName = intent.getStringExtra("file_name")
+    fileLength = intent.getIntExtra("file_length", -1)
 
     notificationManager = getSystemService(NotificationManager::class.java) as
             NotificationManager
-    createForeground(fileName.hashCode())
+    notificationId = fileName.hashCode()
+    createForeground(notificationId)
 
     requestNsdTransfer(uri, fileName!!)
 
@@ -61,26 +68,28 @@ class FileRequestService : Service() {
   }
 
   private fun createForeground(notificationId: Int) {
-    val title = "Transferring file"
-
     // Create a Notification channel if necessary
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
       createChannel()
     }
+    startForeground(notificationId, buildNotification(0))
+  }
 
-    val notification = NotificationCompat.Builder(applicationContext,
+  private fun buildNotification(progress: Int): Notification {
+    val title = "Transferring file"
+
+    return NotificationCompat.Builder(applicationContext,
       NOTIF_CHANNEL_ID
     )
       .setContentTitle(title)
       .setTicker(title)
       .setContentText("Transmission in progress")
       .setSmallIcon(android.R.drawable.ic_menu_upload)
+      .setProgress(fileLength, progress, false)
       .setOngoing(true)
       // Add the cancel action to the notification which can
       // be used to cancel the worker
       .build()
-    Log.d(TAG, "Notif = $notificationId")
-    startForeground(notificationId, notification)
   }
 
   private fun uploadFileContents(uri: Uri) {
@@ -92,10 +101,16 @@ class FileRequestService : Service() {
     val zipOutputStream = GZIPOutputStream(nsdService.output)
 
     val buffer = ByteArray(Config.BUFFER_SIZE)
+
     var n = 0
+    var written = 0
+
+    // read the buffer from the file and write them to sender
     while (!cancelled && input.read(buffer).also { n = it } > 0) {
       try {
         zipOutputStream.write(buffer, 0, n)
+        written += n
+        onUpdateInfoRequired(written)
       } catch (e: SocketException) {
         // BrokenPipe: this error is thrown when the receiver abruptly
         // closes the connection, we have few ms before the client is fully closed
@@ -113,6 +128,15 @@ class FileRequestService : Service() {
 
     nsdService.unregister()
     onComplete()
+  }
+
+  private fun onUpdateInfoRequired(written: Int) {
+    notificationManager.notify(notificationId,
+      buildNotification(written))
+
+    // TODO:
+    //  notify the activity and do the necessary UI
+    //  changes
   }
 
   private fun onComplete() {
