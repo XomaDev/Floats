@@ -9,11 +9,14 @@ import android.net.Uri
 import android.os.Build
 import android.os.Handler
 import android.os.IBinder
+import android.text.format.Formatter
 import android.util.Log
+import android.widget.RemoteViews
 import android.widget.Toast
 import androidx.annotation.RequiresApi
 import androidx.core.app.NotificationCompat
 import com.baxolino.apps.floats.NsdInterface
+import com.baxolino.apps.floats.R
 import com.baxolino.apps.floats.core.Config
 import java.io.InputStream
 import java.net.SocketException
@@ -30,13 +33,18 @@ class FileRequestService : Service() {
   private var fileLength = 0
   private var notificationId: Int = 8
 
+  private var timeStart = 0L
+
   private var cancelled = false
+  private lateinit var fileNameShort: String
 
   override fun onStartCommand(intent: Intent, flags: Int, startId: Int): Int {
     Log.d(TAG, "onStartCommand()")
 
     val uri = Uri.parse(intent.getStringExtra("file_uri"))
-    val fileName = intent.getStringExtra("file_name")
+    val fileName = intent.getStringExtra("file_name")!!
+    fileNameShort = FileNameUtil.toShortDisplayName(fileName)
+
     fileLength = intent.getIntExtra("file_length", -1)
 
     notificationManager = getSystemService(NotificationManager::class.java) as
@@ -44,7 +52,7 @@ class FileRequestService : Service() {
     notificationId = fileName.hashCode()
     createForeground(notificationId)
 
-    requestNsdTransfer(uri, fileName!!)
+    requestNsdTransfer(uri, fileName)
 
     return START_NOT_STICKY
   }
@@ -72,24 +80,7 @@ class FileRequestService : Service() {
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
       createChannel()
     }
-    startForeground(notificationId, buildNotification(0))
-  }
-
-  private fun buildNotification(progress: Int): Notification {
-    val title = "Transferring file"
-
-    return NotificationCompat.Builder(applicationContext,
-      NOTIF_CHANNEL_ID
-    )
-      .setContentTitle(title)
-      .setTicker(title)
-      .setContentText("Transmission in progress")
-      .setSmallIcon(android.R.drawable.ic_menu_upload)
-      .setProgress(fileLength, progress, false)
-      .setOngoing(true)
-      // Add the cancel action to the notification which can
-      // be used to cancel the worker
-      .build()
+    startForeground(notificationId, buildNotification(0, ""))
   }
 
   private fun uploadFileContents(uri: Uri) {
@@ -97,6 +88,8 @@ class FileRequestService : Service() {
     val input = contentResolver.openInputStream(
       uri
     )!!
+
+    timeStart = System.currentTimeMillis()
 
     val zipOutputStream = GZIPOutputStream(nsdService.output)
 
@@ -131,12 +124,39 @@ class FileRequestService : Service() {
   }
 
   private fun onUpdateInfoRequired(written: Int) {
-    notificationManager.notify(notificationId,
-      buildNotification(written))
+    var speed = ""
 
-    // TODO:
-    //  notify the activity and do the necessary UI
-    //  changes
+    val difference = (System.currentTimeMillis() - timeStart)
+
+    if (difference != 0L) {
+      speed = Formatter.formatFileSize(
+        applicationContext,
+        written.toFloat().div(difference.toFloat()
+          .div(1000f)).toLong()
+      )
+    }
+
+    notificationManager.notify(notificationId,
+      buildNotification(written, speed))
+  }
+
+  private fun buildNotification(progress: Int, speed: String): Notification {
+    val removeLayout = RemoteViews(packageName, R.layout.layout_custom_progress)
+    removeLayout.setProgressBar(
+      R.id.progress_notification,
+      fileLength, progress, false
+    )
+
+    removeLayout.setTextViewText(R.id.filename_notification, fileNameShort)
+    if (speed.isNotEmpty())
+      removeLayout.setTextViewText(R.id.speed_notification, speed + "ps")
+
+    return NotificationCompat.Builder(this, NOTIF_CHANNEL_ID)
+      .setSmallIcon(R.mipmap.ic_launcher)
+      .setStyle(NotificationCompat.DecoratedCustomViewStyle())
+      .setCustomContentView(removeLayout)
+      .setOngoing(true)
+      .build()
   }
 
   private fun onComplete() {

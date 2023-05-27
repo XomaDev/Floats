@@ -5,6 +5,7 @@ import android.content.Context
 import android.content.SharedPreferences
 import android.net.nsd.NsdManager
 import android.net.nsd.NsdServiceInfo
+import android.net.wifi.WifiManager
 import android.util.Log
 import com.baxolino.apps.floats.core.http.SocketUtils
 import java.io.IOException
@@ -24,6 +25,8 @@ abstract class NsdInterface constructor(context: Context) {
 
 
   private val nsdManager: NsdManager = context.getSystemService(NsdManager::class.java)
+  private val multicastLock: WifiManager.MulticastLock = (
+          context.getSystemService(WifiManager::class.java)).createMulticastLock(TAG)
 
   private val localPort: Int = SocketUtils.findAvailableTcpPort()
 
@@ -84,6 +87,8 @@ abstract class NsdInterface constructor(context: Context) {
     discoveryListener?.let {
       nsdManager.stopServiceDiscovery(it)
     }
+    if (multicastLock.isHeld)
+      multicastLock.release()
   }
 
   private fun initializeServerSocket() {
@@ -194,6 +199,12 @@ abstract class NsdInterface constructor(context: Context) {
         nsdManager.stopServiceDiscovery(this)
       }
     }
+
+    // this should process any additional packets
+    // if any
+    multicastLock.setReferenceCounted(true)
+    multicastLock.acquire()
+
     nsdManager.discoverServices(
       SERVICE_TYPE, NsdManager.PROTOCOL_DNS_SD, discoveryListener
     )
