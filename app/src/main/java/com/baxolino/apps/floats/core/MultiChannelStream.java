@@ -4,8 +4,8 @@ import static com.baxolino.apps.floats.core.Config.CHUNK_SIZE;
 
 import android.util.Log;
 
-import com.baxolino.apps.floats.core.bytes.io.BitInputStream;
-import com.baxolino.apps.floats.core.bytes.io.DataInputStream;
+import com.baxolino.apps.floats.core.io.BitInputStream;
+import com.baxolino.apps.floats.core.io.DataInputStream;
 
 import java.io.InputStream;
 import java.util.Arrays;

@@ -20,7 +20,7 @@ import androidx.core.app.NotificationCompat
 import com.baxolino.apps.floats.NsdInterface
 import com.baxolino.apps.floats.R
 import com.baxolino.apps.floats.core.Config
-import com.baxolino.apps.floats.core.bytes.io.DummyOutputStream
+import com.baxolino.apps.floats.core.io.DummyOutputStream
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 import java.util.zip.GZIPInputStream
@@ -34,7 +34,6 @@ class FileReceiveService : Service() {
     private const val NOTIF_CHANNEL_NAME = "File Transfer"
 
     const val CANCEL_REQUEST_ACTION = "request_cancel"
-
 
     class CancelRequestReceiver(private val service: FileReceiveService) : BroadcastReceiver() {
       override fun onReceive(context: Context, intent: Intent) {
@@ -168,7 +167,7 @@ class FileReceiveService : Service() {
     // send a cancel request to the sender
     Thread {
       // service operators on the main thread
-      nsdService.output.write(0)
+      nsdService.socket.sendUrgentData(0)
     }.start()
     val executor = Executors.newScheduledThreadPool(1)
 

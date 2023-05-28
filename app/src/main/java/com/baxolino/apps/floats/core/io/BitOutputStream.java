@@ -1,8 +1,6 @@
-package com.baxolino.apps.floats.core.bytes.io;
+package com.baxolino.apps.floats.core.io;
 
 import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.OutputStream;
 
 public class BitOutputStream {
 

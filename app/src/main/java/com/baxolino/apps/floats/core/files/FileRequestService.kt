@@ -185,6 +185,8 @@ class FileRequestService : Service() {
     service.scheduleAtFixedRate({
       if (input.available() > 0) {
         Log.d(TAG, "Transfer was cancelled")
+
+        input.read()
         cancelled = true
         service.shutdownNow()
       }

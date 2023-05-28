@@ -7,6 +7,7 @@ import android.net.nsd.NsdManager
 import android.net.nsd.NsdServiceInfo
 import android.net.wifi.WifiManager
 import android.util.Log
+import com.baxolino.apps.floats.core.Config
 import com.baxolino.apps.floats.core.http.SocketUtils
 import java.io.IOException
 import java.io.InputStream
@@ -48,6 +49,8 @@ abstract class NsdInterface constructor(context: Context) {
   lateinit var input: InputStream
 
   lateinit var output: OutputStream
+
+  lateinit var socket: Socket
 
   private val registrationListener: NsdManager.RegistrationListener = object :
     NsdManager.RegistrationListener {
@@ -99,10 +102,11 @@ abstract class NsdInterface constructor(context: Context) {
       try {
         val serverSocket = ServerSocket(localPort)
         val socket = serverSocket.accept()
-        socket.keepAlive = true
 
-        input = socket.getInputStream()
-        output = socket.getOutputStream()
+        socket.keepAlive = true
+        this.socket = socket
+
+        setSocketProps()
 
         Log.d(TAG, "###### Connection Was Accepted")
 
@@ -160,7 +164,7 @@ abstract class NsdInterface constructor(context: Context) {
           Log.d(TAG, "Found Service = " + device + " port " + service.port + " needs $requestName")
 
           val listener = serviceListeners[device]
-          Log.d(TAG, "onServiceFound: " + listener)
+          Log.d(TAG, "onServiceFound: $listener")
           listener?.apply { available() }
 
           if (device == requestName) {
@@ -230,9 +234,8 @@ abstract class NsdInterface constructor(context: Context) {
           val socket = Socket(host, port)
           socket.keepAlive = true
 
-
-          input = socket.getInputStream()
-          output = socket.getOutputStream()
+          this@NsdInterface.socket = socket
+          setSocketProps()
 
           Log.d(TAG, "######## Connection Was Established")
 
@@ -244,6 +247,19 @@ abstract class NsdInterface constructor(context: Context) {
         }
       }
     })
+  }
+
+  private fun setSocketProps() {
+    // this will enable reading of urgent data using
+    // regular input streams
+    if (!socket.oobInline)
+      socket.oobInline = true
+
+    socket.receiveBufferSize = Config.BUFFER_SIZE
+    socket.sendBufferSize = Config.BUFFER_SIZE
+
+    input = socket.getInputStream()
+    output = socket.getOutputStream()
   }
 
   // will also be called from outside the class

@@ -12,8 +12,8 @@ import androidx.annotation.NonNull;
 import com.baxolino.apps.floats.NsdFloats;
 import com.baxolino.apps.floats.core.files.FileRequest;
 import com.baxolino.apps.floats.core.files.RequestHandler;
-import com.baxolino.apps.floats.core.bytes.io.BitOutputStream;
-import com.baxolino.apps.floats.core.bytes.io.DataInputStream;
+import com.baxolino.apps.floats.core.io.BitOutputStream;
+import com.baxolino.apps.floats.core.io.DataInputStream;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;

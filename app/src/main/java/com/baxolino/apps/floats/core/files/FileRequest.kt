@@ -7,7 +7,7 @@ import android.os.Build
 import android.util.Log
 import com.baxolino.apps.floats.core.Channel
 import com.baxolino.apps.floats.core.MultiChannelSystem
-import com.baxolino.apps.floats.core.bytes.io.BitOutputStream
+import com.baxolino.apps.floats.core.io.BitOutputStream
 
 class FileRequest(
   private val fileInput: Uri,

@@ -1,4 +1,4 @@
-package com.baxolino.apps.floats.core.bytes.io;
+package com.baxolino.apps.floats.core.io;
 
 import java.io.OutputStream;
 

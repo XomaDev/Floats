@@ -2,7 +2,7 @@ package com.baxolino.apps.floats.core.files;
 
 import com.baxolino.apps.floats.core.Channel;
 import com.baxolino.apps.floats.core.MultiChannelStream;
-import com.baxolino.apps.floats.core.bytes.io.DataInputStream;
+import com.baxolino.apps.floats.core.io.DataInputStream;
 
 public class RequestHandler {
 
