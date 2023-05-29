@@ -36,6 +36,16 @@ abstract class NsdInterface constructor(context: Context) {
   private lateinit var mService: NsdServiceInfo
   private var mPreferences: SharedPreferences = context.getSharedPreferences(TAG, Context.MODE_PRIVATE)
 
+  init {
+    discover("")
+
+
+    // this should process any additional packets
+    // if any
+    multicastLock.setReferenceCounted(true)
+    multicastLock.acquire()
+  }
+
   // when we find a device, we will save it here, and also
   // remove it when we are unable to find it anymore
 
@@ -132,10 +142,6 @@ abstract class NsdInterface constructor(context: Context) {
     initializeServerSocket()
   }
 
-  init {
-    discover("")
-  }
-
   /**
    * Starts service discovery and connects to %requestName%
    * if found
@@ -203,11 +209,6 @@ abstract class NsdInterface constructor(context: Context) {
         nsdManager.stopServiceDiscovery(this)
       }
     }
-
-    // this should process any additional packets
-    // if any
-    multicastLock.setReferenceCounted(true)
-    multicastLock.acquire()
 
     nsdManager.discoverServices(
       SERVICE_TYPE, NsdManager.PROTOCOL_DNS_SD, discoveryListener
