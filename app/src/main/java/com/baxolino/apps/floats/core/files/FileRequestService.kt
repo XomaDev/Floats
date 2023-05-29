@@ -141,20 +141,20 @@ class FileRequestService : Service() {
   }
 
   private fun buildNotification(progress: Int, speed: String): Notification {
-    val removeLayout = RemoteViews(packageName, R.layout.layout_custom_progress)
-    removeLayout.setProgressBar(
+    val remoteLayout = RemoteViews(packageName, R.layout.notification_progress)
+    remoteLayout.setProgressBar(
       R.id.progress_notification,
       fileLength, progress, false
     )
 
-    removeLayout.setTextViewText(R.id.filename_notification, fileNameShort)
+    remoteLayout.setTextViewText(R.id.filename_notification, fileNameShort)
     if (speed.isNotEmpty())
-      removeLayout.setTextViewText(R.id.speed_notification, speed + "ps")
+      remoteLayout.setTextViewText(R.id.speed_notification, speed + "ps")
 
     return NotificationCompat.Builder(this, NOTIF_CHANNEL_ID)
       .setSmallIcon(R.mipmap.ic_launcher)
       .setStyle(NotificationCompat.DecoratedCustomViewStyle())
-      .setCustomContentView(removeLayout)
+      .setCustomContentView(remoteLayout)
       .setOngoing(true)
       .build()
   }
