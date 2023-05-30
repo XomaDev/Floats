@@ -5,9 +5,7 @@ import android.bluetooth.BluetoothAdapter
 import android.bluetooth.BluetoothManager
 import android.content.Intent
 import android.graphics.drawable.Drawable
-import android.os.Build
 import android.os.Bundle
-import android.provider.Settings
 import android.util.Log
 import android.widget.ImageView
 import android.widget.TextView
@@ -19,8 +17,8 @@ import com.baxolino.apps.floats.core.KRSystem
 import com.baxolino.apps.floats.core.KRSystem.KnowListener
 import com.baxolino.apps.floats.core.http.NsdFloats
 import com.baxolino.apps.floats.core.http.NsdInterface
-import com.baxolino.apps.floats.core.http.SocketConnection
 import com.baxolino.apps.floats.tools.ThemeHelper
+import com.baxolino.apps.floats.tools.Utils
 import com.github.alexzhirkevich.customqrgenerator.QrData
 import com.github.alexzhirkevich.customqrgenerator.vector.QrCodeDrawable
 import com.github.alexzhirkevich.customqrgenerator.vector.QrVectorOptions
@@ -42,7 +40,9 @@ class HomeActivity : AppCompatActivity() {
   }
 
   private lateinit var adapter: BluetoothAdapter
-  private lateinit var ourDeviceName: String
+
+  private lateinit var ipv4AddressWithDeviceName: String
+  private lateinit var thisDeviceName: String
 
   private lateinit var nsdFloats: NsdFloats
 
@@ -57,34 +57,25 @@ class HomeActivity : AppCompatActivity() {
     adapter = bluetoothManager.adapter
 
     val deviceText = findViewById<TextView>(R.id.device_label)
-    val deviceId = getDeviceName()
+    val deviceId = Utils.getDeviceName(contentResolver)
 
     deviceText.text = deviceId
-    ourDeviceName = deviceId
+    thisDeviceName = deviceId
 
     val qrImageView = findViewById<ImageView>(R.id.qr_image)
-    generateQr(qrImageView, deviceId)
+
+    // the Qr code will include Device name and the Ipv4 address
+    ipv4AddressWithDeviceName = Utils.getIpv4WithDeviceNameString(this)
+    generateQr(qrImageView, ipv4AddressWithDeviceName)
 
     val scanButton = findViewById<MaterialButton>(R.id.scanButton)
 
     // creating the instance will register
     // NSD service
-    nsdFloats = NsdFloats.getInstance(this, ourDeviceName)!!
+    nsdFloats = NsdFloats.getInstance(this, thisDeviceName)!!
 
     if (intent.hasExtra("address")) {
-      // we are back from the qr scan activity
-      // and we can connect to that bluetooth device from the address
-      val name = intent.getStringExtra("address")
-
-      // initiates nsd discovery and tries to find
-      // the device with the {name}
-      name?.let {
-        Toast.makeText(
-          this,
-          "Connecting", Toast.LENGTH_SHORT
-        ).show()
-        nsdFloats.discover(name)
-      }
+      connect()
     } else {
       scanButton.setOnClickListener {
         nsdFloats
@@ -129,34 +120,37 @@ class HomeActivity : AppCompatActivity() {
       })
   }
 
-  private fun getDeviceName(): String {
-    return Settings.Global.getString(
-      contentResolver,
-      if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N_MR1)
-        Settings.Global.DEVICE_NAME
-      else "bluetooth_name"
-    )
+  private fun connect() {
+    // we are back from the qr scan activity
+    // and we can connect to that bluetooth device from the address
+    val qrContent = intent.getStringExtra("address")
+
+    // initiates nsd discovery and tries to find
+    // the device with the {name}
+    qrContent?.let {
+      val ipv4AddressWithDeviceName = Utils.getIpv4AndDeviceName(qrContent)
+      Toast.makeText(
+        this,
+        "Connecting", Toast.LENGTH_SHORT
+      ).show()
+      nsdFloats.discover(ipv4AddressWithDeviceName.second)
+    }
   }
 
   // called upon connection, from NsdFloats.kt
 
   fun onConnectionAccepted() {
-    val system = KRSystem.getInstance(this, ourDeviceName, nsdFloats)
+    val system = KRSystem.getInstance(this, thisDeviceName, nsdFloats)
 
     // we are yet to find out who has connected us
     system.readKnowRequest(object : KnowListener {
-      override fun received(data: String) {
-        val dividerIndex = data.indexOf("%")
-
-        val hostAddress = data.substring(0, dividerIndex)
-        nsdFloats.hostAddress = hostAddress
-
-        val name = data.substring(dividerIndex + 1, data.length)
+      override fun received(text: String) {
+        val data = Utils.getIpv4AndDeviceName(text)
         // save the device name here so that the user
         // can quick connect to it later
-        nsdFloats.saveConnectedDevice(name)
+        nsdFloats.saveConnectedDevice(data.second)
 
-        runOnUiThread { informConnection(name, hostAddress) }
+        runOnUiThread { informConnection(data.second, data.first) }
       }
 
       override fun timeout() {
@@ -174,11 +168,8 @@ class HomeActivity : AppCompatActivity() {
   // called upon successful connection request from
   // NsdFloats.kt
   fun onConnectionSuccessful(connectedDevice: String) {
-    val data = SocketConnection.getIpv4(applicationContext)
-      .hostAddress!!.plus("%$ourDeviceName")
-
-    val system = KRSystem.getInstance(this, ourDeviceName, nsdFloats)
-    system.postKnowRequest(data, {
+    val system = KRSystem.getInstance(this, thisDeviceName, nsdFloats)
+    system.postKnowRequest(ipv4AddressWithDeviceName, {
       // client received know-request
       Log.d(TAG, "Know Request Successful")
       runOnUiThread {
