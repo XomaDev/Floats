@@ -26,6 +26,7 @@ public class RequestHandler {
   private void init() {
     DataInputStream requests = new DataInputStream();
     requests.setByteListener(b -> {
+      int port = requests.readInt32();
       int lengthOfFile = requests.readInt32();
       int nameStringLength = requests.readInt32();
 
@@ -36,7 +37,7 @@ public class RequestHandler {
 
       // true because, we do not need rest of the
       // byte listen calls
-      listener.requested(new FileReceiver(name, lengthOfFile));
+      listener.requested(new FileReceiver(port, name, lengthOfFile));
       return true;
     });
     reader.registerChannelStream(Channel.FILE_REQUEST_CHANNEL, requests);

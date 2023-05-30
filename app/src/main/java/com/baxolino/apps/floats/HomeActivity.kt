@@ -17,6 +17,9 @@ import androidx.camera.core.ExperimentalGetImage
 import com.baxolino.apps.floats.camera.ScanActivity
 import com.baxolino.apps.floats.core.KRSystem
 import com.baxolino.apps.floats.core.KRSystem.KnowListener
+import com.baxolino.apps.floats.core.http.NsdFloats
+import com.baxolino.apps.floats.core.http.NsdInterface
+import com.baxolino.apps.floats.core.http.SocketConnection
 import com.baxolino.apps.floats.tools.ThemeHelper
 import com.github.alexzhirkevich.customqrgenerator.QrData
 import com.github.alexzhirkevich.customqrgenerator.vector.QrCodeDrawable
@@ -76,8 +79,10 @@ class HomeActivity : AppCompatActivity() {
       // initiates nsd discovery and tries to find
       // the device with the {name}
       name?.let {
-        Toast.makeText(this,
-          "Connecting", Toast.LENGTH_SHORT).show()
+        Toast.makeText(
+          this,
+          "Connecting", Toast.LENGTH_SHORT
+        ).show()
         nsdFloats.discover(name)
       }
     } else {
@@ -97,52 +102,56 @@ class HomeActivity : AppCompatActivity() {
     val recentConnectionStatus = findViewById<TextView>(R.id.recent_connection_status)
     val deviceStatusCard = findViewById<MaterialCardView>(R.id.device_status)
 
-    nsdFloats.registerAvailabilityListener(otherRecentDeviceId, object: NsdInterface.ServiceAvailableListener {
-      override fun available() {
-        runOnUiThread {
-          recentConnectionStatus.text = "Online"
+    nsdFloats.registerAvailabilityListener(
+      otherRecentDeviceId,
+      object : NsdInterface.ServiceAvailableListener {
+        override fun available() {
+          runOnUiThread {
+            recentConnectionStatus.text = "Online"
 
-          deviceStatusCard.setOnClickListener {
-            Toast.makeText(applicationContext,
-              "Connecting", Toast.LENGTH_SHORT).show()
+            deviceStatusCard.setOnClickListener {
+              Toast.makeText(
+                applicationContext,
+                "Connecting", Toast.LENGTH_SHORT
+              ).show()
 
-            nsdFloats.discover(deviceIdRecentConnection.text.toString())
+              nsdFloats.discover(deviceIdRecentConnection.text.toString())
+            }
           }
         }
-      }
 
-      override fun disappeared() {
-        runOnUiThread {
-          recentConnectionStatus.text = "Offline"
-          deviceStatusCard.setOnClickListener(null)
-        }
-      }
-    })
-
-
-    val krSystem = KRSystem.getInstanceUnsafe()
-
-    krSystem?.let {
-      krSystem.readKnowRequest(object : KnowListener {
-        override fun received(name: String) {
-          // save the device name here so that the user
-          // can quick connect to it later
-          nsdFloats.saveConnectedDevice(name)
-
-          runOnUiThread { informConnection(name) }
-        }
-
-        override fun timeout() {
+        override fun disappeared() {
           runOnUiThread {
-            Toast.makeText(
-              applicationContext,
-              "Client failed to send to know request. [1]",
-              Toast.LENGTH_SHORT
-            ).show()
+            recentConnectionStatus.text = "Offline"
+            deviceStatusCard.setOnClickListener(null)
           }
         }
       })
-    }
+
+
+//    val krSystem = KRSystem.getInstanceUnsafe()
+//
+//    krSystem?.let {
+//      krSystem.readKnowRequest(object : KnowListener {
+//        override fun received(name: String) {
+//          // save the device name here so that the user
+//          // can quick connect to it later
+//          nsdFloats.saveConnectedDevice(name)
+//
+//          runOnUiThread { informConnection(name) }
+//        }
+//
+//        override fun timeout() {
+//          runOnUiThread {
+//            Toast.makeText(
+//              applicationContext,
+//              "Client failed to send to know request. [1]",
+//              Toast.LENGTH_SHORT
+//            ).show()
+//          }
+//        }
+//      })
+//    }
   }
 
   private fun getDeviceName(): String {
@@ -158,16 +167,24 @@ class HomeActivity : AppCompatActivity() {
   // called from NsdFloats.java class after
   // creating connection with another device
 
+  // TODO:
+  //  split up the codes so that it's better
   fun deviceConnected(isServer: Boolean, device: String?) {
     val krSystem = KRSystem.getInstance(this, deviceName, nsdFloats)
 
     Log.d(TAG, "deviceConnected()")
     if (!isServer) {
       Log.d(TAG, "deviceConnected: Posting Request")
-      krSystem.postKnowRequest(deviceName, {
+
+      // we'll send this to other device so that it knows
+      // who are we
+      val data = SocketConnection.getIpv4(applicationContext)
+        .hostAddress!!.plus("%$deviceName")
+
+      krSystem.postKnowRequest(data, {
         // client received know-request
         Log.d(TAG, "Know Request Successful")
-        runOnUiThread { informConnection(device!!) }
+        runOnUiThread { informConnection(device!!, nsdFloats.hostAddress) }
       }, {
         Log.d(TAG, "Server failed to respond to KR")
         runOnUiThread {
@@ -180,12 +197,18 @@ class HomeActivity : AppCompatActivity() {
       })
     } else {
       krSystem.readKnowRequest(object : KnowListener {
-        override fun received(name: String) {
+        override fun received(data: String) {
+          val indexOfDiv = data.indexOf("%")
+
+          val theirAddress = data.substring(0, indexOfDiv)
+          nsdFloats.hostAddress = theirAddress
+
+          val name = data.substring(indexOfDiv + 1, data.length)
           // save the device name here so that the user
           // can quick connect to it later
           nsdFloats.saveConnectedDevice(name)
 
-          runOnUiThread { informConnection(name) }
+          runOnUiThread { informConnection(name, theirAddress) }
         }
 
         override fun timeout() {
@@ -201,10 +224,11 @@ class HomeActivity : AppCompatActivity() {
     }
   }
 
-  private fun informConnection(deviceName: String) {
+  private fun informConnection(deviceName: String, hostAddress: String) {
     startActivity(
       Intent(this, SessionActivity::class.java)
         .putExtra("deviceName", deviceName)
+        .putExtra("hostAddress", hostAddress)
     )
   }
 

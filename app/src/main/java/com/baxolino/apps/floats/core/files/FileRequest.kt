@@ -7,6 +7,8 @@ import android.os.Build
 import android.util.Log
 import com.baxolino.apps.floats.core.Channel
 import com.baxolino.apps.floats.core.MultiChannelSystem
+import com.baxolino.apps.floats.core.http.SocketConnection
+import com.baxolino.apps.floats.core.http.SocketUtils
 import com.baxolino.apps.floats.core.io.BitOutputStream
 
 class FileRequest(
@@ -20,8 +22,11 @@ class FileRequest(
   }
 
   fun execute(context: Context, writer: MultiChannelSystem) {
+    val localPort = SocketUtils.findAvailableTcpPort()
+
     val fileNameBytes = fileName.toByteArray()
     val requestData = BitOutputStream()
+      .writeInt32(localPort)
       .writeInt32(fileLength)
       .writeInt32(fileNameBytes.size)
       .write(fileNameBytes)
@@ -33,6 +38,7 @@ class FileRequest(
       .putExtra("file_uri", fileInput.toString())
       .putExtra("file_name", fileName)
       .putExtra("file_length", fileLength)
+      .putExtra("local_port", localPort)
 
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
       context.startForegroundService(service)

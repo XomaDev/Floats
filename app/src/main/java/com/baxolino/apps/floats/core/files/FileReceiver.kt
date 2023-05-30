@@ -10,7 +10,7 @@ import android.os.Messenger
 import com.baxolino.apps.floats.SessionActivity
 
 
-class FileReceiver internal constructor(val name: String, val length: Int) {
+class FileReceiver internal constructor(private val port: Int, val name: String, val length: Int) {
 
   private lateinit var startListener: () -> Unit
 
@@ -24,6 +24,8 @@ class FileReceiver internal constructor(val name: String, val length: Int) {
 
   // formatted transfer speed like 7 Mb(ps)
   var transferSpeed = ""
+
+  private val handler = EventHandler(this)
 
   fun setStartListener(listener: () -> Unit) {
     startListener = listener
@@ -45,7 +47,6 @@ class FileReceiver internal constructor(val name: String, val length: Int) {
         action = FileReceiveService.CANCEL_REQUEST_ACTION
       })
   }
-
 
   class EventHandler(private val receiver: FileReceiver) : Handler(Looper.getMainLooper()) {
     override fun handleMessage(message: Message) {
@@ -72,12 +73,12 @@ class FileReceiver internal constructor(val name: String, val length: Int) {
     }
   }
 
-  private val handler = EventHandler(this)
-
   fun receive(session: SessionActivity) {
     val service = Intent(session, FileReceiveService::class.java)
       .putExtra("file_receive", name)
       .putExtra("file_length", length)
+      .putExtra("port", port)
+      .putExtra("host_address", session.hostAddress)
       .putExtra("handler", Messenger(handler))
 
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)

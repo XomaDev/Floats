@@ -17,9 +17,9 @@ import android.util.Log
 import android.widget.RemoteViews
 import androidx.annotation.RequiresApi
 import androidx.core.app.NotificationCompat
-import com.baxolino.apps.floats.NsdInterface
 import com.baxolino.apps.floats.R
 import com.baxolino.apps.floats.core.Config
+import com.baxolino.apps.floats.core.http.SocketConnection
 import com.baxolino.apps.floats.core.io.DummyOutputStream
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
@@ -45,7 +45,7 @@ class FileReceiveService : Service() {
 
   private lateinit var notificationManager: NotificationManager
 
-  private lateinit var nsdService: NsdInterface
+  private lateinit var connection: SocketConnection
   private lateinit var messenger: Messenger
 
   private var notificationId: Int = 7
@@ -83,23 +83,19 @@ class FileReceiveService : Service() {
 
     registerReceiver(cancelRequestReceiver, IntentFilter(CANCEL_REQUEST_ACTION))
 
-    initiateDiscovery(fileName)
+    val port = intent.getIntExtra("port", -1)
+    val hostAddress = intent.getStringExtra("host_address")!!
+
+    initSocketConnection(port, hostAddress)
     return START_NOT_STICKY
   }
 
-  private fun initiateDiscovery(name: String) {
-    nsdService = object : NsdInterface(applicationContext) {
-      override fun accepted() {
-        // method not called since we are the one
-        // accepting connection
-      }
-
-      override fun connected(serviceName: String) {
-        Log.d(TAG, "Connected")
-        receiveContents()
-      }
-    }
-    nsdService.discover(name)
+  private fun initSocketConnection(port: Int, host: String) {
+    // does not matter what we pass to constructor over here
+   connection = SocketConnection(0)
+     .connectOnPort(port, host) {
+       receiveContents()
+     }
   }
 
   private fun receiveContents() {
@@ -113,7 +109,7 @@ class FileReceiveService : Service() {
     )
 
     val output = DummyOutputStream()
-    val zipInput = GZIPInputStream(nsdService.input, Config.BUFFER_SIZE)
+    val zipInput = GZIPInputStream(connection.input, Config.BUFFER_SIZE)
     val buffer = ByteArray(Config.BUFFER_SIZE)
 
     var n = 0
@@ -127,7 +123,7 @@ class FileReceiveService : Service() {
     if (cancelled)
       return
     zipInput.close()
-    nsdService.detach()
+    connection.close()
 
     onComplete()
   }
@@ -167,7 +163,7 @@ class FileReceiveService : Service() {
     // send a cancel request to the sender
     Thread {
       // service operators on the main thread
-      nsdService.socket.sendUrgentData(0)
+      connection.socket.sendUrgentData(0)
     }.start()
     val executor = Executors.newScheduledThreadPool(1)
 

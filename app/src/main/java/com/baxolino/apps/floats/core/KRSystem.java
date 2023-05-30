@@ -9,7 +9,7 @@ import android.util.Log;
 
 import androidx.annotation.NonNull;
 
-import com.baxolino.apps.floats.NsdFloats;
+import com.baxolino.apps.floats.core.http.NsdFloats;
 import com.baxolino.apps.floats.core.files.FileRequest;
 import com.baxolino.apps.floats.core.files.RequestHandler;
 import com.baxolino.apps.floats.core.io.BitOutputStream;

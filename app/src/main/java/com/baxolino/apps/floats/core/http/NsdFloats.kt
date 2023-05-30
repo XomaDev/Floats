@@ -1,9 +1,14 @@
-package com.baxolino.apps.floats
+package com.baxolino.apps.floats.core.http
 
 import android.annotation.SuppressLint
+import com.baxolino.apps.floats.HomeActivity
+import java.net.InetAddress
 
 @SuppressLint("UnsafeOptInUsageError")
 class NsdFloats(private val home: HomeActivity, name: String): NsdInterface(home) {
+
+  // the device address of what we are connected to
+  var hostAddress = ""
 
   companion object {
     private var nsdFloatsInstance: NsdFloats? = null
@@ -24,8 +29,10 @@ class NsdFloats(private val home: HomeActivity, name: String): NsdInterface(home
     home.deviceConnected(true, null)
   }
 
-  override fun connected(serviceName: String) {
+  override fun connected(serviceName: String, host: InetAddress) {
     saveConnectedDevice(serviceName)
+
+    hostAddress = host.hostAddress as String
     home.deviceConnected(false, serviceName)
   }
 }

@@ -1,4 +1,4 @@
-package com.baxolino.apps.floats
+package com.baxolino.apps.floats.core.http
 
 import android.annotation.SuppressLint
 import android.content.Context
@@ -8,10 +8,10 @@ import android.net.nsd.NsdServiceInfo
 import android.net.wifi.WifiManager
 import android.util.Log
 import com.baxolino.apps.floats.core.Config
-import com.baxolino.apps.floats.core.http.SocketUtils
 import java.io.IOException
 import java.io.InputStream
 import java.io.OutputStream
+import java.net.InetAddress
 import java.net.ServerSocket
 import java.net.Socket
 
@@ -240,11 +240,11 @@ abstract class NsdInterface constructor(context: Context) {
 
           Log.d(TAG, "######## Connection Was Established")
 
-          connected(requestName)
+          connected(requestName, host)
 
           Log.e(TAG, "Resolve Succeeded. $mService port $port")
         } catch (io: IOException) {
-          Log.d(TAG, "Failed To Connect")
+          Log.d(TAG, "I/O Exception ${io.message}")
         }
       }
     })
@@ -275,5 +275,5 @@ abstract class NsdInterface constructor(context: Context) {
 
   abstract fun accepted()
 
-  abstract fun connected(serviceName: String)
+  abstract fun connected(serviceName: String, host: InetAddress)
 }

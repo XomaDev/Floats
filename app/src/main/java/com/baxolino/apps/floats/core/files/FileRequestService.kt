@@ -15,9 +15,9 @@ import android.widget.RemoteViews
 import android.widget.Toast
 import androidx.annotation.RequiresApi
 import androidx.core.app.NotificationCompat
-import com.baxolino.apps.floats.NsdInterface
 import com.baxolino.apps.floats.R
 import com.baxolino.apps.floats.core.Config
+import com.baxolino.apps.floats.core.http.SocketConnection
 import java.io.InputStream
 import java.net.SocketException
 import java.util.concurrent.Executors
@@ -28,7 +28,7 @@ class FileRequestService : Service() {
 
   private lateinit var notificationManager: NotificationManager
 
-  private lateinit var nsdService: NsdInterface
+  private lateinit var connection: SocketConnection
 
   private var fileLength = 0
   private var notificationId: Int = 8
@@ -43,6 +43,8 @@ class FileRequestService : Service() {
 
     val uri = Uri.parse(intent.getStringExtra("file_uri"))
     val fileName = intent.getStringExtra("file_name")!!
+    val localPort = intent.getIntExtra("local_port", -1)
+
     fileNameShort = FileNameUtil.toShortDisplayName(fileName)
 
     fileLength = intent.getIntExtra("file_length", -1)
@@ -52,27 +54,16 @@ class FileRequestService : Service() {
     notificationId = fileName.hashCode()
     createForeground(notificationId)
 
-    requestNsdTransfer(uri, fileName)
-
+    initSocketConnection(uri, localPort)
     return START_NOT_STICKY
   }
 
-  private fun requestNsdTransfer(uri: Uri, fileName: String) {
-    nsdService = object : NsdInterface(applicationContext) {
-      override fun accepted() {
-        // the other device found the service and now is connected
-        Log.d(TAG, "accepted()")
+  private fun initSocketConnection(uri: Uri, localPort: Int) {
+    connection = SocketConnection(localPort)
+      .acceptOnPort {
         lookForAbortRequests()
         uploadFileContents(uri)
       }
-
-      override fun connected(serviceName: String) {
-        // not invoked, since we are not the one making the request
-      }
-    }
-    // register as the name of the file
-    // register as the name of the file
-    nsdService.registerService(fileName)
   }
 
   private fun createForeground(notificationId: Int) {
@@ -91,7 +82,7 @@ class FileRequestService : Service() {
 
     timeStart = System.currentTimeMillis()
 
-    val zipOutputStream = GZIPOutputStream(nsdService.output)
+    val zipOutputStream = GZIPOutputStream(connection.output)
 
     val buffer = ByteArray(Config.BUFFER_SIZE)
 
@@ -119,7 +110,7 @@ class FileRequestService : Service() {
       zipOutputStream.close()
     }
 
-    nsdService.unregister()
+    connection.close()
     onComplete()
   }
 
@@ -131,13 +122,17 @@ class FileRequestService : Service() {
     if (difference != 0L) {
       speed = Formatter.formatFileSize(
         applicationContext,
-        written.toFloat().div(difference.toFloat()
-          .div(1000f)).toLong()
+        written.toFloat().div(
+          difference.toFloat()
+            .div(1000f)
+        ).toLong()
       )
     }
 
-    notificationManager.notify(notificationId,
-      buildNotification(written, speed))
+    notificationManager.notify(
+      notificationId,
+      buildNotification(written, speed)
+    )
   }
 
   private fun buildNotification(progress: Int, speed: String): Notification {
@@ -179,7 +174,7 @@ class FileRequestService : Service() {
   }
 
   private fun lookForAbortRequests() {
-    val input: InputStream = nsdService.input
+    val input: InputStream = connection.input
     val service = Executors.newScheduledThreadPool(1)
 
     service.scheduleAtFixedRate({

@@ -1,7 +1,7 @@
 package com.baxolino.apps.floats.core.http;
 
 /*
-  Modified class by the spring library for Android
+  Modified class from the spring library for Android
  */
 
 import java.io.IOException;

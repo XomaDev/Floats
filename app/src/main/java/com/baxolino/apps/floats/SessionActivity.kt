@@ -36,6 +36,8 @@ class SessionActivity : AppCompatActivity() {
   private lateinit var fileNameLabel: TextView
   private lateinit var fileSizeLabel: TextView
 
+  lateinit var hostAddress: String
+
   private lateinit var transferSpeedText: TextView
 
   private lateinit var progressBar: CircularProgressIndicator
@@ -56,6 +58,7 @@ class SessionActivity : AppCompatActivity() {
 
     // or else we are just testing
     val deviceName = intent.getStringExtra("deviceName")
+    hostAddress = intent.getStringExtra("hostAddress")!!
 
     val label = findViewById<TextView>(R.id.label)
     label.text = "Connected to $deviceName"
