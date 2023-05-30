@@ -26,13 +26,13 @@ class NsdFloats(private val home: HomeActivity, name: String): NsdInterface(home
   }
 
   override fun accepted() {
-    home.deviceConnected(true, null)
+    home.onConnectionAccepted()
   }
 
   override fun connected(serviceName: String, host: InetAddress) {
     saveConnectedDevice(serviceName)
 
     hostAddress = host.hostAddress as String
-    home.deviceConnected(false, serviceName)
+    home.onConnectionSuccessful(serviceName)
   }
 }

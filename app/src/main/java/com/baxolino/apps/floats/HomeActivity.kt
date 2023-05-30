@@ -42,7 +42,7 @@ class HomeActivity : AppCompatActivity() {
   }
 
   private lateinit var adapter: BluetoothAdapter
-  private lateinit var deviceName: String
+  private lateinit var ourDeviceName: String
 
   private lateinit var nsdFloats: NsdFloats
 
@@ -60,7 +60,7 @@ class HomeActivity : AppCompatActivity() {
     val deviceId = getDeviceName()
 
     deviceText.text = deviceId
-    deviceName = deviceId
+    ourDeviceName = deviceId
 
     val qrImageView = findViewById<ImageView>(R.id.qr_image)
     generateQr(qrImageView, deviceId)
@@ -69,7 +69,7 @@ class HomeActivity : AppCompatActivity() {
 
     // creating the instance will register
     // NSD service
-    nsdFloats = NsdFloats.getInstance(this, deviceName)!!
+    nsdFloats = NsdFloats.getInstance(this, ourDeviceName)!!
 
     if (intent.hasExtra("address")) {
       // we are back from the qr scan activity
@@ -127,31 +127,6 @@ class HomeActivity : AppCompatActivity() {
           }
         }
       })
-
-
-//    val krSystem = KRSystem.getInstanceUnsafe()
-//
-//    krSystem?.let {
-//      krSystem.readKnowRequest(object : KnowListener {
-//        override fun received(name: String) {
-//          // save the device name here so that the user
-//          // can quick connect to it later
-//          nsdFloats.saveConnectedDevice(name)
-//
-//          runOnUiThread { informConnection(name) }
-//        }
-//
-//        override fun timeout() {
-//          runOnUiThread {
-//            Toast.makeText(
-//              applicationContext,
-//              "Client failed to send to know request. [1]",
-//              Toast.LENGTH_SHORT
-//            ).show()
-//          }
-//        }
-//      })
-//    }
   }
 
   private fun getDeviceName(): String {
@@ -163,66 +138,64 @@ class HomeActivity : AppCompatActivity() {
     )
   }
 
+  // called upon connection, from NsdFloats.kt
 
-  // called from NsdFloats.java class after
-  // creating connection with another device
+  fun onConnectionAccepted() {
+    val system = KRSystem.getInstance(this, ourDeviceName, nsdFloats)
 
-  // TODO:
-  //  split up the codes so that it's better
-  fun deviceConnected(isServer: Boolean, device: String?) {
-    val krSystem = KRSystem.getInstance(this, deviceName, nsdFloats)
+    // we are yet to find out who has connected us
+    system.readKnowRequest(object : KnowListener {
+      override fun received(data: String) {
+        val dividerIndex = data.indexOf("%")
 
-    Log.d(TAG, "deviceConnected()")
-    if (!isServer) {
-      Log.d(TAG, "deviceConnected: Posting Request")
+        val hostAddress = data.substring(0, dividerIndex)
+        nsdFloats.hostAddress = hostAddress
 
-      // we'll send this to other device so that it knows
-      // who are we
-      val data = SocketConnection.getIpv4(applicationContext)
-        .hostAddress!!.plus("%$deviceName")
+        val name = data.substring(dividerIndex + 1, data.length)
+        // save the device name here so that the user
+        // can quick connect to it later
+        nsdFloats.saveConnectedDevice(name)
 
-      krSystem.postKnowRequest(data, {
-        // client received know-request
-        Log.d(TAG, "Know Request Successful")
-        runOnUiThread { informConnection(device!!, nsdFloats.hostAddress) }
-      }, {
-        Log.d(TAG, "Server failed to respond to KR")
+        runOnUiThread { informConnection(name, hostAddress) }
+      }
+
+      override fun timeout() {
         runOnUiThread {
           Toast.makeText(
-            this,
-            "$device did not respond to request.",
+            applicationContext,
+            "Client failed to send to know request.",
             Toast.LENGTH_SHORT
           ).show()
         }
-      })
-    } else {
-      krSystem.readKnowRequest(object : KnowListener {
-        override fun received(data: String) {
-          val indexOfDiv = data.indexOf("%")
-
-          val theirAddress = data.substring(0, indexOfDiv)
-          nsdFloats.hostAddress = theirAddress
-
-          val name = data.substring(indexOfDiv + 1, data.length)
-          // save the device name here so that the user
-          // can quick connect to it later
-          nsdFloats.saveConnectedDevice(name)
-
-          runOnUiThread { informConnection(name, theirAddress) }
-        }
-
-        override fun timeout() {
-          runOnUiThread {
-            Toast.makeText(
-              applicationContext,
-              "Client failed to send to know request.",
-              Toast.LENGTH_SHORT
-            ).show()
-          }
-        }
-      })
-    }
+      }
+    })
   }
+
+  // called upon successful connection request from
+  // NsdFloats.kt
+  fun onConnectionSuccessful(connectedDevice: String) {
+    val data = SocketConnection.getIpv4(applicationContext)
+      .hostAddress!!.plus("%$ourDeviceName")
+
+    val system = KRSystem.getInstance(this, ourDeviceName, nsdFloats)
+    system.postKnowRequest(data, {
+      // client received know-request
+      Log.d(TAG, "Know Request Successful")
+      runOnUiThread {
+        informConnection(connectedDevice, nsdFloats.hostAddress)
+      }
+    }, {
+      Log.d(TAG, "Server failed to respond to KR")
+      runOnUiThread {
+        Toast.makeText(
+          this,
+          "$connectedDevice did not respond to request.",
+          Toast.LENGTH_SHORT
+        ).show()
+      }
+    })
+  }
+
 
   private fun informConnection(deviceName: String, hostAddress: String) {
     startActivity(
