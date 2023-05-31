@@ -29,8 +29,9 @@ import com.github.alexzhirkevich.customqrgenerator.vector.style.QrVectorFrameSha
 import com.github.alexzhirkevich.customqrgenerator.vector.style.QrVectorPixelShape
 import com.github.alexzhirkevich.customqrgenerator.vector.style.QrVectorShapes
 import com.google.android.material.button.MaterialButton
-import org.json.JSONObject
+import java.net.InetAddress
 import java.nio.ByteBuffer
+import java.nio.ByteOrder
 
 
 @ExperimentalGetImage
@@ -38,10 +39,6 @@ class HomeActivity : AppCompatActivity() {
 
   companion object {
     private const val TAG = "HomeActivity"
-
-    private const val JSON_IPV4 = "Ipv4"
-    private const val JSON_PORT = "port"
-    private const val JSON_DEVICE_NAME = "device_name"
   }
 
   private lateinit var adapter: BluetoothAdapter
@@ -98,8 +95,8 @@ class HomeActivity : AppCompatActivity() {
     deviceConnectionInfo = connectionInfo
     generateQr(qrImageView, connectionInfo)
 
-    if (intent.hasExtra("address")) {
-      connect()
+    if (intent.hasExtra("content")) {
+      onScanResult()
     } else {
       val scanButton = findViewById<MaterialButton>(R.id.scanButton)
 
@@ -111,25 +108,35 @@ class HomeActivity : AppCompatActivity() {
     }
   }
 
-  private fun connect() {
+  private fun onScanResult() {
     // we are back from the qr scan activity
     // and we can connect to that bluetooth device from the address
-    val qrContent = intent.getStringExtra("address")
+    val qrContent = intent.getStringExtra("content")
 
     // initiates nsd discovery and tries to find
     // the device with the {name}
     qrContent?.let {
-      val json = JSONObject(qrContent)
+      val args = qrContent.split("\u0000")
+      val ipv4Address = InetAddress.getByAddress(
+        ByteBuffer
+          .allocate(Integer.BYTES)
+          .order(ByteOrder.LITTLE_ENDIAN)
+          .putInt(args[0].toInt())
+          .array())
+        .hostAddress!!
 
+      val port = args[1].toInt()
+      val deviceId = args[2]
+
+      Log.d(TAG, "onScanResult: $args")
       Toast.makeText(
         this,
         "Connecting", Toast.LENGTH_SHORT
       ).show()
 
-      val ipv4Address = json.getString(JSON_IPV4)
-      connector.connectOnPort(json.getInt(JSON_PORT), ipv4Address) {
+      connector.connectOnPort(port, ipv4Address) {
         Log.d(TAG, "Connection was established")
-        onConnectionSuccessful(json.getString(JSON_DEVICE_NAME), ipv4Address)
+        onConnectionSuccessful(deviceId, ipv4Address)
       }
     }
   }

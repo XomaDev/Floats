@@ -73,7 +73,7 @@ import com.baxolino.apps.floats.R
         cameraProvider.unbindAll()
         startActivity(
             Intent(this, HomeActivity::class.java)
-                .putExtra("address", rawString)
+                .putExtra("content", rawString)
         )
     }
 }
