@@ -4,6 +4,7 @@ import android.content.Context
 import android.net.ConnectivityManager
 import android.net.LinkProperties
 import android.util.Log
+import com.baxolino.apps.floats.core.Config
 import java.io.InputStream
 import java.io.OutputStream
 import java.net.InetAddress
@@ -91,6 +92,9 @@ class SocketConnection(private val localPort: Int) {
       // input stream
       if (!oobInline)
         oobInline = true
+
+      sendBufferSize = Config.BUFFER_SIZE
+      receiveBufferSize = Config.BUFFER_SIZE
     }
   }
 
