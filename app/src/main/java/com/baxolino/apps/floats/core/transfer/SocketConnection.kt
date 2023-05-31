@@ -58,7 +58,7 @@ class SocketConnection (private val localPort: Int) {
 
     fun getMainInstance(localPort: Int): SocketConnection {
       connectionMain?.let {
-        throw Error("Socket Connection already exists")
+        return it
       }
       SocketConnection(localPort)
         .apply {
@@ -79,26 +79,26 @@ class SocketConnection (private val localPort: Int) {
   lateinit var output: OutputStream
 
   fun acceptOnPort(onConnect: () -> Unit): SocketConnection {
-    thread {
-      val serverSocket = ServerSocket(localPort)
-      socket = serverSocket.accept()
-
-      Log.d(TAG, "acceptOnPort() Connection was accepted.")
-
-      onConnected()
-      onConnect.invoke()
-    }
+//    thread {
+//      val serverSocket = ServerSocket(localPort)
+//      socket = serverSocket.accept()
+//
+//      Log.d(TAG, "acceptOnPort() Connection was accepted.")
+//
+//      onConnected()
+//      onConnect.invoke()
+//    }
     return this
   }
 
   fun connectOnPort(port: Int, host: String, onConnect: () -> Unit): SocketConnection {
-    thread {
-      socket = Socket(host, port)
-      Log.d(TAG, "acceptOnPort() Connection was established.")
-
-      onConnected()
-      onConnect.invoke()
-    }
+//    thread {
+//      socket = Socket(host, port)
+//      Log.d(TAG, "acceptOnPort() Connection was established.")
+//
+//      onConnected()
+//      onConnect.invoke()
+//    }
     return this
   }
 
