@@ -33,21 +33,6 @@ object ThemeHelper {
             )
         )
 
-
-        val deviceStatusCard = homeActivity.findViewById<MaterialCardView>(R.id.device_status)
-        deviceStatusCard.backgroundTintList = ColorStateList.valueOf(
-            homeActivity.getColor(
-                R.color.card_view_background
-            )
-        )
-
-        val frameStatusCard = homeActivity.findViewById<MaterialCardView>(R.id.outline_status_card)
-        frameStatusCard.backgroundTintList = ColorStateList.valueOf(
-            homeActivity.getColor(
-                R.color.mtr_card_varient_background
-            )
-        )
-
     }
 
     fun themeOfSessionActivity(session: SessionActivity) {

@@ -7,8 +7,7 @@ import android.os.Build
 import android.util.Log
 import com.baxolino.apps.floats.core.Channel
 import com.baxolino.apps.floats.core.MultiChannelSystem
-import com.baxolino.apps.floats.core.http.SocketConnection
-import com.baxolino.apps.floats.core.http.SocketUtils
+import com.baxolino.apps.floats.core.transfer.SocketUtils
 import com.baxolino.apps.floats.core.io.BitOutputStream
 
 class FileRequest(

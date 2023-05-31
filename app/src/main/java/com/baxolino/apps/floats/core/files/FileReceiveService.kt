@@ -19,7 +19,7 @@ import androidx.annotation.RequiresApi
 import androidx.core.app.NotificationCompat
 import com.baxolino.apps.floats.R
 import com.baxolino.apps.floats.core.Config
-import com.baxolino.apps.floats.core.http.SocketConnection
+import com.baxolino.apps.floats.core.transfer.SocketConnection
 import com.baxolino.apps.floats.core.io.DummyOutputStream
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit

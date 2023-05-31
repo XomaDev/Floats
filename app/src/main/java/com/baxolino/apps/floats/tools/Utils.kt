@@ -4,7 +4,7 @@ import android.content.ContentResolver
 import android.content.Context
 import android.os.Build
 import android.provider.Settings
-import com.baxolino.apps.floats.core.http.SocketConnection
+import com.baxolino.apps.floats.core.transfer.SocketConnection
 
 object Utils {
   fun getDeviceName(contentResolver: ContentResolver): String {

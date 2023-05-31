@@ -1,18 +1,20 @@
-package com.baxolino.apps.floats.core.http
+package com.baxolino.apps.floats.core.transfer
 
 import android.content.Context
 import android.net.ConnectivityManager
 import android.net.LinkProperties
 import android.util.Log
 import com.baxolino.apps.floats.core.Config
+import com.baxolino.apps.floats.core.encryption.AsymmetricEncryption
 import java.io.InputStream
 import java.io.OutputStream
 import java.net.InetAddress
 import java.net.ServerSocket
 import java.net.Socket
+import java.security.KeyPair
 import kotlin.concurrent.thread
 
-class SocketConnection(private val localPort: Int) {
+class SocketConnection (private val localPort: Int) {
 
   companion object {
     private const val TAG = "SocketConnection"
@@ -50,6 +52,24 @@ class SocketConnection(private val localPort: Int) {
       } catch (nfe: NumberFormatException) {
         false
       }
+    }
+
+    private var connectionMain: SocketConnection? = null
+
+    fun getMainInstance(localPort: Int): SocketConnection {
+      connectionMain?.let {
+        throw Error("Socket Connection already exists")
+      }
+      SocketConnection(localPort)
+        .apply {
+          connectionMain = this
+          return this
+        }
+    }
+
+    fun getMainExisting(): SocketConnection {
+      connectionMain?.let { return it }
+      throw Error("Socket Connection Not Initialized")
     }
   }
 

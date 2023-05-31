@@ -10,7 +10,7 @@ import androidx.annotation.NonNull;
 
 import com.baxolino.apps.floats.core.files.FileRequest;
 import com.baxolino.apps.floats.core.files.RequestHandler;
-import com.baxolino.apps.floats.core.http.SocketConnection;
+import com.baxolino.apps.floats.core.transfer.SocketConnection;
 import com.baxolino.apps.floats.core.io.BitOutputStream;
 import com.baxolino.apps.floats.core.io.DataInputStream;
 

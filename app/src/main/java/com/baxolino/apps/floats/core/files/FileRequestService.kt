@@ -17,7 +17,7 @@ import androidx.annotation.RequiresApi
 import androidx.core.app.NotificationCompat
 import com.baxolino.apps.floats.R
 import com.baxolino.apps.floats.core.Config
-import com.baxolino.apps.floats.core.http.SocketConnection
+import com.baxolino.apps.floats.core.transfer.SocketConnection
 import java.io.InputStream
 import java.net.SocketException
 import java.util.concurrent.Executors

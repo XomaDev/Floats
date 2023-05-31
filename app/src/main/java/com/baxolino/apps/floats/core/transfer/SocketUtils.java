@@ -1,4 +1,4 @@
-package com.baxolino.apps.floats.core.http;
+package com.baxolino.apps.floats.core.transfer;
 
 /*
   Modified class from the spring library for Android

@@ -15,8 +15,8 @@ import androidx.camera.core.ExperimentalGetImage
 import com.baxolino.apps.floats.camera.ScanActivity
 import com.baxolino.apps.floats.core.KRSystem
 import com.baxolino.apps.floats.core.KRSystem.KnowListener
-import com.baxolino.apps.floats.core.http.SocketConnection
-import com.baxolino.apps.floats.core.http.SocketUtils
+import com.baxolino.apps.floats.core.transfer.SocketConnection
+import com.baxolino.apps.floats.core.transfer.SocketUtils
 import com.baxolino.apps.floats.tools.ThemeHelper
 import com.baxolino.apps.floats.tools.Utils
 import com.github.alexzhirkevich.customqrgenerator.QrData
@@ -30,6 +30,7 @@ import com.github.alexzhirkevich.customqrgenerator.vector.style.QrVectorPixelSha
 import com.github.alexzhirkevich.customqrgenerator.vector.style.QrVectorShapes
 import com.google.android.material.button.MaterialButton
 import org.json.JSONObject
+import java.nio.ByteBuffer
 
 
 @ExperimentalGetImage
@@ -71,7 +72,7 @@ class HomeActivity : AppCompatActivity() {
 
     // create a new socket connection with the local port
     localPort = SocketUtils.findAvailableTcpPort()
-    connector = SocketConnection(localPort)
+    connector = SocketConnection.getMainInstance(localPort)
       .acceptOnPort {
         Log.d(TAG, "Connection was accepted.")
         onConnectionAccepted(
@@ -79,17 +80,23 @@ class HomeActivity : AppCompatActivity() {
         )
       }
 
-    val connectionInfo = JSONObject()
-      .put(
-        JSON_IPV4, SocketConnection.getIpv4(this)
-          .hostAddress
-      ).put(
-        JSON_PORT, localPort
-      ).put(
-        JSON_DEVICE_NAME, deviceId
-      )
-    deviceConnectionInfo = connectionInfo.toString()
-    generateQr(qrImageView, connectionInfo.toString())
+
+    // TODO:
+    //  we have to also change the read mechanism
+    //  after qr-scanning
+    val connectionInfo = arrayOf(
+      ByteBuffer.wrap(
+        SocketConnection.getIpv4(this).address
+      ).int,
+      localPort,
+      // TODO:
+      //  let's make it much more smaller by using alternative
+      //  method to embedding device id here
+      deviceId
+    ).joinToString("\u0000")
+
+    deviceConnectionInfo = connectionInfo
+    generateQr(qrImageView, connectionInfo)
 
     if (intent.hasExtra("address")) {
       connect()
@@ -156,12 +163,10 @@ class HomeActivity : AppCompatActivity() {
     val system = KRSystem.getInstance(selfDeviceId, connector)
     system.postKnowRequest(deviceName, {
       // client received know-request
-      Log.d(TAG, "Know Request Successful")
       runOnUiThread {
         informConnection(deviceName, hostAddress)
       }
     }, {
-      Log.d(TAG, "Server failed to respond to KR")
       runOnUiThread {
         Toast.makeText(
           this,
