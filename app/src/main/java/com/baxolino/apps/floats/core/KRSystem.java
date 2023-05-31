@@ -4,21 +4,16 @@ import static com.baxolino.apps.floats.core.Channel.ALIVE_CHECKS_CHANNEL;
 import static com.baxolino.apps.floats.core.Channel.KNOW_REQUEST_CHANNEL;
 
 import android.content.Context;
-import android.net.wifi.WifiManager;
 import android.util.Log;
 
 import androidx.annotation.NonNull;
 
-import com.baxolino.apps.floats.core.http.NsdFloats;
 import com.baxolino.apps.floats.core.files.FileRequest;
 import com.baxolino.apps.floats.core.files.RequestHandler;
+import com.baxolino.apps.floats.core.http.SocketConnection;
 import com.baxolino.apps.floats.core.io.BitOutputStream;
 import com.baxolino.apps.floats.core.io.DataInputStream;
 
-import java.net.InetAddress;
-import java.net.UnknownHostException;
-import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -55,17 +50,12 @@ public class KRSystem {
     throw new IllegalStateException("KR System Not Initialized");
   }
 
-  public static KRSystem getInstanceUnsafe() {
-    return krSystem;
-  }
-
-  public static @NonNull KRSystem getInstance(Context context,
-                                     String deviceName,
-                                     NsdFloats floats) throws UnknownHostException {
+  public static @NonNull KRSystem getInstance(String deviceName,
+                                              SocketConnection connection) {
     // TODO:
-    //  update the streams accordingly, this may cause side effectd
+    //  update the streams accordingly, this may cause side effects
     //  take a look into it tomorrow, please!
-    return krSystem = new KRSystem(context, deviceName, floats);
+    return krSystem = new KRSystem(deviceName, connection);
   }
 
   public interface KnowListener {
@@ -79,33 +69,14 @@ public class KRSystem {
   private final MultiChannelStream reader;
   private final MultiChannelSystem writer;
 
-  private final int deviceIntIp;
-
-  private String otherDeviceIp = null;
-
-  private KRSystem(Context context, String deviceName, NsdFloats floats) throws UnknownHostException {
+  private KRSystem(String deviceName, SocketConnection connection) {
     this.deviceName = deviceName;
 
-    reader = new MultiChannelStream(floats.input);
-    writer = new MultiChannelSystem(floats.output);
+    reader = new MultiChannelStream(connection.input);
+    writer = new MultiChannelSystem(connection.output);
 
     reader.start();
     writer.start();
-
-    WifiManager wifi = context.getSystemService(WifiManager.class);
-
-    deviceIntIp = wifi.getConnectionInfo().getIpAddress();
-    Log.d(TAG, "Device Ip = " + formatIp(deviceIntIp));
-  }
-
-  private String formatIp(int intIp) throws UnknownHostException {
-    return InetAddress.getByAddress(
-                    ByteBuffer
-                            .allocate(Integer.BYTES)
-                            .order(ByteOrder.LITTLE_ENDIAN)
-                            .putInt(intIp)
-                            .array())
-            .getHostAddress();
   }
 
   public void postKnowRequest(String name, Runnable knowSuccessful, Runnable knowFailed) {
@@ -114,7 +85,6 @@ public class KRSystem {
     byte[] content = new BitOutputStream()
             .writeShort16((short) bytes.length)
             .write(bytes)
-            .writeInt32(deviceIntIp)
             .toBytes();
     writer.write(KNOW_REQUEST_CHANNEL, content);
 
@@ -122,12 +92,6 @@ public class KRSystem {
     input.setByteListener((b) -> {
       if (b == KNOW_RESPONSE_INT) {
         input.skip(1);
-        try {
-          otherDeviceIp = formatIp(input.readInt32());
-          Log.d(TAG, "Received Other Device Ip = " + otherDeviceIp);
-        } catch (UnknownHostException e) {
-          throw new RuntimeException(e);
-        }
 
         knowState = KnowRequestState.SUCCESS;
         knowSuccessful.run();
@@ -172,12 +136,6 @@ public class KRSystem {
         // we expected
         listener.timeout();
       } else {
-        try {
-          otherDeviceIp = formatIp(input.readInt32());
-          Log.d(TAG, "Received Other Device Id = " + otherDeviceIp);
-        } catch (UnknownHostException e) {
-          throw new RuntimeException(e);
-        }
 
         // @Important if we want to use same channel again
         input.flushCurrent();
@@ -190,7 +148,6 @@ public class KRSystem {
 
         writer.write(KNOW_REQUEST_CHANNEL, new BitOutputStream()
                 .write(KNOW_RESPONSE_INT)
-                .writeInt32(deviceIntIp)
                 .toBytes());
       }
       reader.forget(KNOW_REQUEST_CHANNEL);

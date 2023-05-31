@@ -19,6 +19,7 @@ class SocketConnection(private val localPort: Int) {
     fun getIpv4(context: Context): InetAddress {
       val connector = context.getSystemService(ConnectivityManager::class.java)
 
+      // this may return null when not connected to any network
       val linkProperties = connector.getLinkProperties(connector.activeNetwork) as LinkProperties
       for (linkAddress in linkProperties.linkAddresses) {
         val address = linkAddress.address

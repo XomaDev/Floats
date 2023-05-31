@@ -15,8 +15,8 @@ import androidx.camera.core.ExperimentalGetImage
 import com.baxolino.apps.floats.camera.ScanActivity
 import com.baxolino.apps.floats.core.KRSystem
 import com.baxolino.apps.floats.core.KRSystem.KnowListener
-import com.baxolino.apps.floats.core.http.NsdFloats
-import com.baxolino.apps.floats.core.http.NsdInterface
+import com.baxolino.apps.floats.core.http.SocketConnection
+import com.baxolino.apps.floats.core.http.SocketUtils
 import com.baxolino.apps.floats.tools.ThemeHelper
 import com.baxolino.apps.floats.tools.Utils
 import com.github.alexzhirkevich.customqrgenerator.QrData
@@ -29,7 +29,7 @@ import com.github.alexzhirkevich.customqrgenerator.vector.style.QrVectorFrameSha
 import com.github.alexzhirkevich.customqrgenerator.vector.style.QrVectorPixelShape
 import com.github.alexzhirkevich.customqrgenerator.vector.style.QrVectorShapes
 import com.google.android.material.button.MaterialButton
-import com.google.android.material.card.MaterialCardView
+import org.json.JSONObject
 
 
 @ExperimentalGetImage
@@ -37,14 +37,19 @@ class HomeActivity : AppCompatActivity() {
 
   companion object {
     private const val TAG = "HomeActivity"
+
+    private const val JSON_IPV4 = "Ipv4"
+    private const val JSON_PORT = "port"
+    private const val JSON_DEVICE_NAME = "device_name"
   }
 
   private lateinit var adapter: BluetoothAdapter
 
-  private lateinit var ipv4AddressWithDeviceName: String
-  private lateinit var thisDeviceName: String
+  private lateinit var deviceConnectionInfo: String
+  private lateinit var selfDeviceId: String
 
-  private lateinit var nsdFloats: NsdFloats
+  private var localPort = -1
+  private lateinit var connector: SocketConnection
 
   @SuppressLint("HardwareIds")
   override fun onCreate(savedInstanceState: Bundle?) {
@@ -60,64 +65,43 @@ class HomeActivity : AppCompatActivity() {
     val deviceId = Utils.getDeviceName(contentResolver)
 
     deviceText.text = deviceId
-    thisDeviceName = deviceId
+    selfDeviceId = deviceId
 
     val qrImageView = findViewById<ImageView>(R.id.qr_image)
 
-    // the Qr code will include Device name and the Ipv4 address
-    ipv4AddressWithDeviceName = Utils.getIpv4WithDeviceNameString(this)
-    generateQr(qrImageView, ipv4AddressWithDeviceName)
+    // create a new socket connection with the local port
+    localPort = SocketUtils.findAvailableTcpPort()
+    connector = SocketConnection(localPort)
+      .acceptOnPort {
+        Log.d(TAG, "Connection was accepted.")
+        onConnectionAccepted(
+          connector.socket.inetAddress.hostAddress!!
+        )
+      }
 
-    val scanButton = findViewById<MaterialButton>(R.id.scanButton)
-
-    // creating the instance will register
-    // NSD service
-    nsdFloats = NsdFloats.getInstance(this, thisDeviceName)!!
+    val connectionInfo = JSONObject()
+      .put(
+        JSON_IPV4, SocketConnection.getIpv4(this)
+          .hostAddress
+      ).put(
+        JSON_PORT, localPort
+      ).put(
+        JSON_DEVICE_NAME, deviceId
+      )
+    deviceConnectionInfo = connectionInfo.toString()
+    generateQr(qrImageView, connectionInfo.toString())
 
     if (intent.hasExtra("address")) {
       connect()
     } else {
+      val scanButton = findViewById<MaterialButton>(R.id.scanButton)
+
       scanButton.setOnClickListener {
-        nsdFloats
         startActivity(
           Intent(this, ScanActivity::class.java)
         )
       }
     }
-
-    val deviceIdRecentConnection = findViewById<TextView>(R.id.recent_device_id_label)
-    val otherRecentDeviceId = nsdFloats.retrieveSavedDevice()
-
-    deviceIdRecentConnection.text = otherRecentDeviceId
-
-    val recentConnectionStatus = findViewById<TextView>(R.id.recent_connection_status)
-    val deviceStatusCard = findViewById<MaterialCardView>(R.id.device_status)
-
-    nsdFloats.registerAvailabilityListener(
-      otherRecentDeviceId,
-      object : NsdInterface.ServiceAvailableListener {
-        override fun available() {
-          runOnUiThread {
-            recentConnectionStatus.text = "Online"
-
-            deviceStatusCard.setOnClickListener {
-              Toast.makeText(
-                applicationContext,
-                "Connecting", Toast.LENGTH_SHORT
-              ).show()
-
-              nsdFloats.discover(deviceIdRecentConnection.text.toString())
-            }
-          }
-        }
-
-        override fun disappeared() {
-          runOnUiThread {
-            recentConnectionStatus.text = "Offline"
-            deviceStatusCard.setOnClickListener(null)
-          }
-        }
-      })
   }
 
   private fun connect() {
@@ -128,29 +112,30 @@ class HomeActivity : AppCompatActivity() {
     // initiates nsd discovery and tries to find
     // the device with the {name}
     qrContent?.let {
-      val ipv4AddressWithDeviceName = Utils.getIpv4AndDeviceName(qrContent)
+      val json = JSONObject(qrContent)
+
       Toast.makeText(
         this,
         "Connecting", Toast.LENGTH_SHORT
       ).show()
-      nsdFloats.discover(ipv4AddressWithDeviceName.second)
+
+      val ipv4Address = json.getString(JSON_IPV4)
+      connector.connectOnPort(json.getInt(JSON_PORT), ipv4Address) {
+        Log.d(TAG, "Connection was established")
+        onConnectionSuccessful(json.getString(JSON_DEVICE_NAME), ipv4Address)
+      }
     }
   }
 
   // called upon connection, from NsdFloats.kt
 
-  fun onConnectionAccepted() {
-    val system = KRSystem.getInstance(this, thisDeviceName, nsdFloats)
+  private fun onConnectionAccepted(hostAddress: String) {
+    val system = KRSystem.getInstance(selfDeviceId, connector)
 
     // we are yet to find out who has connected us
     system.readKnowRequest(object : KnowListener {
-      override fun received(text: String) {
-        val data = Utils.getIpv4AndDeviceName(text)
-        // save the device name here so that the user
-        // can quick connect to it later
-        nsdFloats.saveConnectedDevice(data.second)
-
-        runOnUiThread { informConnection(data.second, data.first) }
+      override fun received(deviceName: String) {
+        runOnUiThread { informConnection(deviceName, hostAddress) }
       }
 
       override fun timeout() {
@@ -167,20 +152,20 @@ class HomeActivity : AppCompatActivity() {
 
   // called upon successful connection request from
   // NsdFloats.kt
-  fun onConnectionSuccessful(connectedDevice: String) {
-    val system = KRSystem.getInstance(this, thisDeviceName, nsdFloats)
-    system.postKnowRequest(ipv4AddressWithDeviceName, {
+  private fun onConnectionSuccessful(deviceName: String, hostAddress: String) {
+    val system = KRSystem.getInstance(selfDeviceId, connector)
+    system.postKnowRequest(deviceName, {
       // client received know-request
       Log.d(TAG, "Know Request Successful")
       runOnUiThread {
-        informConnection(connectedDevice, nsdFloats.hostAddress)
+        informConnection(deviceName, hostAddress)
       }
     }, {
       Log.d(TAG, "Server failed to respond to KR")
       runOnUiThread {
         Toast.makeText(
           this,
-          "$connectedDevice did not respond to request.",
+          "$deviceName did not respond to request.",
           Toast.LENGTH_SHORT
         ).show()
       }
