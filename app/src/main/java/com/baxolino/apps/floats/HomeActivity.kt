@@ -70,17 +70,8 @@ class HomeActivity : AppCompatActivity() {
     // create a new socket connection with the local port
     localPort = SocketUtils.findAvailableTcpPort()
     connector = SocketConnection.getMainInstance(localPort)
-      .acceptOnPort {
-        Log.d(TAG, "Connection was accepted.")
-        onConnectionAccepted(
-          connector.socket.inetAddress.hostAddress!!
-        )
-      }
 
 
-    // TODO:
-    //  we have to also change the read mechanism
-    //  after qr-scanning
     val connectionInfo = arrayOf(
       ByteBuffer.wrap(
         SocketConnection.getIpv4(this).address
@@ -105,6 +96,15 @@ class HomeActivity : AppCompatActivity() {
           Intent(this, ScanActivity::class.java)
         )
       }
+
+      // we put it over here because, we dont want it called multiple
+      // times
+      connector.acceptOnPort {
+        Log.d(TAG, "Connection was accepted.")
+        onConnectionAccepted(
+          connector.socket.inetAddress.hostAddress!!
+        )
+      }
     }
   }
 
@@ -120,15 +120,16 @@ class HomeActivity : AppCompatActivity() {
       val ipv4Address = InetAddress.getByAddress(
         ByteBuffer
           .allocate(Integer.BYTES)
-          .order(ByteOrder.LITTLE_ENDIAN)
+          .order(ByteOrder.BIG_ENDIAN)
           .putInt(args[0].toInt())
-          .array())
+          .array()
+      )
         .hostAddress!!
 
       val port = args[1].toInt()
       val deviceId = args[2]
 
-      Log.d(TAG, "onScanResult: $args")
+      Log.d(TAG, "onScanResult: $args $ipv4Address")
       Toast.makeText(
         this,
         "Connecting", Toast.LENGTH_SHORT

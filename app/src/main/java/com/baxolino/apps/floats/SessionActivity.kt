@@ -19,8 +19,6 @@ import com.baxolino.apps.floats.core.KRSystem
 import com.baxolino.apps.floats.core.files.FileNameUtil
 import com.baxolino.apps.floats.core.files.FileReceiver
 import com.baxolino.apps.floats.core.files.RequestHandler
-import com.baxolino.apps.floats.core.transfer.SecureSocketConnection
-import com.baxolino.apps.floats.core.transfer.SocketConnection
 import com.baxolino.apps.floats.tools.ThemeHelper
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.floatingactionbutton.FloatingActionButton
@@ -58,8 +56,6 @@ class SessionActivity : AppCompatActivity() {
     if (!isConnected)
       return
 
-    val connection = SocketConnection.getMainExisting()
-    val secure = SecureSocketConnection(connection)
 
     // or else we are just testing
     val deviceName = intent.getStringExtra("deviceName")

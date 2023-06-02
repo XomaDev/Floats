@@ -12,12 +12,11 @@ import javax.crypto.Cipher
 
 object AsymmetricEncryption {
 
-  const val KEY_SIZE_BITS = 4096
+  const val KEY_SIZE_BITS = 1024
 
   fun getKeyPair(): KeyPair {
-    val random = SecureRandom()
     KeyPairGenerator.getInstance("RSA").apply {
-      initialize(KEY_SIZE_BITS, random)
+      initialize(KEY_SIZE_BITS)
       return generateKeyPair()
     }
   }
@@ -35,14 +34,5 @@ object AsymmetricEncryption {
         )
         return this
       }
-  }
-
-  fun doFinalBytes(
-    cipher: Cipher,
-    plainText: String,
-  ): ByteArray {
-    return cipher.doFinal(
-      plainText.toByteArray()
-    )
   }
 }

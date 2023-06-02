@@ -12,6 +12,11 @@ import java.net.InetAddress
 import java.net.ServerSocket
 import java.net.Socket
 import java.security.KeyPair
+import java.util.concurrent.ScheduledThreadPoolExecutor
+import java.util.concurrent.TimeUnit
+import javax.crypto.Cipher
+import javax.crypto.CipherInputStream
+import javax.crypto.CipherOutputStream
 import kotlin.concurrent.thread
 
 class SocketConnection (private val localPort: Int) {
@@ -54,22 +59,17 @@ class SocketConnection (private val localPort: Int) {
       }
     }
 
-    private var connectionMain: SocketConnection? = null
+    private var mainSocket: SocketConnection? = null
 
     fun getMainInstance(localPort: Int): SocketConnection {
-      connectionMain?.let {
+      mainSocket?.let {
         return it
       }
       SocketConnection(localPort)
         .apply {
-          connectionMain = this
+          mainSocket = this
           return this
         }
-    }
-
-    fun getMainExisting(): SocketConnection {
-      connectionMain?.let { return it }
-      throw Error("Socket Connection Not Initialized")
     }
   }
 
@@ -78,31 +78,38 @@ class SocketConnection (private val localPort: Int) {
   lateinit var input: InputStream
   lateinit var output: OutputStream
 
+  lateinit var secureInput: InputStream
+  lateinit var secureOutput: OutputStream
+
+
+  private val keys: KeyPair = AsymmetricEncryption.getKeyPair()
+
+  private lateinit var encryptCipher: Cipher
+  private lateinit var decryptCipher: Cipher
+
   fun acceptOnPort(onConnect: () -> Unit): SocketConnection {
-//    thread {
-//      val serverSocket = ServerSocket(localPort)
-//      socket = serverSocket.accept()
-//
-//      Log.d(TAG, "acceptOnPort() Connection was accepted.")
-//
-//      onConnected()
-//      onConnect.invoke()
-//    }
+    thread {
+      val serverSocket = ServerSocket(localPort)
+      socket = serverSocket.accept()
+
+      Log.d(TAG, "acceptOnPort() Connection was accepted.")
+
+      onConnected(onConnect)
+    }
     return this
   }
 
   fun connectOnPort(port: Int, host: String, onConnect: () -> Unit): SocketConnection {
-//    thread {
-//      socket = Socket(host, port)
-//      Log.d(TAG, "acceptOnPort() Connection was established.")
-//
-//      onConnected()
-//      onConnect.invoke()
-//    }
+    thread {
+      socket = Socket(host, port)
+      Log.d(TAG, "acceptOnPort() Connection was established.")
+
+      onConnected(onConnect)
+    }
     return this
   }
 
-  private fun onConnected() {
+  private fun onConnected(onFinish: () -> Unit) {
     socket.apply {
       keepAlive = true
       input = getInputStream()
@@ -116,6 +123,65 @@ class SocketConnection (private val localPort: Int) {
       sendBufferSize = Config.BUFFER_SIZE
       receiveBufferSize = Config.BUFFER_SIZE
     }
+
+    exchangeKeys(onFinish)
+  }
+
+  /**
+   * RSA (public keys) are exchanged with each
+   * other, (max delay = 50ms)
+   */
+  private fun exchangeKeys(onFinish: () -> Unit) {
+    // send the RSA public key to the other device
+    val public = keys.public
+    Log.d(TAG, "Sending Public Key")
+    Log.d(TAG, "Sending Public Key ${keys.public.encoded.contentToString()}")
+
+    public.encoded.apply {
+      // send the key size
+      output.let {
+        it.write(size shr 8 and 0xFF)
+        it.write(size and 0xFF)
+
+        it.write(this)
+      }
+    }
+    decryptCipher = AsymmetricEncryption.init(Cipher.DECRYPT_MODE, keys.private)
+
+    // receiving their public key
+    val executor = ScheduledThreadPoolExecutor(1)
+    executor.schedule({
+      Log.d(TAG, "exchangeKeys: ---------------------- " + input.available())
+      val publicKeyBytesLen =
+        (input.read() and 255 shl 8) or (input.read() and 255)
+
+      Log.d(TAG, "exchangeKeys: length = $publicKeyBytesLen")
+      val encryptionKeyBytes = ByteArray(publicKeyBytesLen)
+
+      var offset = 0
+      while (offset != publicKeyBytesLen)
+        offset += input.read(encryptionKeyBytes, offset, publicKeyBytesLen - offset)
+      Log.d(
+        TAG,
+        "exchangeKeys: Received $offset / $publicKeyBytesLen hash = ${
+          encryptionKeyBytes.contentToString()
+        }"
+      )
+
+      val encryptionKey = AsymmetricEncryption.getPublicKey(encryptionKeyBytes)
+      encryptCipher = AsymmetricEncryption.init(Cipher.ENCRYPT_MODE, encryptionKey)
+
+      Log.d(TAG, "Exchanged Public Key")
+      initSecureStreams()
+      onFinish.invoke()
+
+      executor.shutdownNow()
+    }, 50, TimeUnit.MILLISECONDS)
+  }
+
+  private fun initSecureStreams() {
+    input = CipherInputStream(input, decryptCipher)
+    output = CipherOutputStream(output, encryptCipher)
   }
 
   fun close() {
