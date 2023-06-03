@@ -9,7 +9,6 @@ public class DataInputStream extends BitInputStream {
   }
 
 
-
   /**
    * Called when there is a new byte available;
    */
@@ -20,9 +19,9 @@ public class DataInputStream extends BitInputStream {
 
   private ByteListener byteListener = null;
 
-  private final LinkedList<Chunk> chunks = new LinkedList<>();
+  private final LinkedList<Bytes> series = new LinkedList<>();
 
-  private Chunk chunk = null;
+  private Bytes bytes = null;
 
   private boolean reachedEOS = true;
 
@@ -39,7 +38,7 @@ public class DataInputStream extends BitInputStream {
 
   public void addChunk(byte[] bytes) {
     available += bytes.length;
-    chunks.add(new Chunk(bytes));
+    series.add(new Bytes(bytes));
     reachedEOS = false;
   }
 
@@ -48,8 +47,8 @@ public class DataInputStream extends BitInputStream {
   // because of strict chunk size system
 
   public void flushCurrent() {
-    chunk = chunks.poll();
-    if (chunk == null) {
+    bytes = series.poll();
+    if (bytes == null) {
       reachedEOS = true;
     }
   }
@@ -61,15 +60,15 @@ public class DataInputStream extends BitInputStream {
 
   @Override
   public int readStream() {
-    if (chunk == null || chunk.available() == 0) {
-      chunk = chunks.poll();
-      if (chunk == null) {
+    if (bytes == null || bytes.available() == 0) {
+      bytes = series.poll();
+      if (bytes == null) {
         reachedEOS = true;
         return -1;
       }
     }
     available--;
-    return chunk.read();
+    return bytes.read();
   }
 
   public boolean reachedEOS() {
