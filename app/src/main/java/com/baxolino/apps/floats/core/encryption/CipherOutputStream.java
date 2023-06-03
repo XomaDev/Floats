@@ -35,7 +35,7 @@ public class CipherOutputStream extends OutputStream {
 
   @Override
   public void write(int b) throws IOException {
-    write(new byte[b], 0, 1);
+    write(new byte[] {(byte) b}, 0, 1);
   }
 
   private byte[] finalize(byte[] input, int off, int len) {
