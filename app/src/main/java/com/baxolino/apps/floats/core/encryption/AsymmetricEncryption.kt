@@ -12,7 +12,7 @@ import javax.crypto.Cipher
 
 object AsymmetricEncryption {
 
-  const val KEY_SIZE_BITS = 1024
+  private const val KEY_SIZE_BITS = 1024
 
   fun getKeyPair(): KeyPair {
     KeyPairGenerator.getInstance("RSA").apply {

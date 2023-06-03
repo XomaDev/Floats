@@ -6,6 +6,8 @@ import android.net.LinkProperties
 import android.util.Log
 import com.baxolino.apps.floats.core.Config
 import com.baxolino.apps.floats.core.encryption.AsymmetricEncryption
+import com.baxolino.apps.floats.core.encryption.CipherInputStream
+import com.baxolino.apps.floats.core.encryption.CipherOutputStream
 import java.io.InputStream
 import java.io.OutputStream
 import java.net.InetAddress
@@ -15,8 +17,6 @@ import java.security.KeyPair
 import java.util.concurrent.ScheduledThreadPoolExecutor
 import java.util.concurrent.TimeUnit
 import javax.crypto.Cipher
-import javax.crypto.CipherInputStream
-import javax.crypto.CipherOutputStream
 import kotlin.concurrent.thread
 
 class SocketConnection (private val localPort: Int) {
@@ -172,16 +172,33 @@ class SocketConnection (private val localPort: Int) {
       encryptCipher = AsymmetricEncryption.init(Cipher.ENCRYPT_MODE, encryptionKey)
 
       Log.d(TAG, "Exchanged Public Key")
+
       initSecureStreams()
-      onFinish.invoke()
+      doStreamTest()
+//      onFinish.invoke()
 
       executor.shutdownNow()
     }, 50, TimeUnit.MILLISECONDS)
   }
 
+  private fun doStreamTest() {
+    secureOutput.write("hello".toByteArray())
+    secureOutput.write("akwd jiAW JdioAW JIOdjiojioaw ojid".toByteArray())
+    secureOutput.write("172398189273781278979388".toByteArray())
+    secureOutput.write("172398189273781278979388q298798q27837929783789".toByteArray())
+
+    val executor = ScheduledThreadPoolExecutor(1)
+    executor.schedule({
+      val buffer = ByteArray(secureInput.available())
+      secureInput.read(buffer)
+
+      Log.d(TAG, "doStreamTest: yeahh " + String(buffer))
+    }, 50 + 50, TimeUnit.MILLISECONDS)
+  }
+
   private fun initSecureStreams() {
-    input = CipherInputStream(input, decryptCipher)
-    output = CipherOutputStream(output, encryptCipher)
+    secureInput = CipherInputStream(input, decryptCipher)
+    secureOutput = CipherOutputStream(output, encryptCipher)
   }
 
   fun close() {

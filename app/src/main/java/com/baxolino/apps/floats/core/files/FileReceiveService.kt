@@ -20,7 +20,7 @@ import androidx.core.app.NotificationCompat
 import com.baxolino.apps.floats.R
 import com.baxolino.apps.floats.core.Config
 import com.baxolino.apps.floats.core.transfer.SocketConnection
-import com.baxolino.apps.floats.core.io.DummyOutputStream
+import com.baxolino.apps.floats.core.io.NullOutputStream
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 import java.util.zip.GZIPInputStream
@@ -108,7 +108,7 @@ class FileReceiveService : Service() {
       }
     )
 
-    val output = DummyOutputStream()
+    val output = NullOutputStream()
     val zipInput = GZIPInputStream(connection.input, Config.BUFFER_SIZE)
     val buffer = ByteArray(Config.BUFFER_SIZE)
 
