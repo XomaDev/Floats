@@ -1,5 +1,7 @@
 package com.baxolino.apps.floats.core;
 
+import com.baxolino.apps.floats.core.io.BitOutputStream;
+
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.ArrayList;
@@ -9,12 +11,12 @@ import java.util.concurrent.TimeUnit;
 
 public class MultiChannelSystem {
 
-  private final OutputStream stream;
+  private final BitOutputStream stream;
 
   private final ArrayList<ByteChunk> byteChunks = new ArrayList<>();
 
   public MultiChannelSystem(OutputStream stream) {
-    this.stream = stream;
+    this.stream = new BitOutputStream(stream);
   }
 
   public void write(Channel channel, byte[] bytes) {
@@ -46,10 +48,7 @@ public class MultiChannelSystem {
       stream.write(chunk.channel.bytes());
       int blockSize = chunk.bytes.length;
 
-      stream.write(blockSize >> 24);
-      stream.write(blockSize >> 16);
-      stream.write(blockSize >> 8);
-      stream.write(blockSize);
+      stream.writeInt32(blockSize);
 
       stream.write(chunk.bytes);
     } catch (IOException e) {

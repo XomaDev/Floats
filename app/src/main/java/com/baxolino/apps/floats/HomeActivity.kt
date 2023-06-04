@@ -4,7 +4,6 @@ import android.annotation.SuppressLint
 import android.bluetooth.BluetoothAdapter
 import android.bluetooth.BluetoothManager
 import android.content.Intent
-import android.graphics.drawable.Drawable
 import android.os.Bundle
 import android.util.Log
 import android.widget.ImageView
@@ -18,6 +17,7 @@ import com.baxolino.apps.floats.core.transfer.SocketConnection
 import com.baxolino.apps.floats.core.transfer.SocketUtils
 import com.baxolino.apps.floats.tools.ThemeHelper
 import com.baxolino.apps.floats.tools.Utils
+import com.baxolino.apps.floats.tools.Utils.getIpv4
 import com.github.alexzhirkevich.customqrgenerator.QrData
 import com.github.alexzhirkevich.customqrgenerator.vector.QrCodeDrawable
 import com.github.alexzhirkevich.customqrgenerator.vector.QrVectorOptions
@@ -73,7 +73,7 @@ class HomeActivity : AppCompatActivity() {
 
     val connectionInfo = arrayOf(
       ByteBuffer.wrap(
-        SocketConnection.getIpv4(this).address
+        getIpv4(this).address
       ).int,
       localPort,
     ).joinToString("\u0000")
@@ -92,7 +92,7 @@ class HomeActivity : AppCompatActivity() {
         )
       }
 
-      // we put it over here because, we dont want it called multiple
+      // we put it over here because, we don't want it called multiple
       // times
       connector.acceptOnPort {
         Log.d(TAG, "Accepted()")
@@ -106,8 +106,8 @@ class HomeActivity : AppCompatActivity() {
     // and we can connect to that bluetooth device from the address
     val qrContent = intent.getStringExtra("content")
 
-    // initiates nsd discovery and tries to find
-    // the device with the {name}
+    // attempts to start connecting to the other
+    // device
     qrContent?.let {
       val args = qrContent.split("\u0000")
       val ipv4Address = InetAddress.getByAddress(
@@ -146,10 +146,8 @@ class HomeActivity : AppCompatActivity() {
   }
 
   private fun generateQr(qrImageView: ImageView, text: String) {
-    Log.d(TAG, "generateQr: $text")
     val primaryColor = ThemeHelper.variant60Color(this)
 
-    val data = QrData.Text(text)
     val options = QrVectorOptions.Builder()
       .setPadding(.3f)
       .setColors(
@@ -172,7 +170,9 @@ class HomeActivity : AppCompatActivity() {
         )
       )
       .build()
-    val drawable: Drawable = QrCodeDrawable(data, options)
-    qrImageView.background = drawable
+    qrImageView.background = QrCodeDrawable(
+      QrData.Text(text),
+      options
+    )
   }
 }

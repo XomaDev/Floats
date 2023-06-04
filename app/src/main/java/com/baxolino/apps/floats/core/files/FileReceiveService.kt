@@ -96,10 +96,10 @@ class FileReceiveService : Service() {
 
   private fun initSocketConnection(port: Int, host: String) {
     // does not matter what we pass to constructor over here
-   connection = SocketConnection(0)
-     .connectOnPort(port, host) {
-       receiveContents()
-     }
+    connection = SocketConnection(0)
+      .connectOnPort(port, host) {
+        receiveContents()
+      }
   }
 
   private fun receiveContents() {
@@ -142,8 +142,10 @@ class FileReceiveService : Service() {
     if (difference != 0L) {
       speed = Formatter.formatFileSize(
         applicationContext,
-        received.toFloat().div(difference.toFloat()
-          .div(1000f)).toLong()
+        received.toFloat().div(
+          difference.toFloat()
+            .div(1000f)
+        ).toLong()
       )
     }
     notificationManager.notify(
@@ -183,17 +185,12 @@ class FileReceiveService : Service() {
   private fun onComplete() {
     // inform the user completion and stop the foreground service
     Handler(mainLooper).post {
-      if (cancelled) {
-        Toast.makeText(
-          this, "File transfer was cancelled.",
-          Toast.LENGTH_LONG
-        ).show()
-      } else {
-        Toast.makeText(
-          this, "File was transferred",
-          Toast.LENGTH_LONG
-        ).show()
-      }
+      Toast.makeText(
+        this,
+        if (cancelled) "File transfer was cancelled."
+        else "File was transferred",
+        Toast.LENGTH_LONG
+      ).show()
     }
 
     messenger.send(

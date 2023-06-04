@@ -1,13 +1,9 @@
 package com.baxolino.apps.floats.core.transfer
 
-import android.content.Context
-import android.net.ConnectivityManager
-import android.net.LinkProperties
 import android.util.Log
 import com.baxolino.apps.floats.core.Config
 import java.io.InputStream
 import java.io.OutputStream
-import java.net.InetAddress
 import java.net.ServerSocket
 import java.net.Socket
 import kotlin.concurrent.thread
@@ -16,41 +12,6 @@ class SocketConnection(private val localPort: Int) {
 
   companion object {
     private const val TAG = "SocketConnection"
-
-    fun getIpv4(context: Context): InetAddress {
-      val connector = context.getSystemService(ConnectivityManager::class.java)
-
-      // this may return null when not connected to any network
-      val linkProperties = connector.getLinkProperties(connector.activeNetwork) as LinkProperties
-      for (linkAddress in linkProperties.linkAddresses) {
-        val address = linkAddress.address
-        val hostAddress = address.hostAddress
-
-        // we have to look for Ip4 address here
-        if (isValidIpv4(hostAddress))
-          return InetAddress.getByAddress(address.address)
-      }
-      throw Error("Could not find Ipv4 address")
-    }
-
-    private fun isValidIpv4(ip: String?): Boolean {
-      return try {
-        if (ip.isNullOrEmpty()) return false
-        val parts = ip.split("\\.".toRegex())
-          .dropLastWhile { it.isEmpty() }
-          .toTypedArray()
-        if (parts.size != 4) return false
-        for (s in parts) {
-          val i = s.toInt()
-          if (i < 0 || i > 255) {
-            return false
-          }
-        }
-        !ip.endsWith(".")
-      } catch (nfe: NumberFormatException) {
-        false
-      }
-    }
 
     private var mainSocket: SocketConnection? = null
 

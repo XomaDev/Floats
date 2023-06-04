@@ -194,12 +194,12 @@ class SessionActivity : AppCompatActivity() {
                 "${Formatter.formatFileSize(applicationContext, fileLength.toLong())}?"
       )
 
-      .setPositiveButton("Proceed") { _, _ -> beginNsdTransfer(uri, fileName, fileLength) }
+      .setPositiveButton("Proceed") { _, _ -> beginSocketTransfer(uri, fileName, fileLength) }
       .setNegativeButton("Cancel") { dialog, _ -> dialog.dismiss() }
       .show()
   }
 
-  private fun beginNsdTransfer(uri: Uri, fileName: String, fileLength: Int) {
+  private fun beginSocketTransfer(uri: Uri, fileName: String, fileLength: Int) {
     val request = FileRequest(
       uri, fileName, fileLength
     )

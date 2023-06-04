@@ -8,7 +8,6 @@ import android.widget.ImageView
 import com.baxolino.apps.floats.HomeActivity
 import com.baxolino.apps.floats.R
 import com.baxolino.apps.floats.SessionActivity
-import com.google.android.material.card.MaterialCardView
 import com.google.android.material.color.DynamicColors
 
 

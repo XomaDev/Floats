@@ -86,7 +86,4 @@ class FileReceiver internal constructor(private val port: Int, val name: String,
     else session.startService(service)
   }
 
-  companion object {
-    private const val TAG = "FileReceiver"
-  }
 }

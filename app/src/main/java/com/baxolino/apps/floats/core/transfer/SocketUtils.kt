@@ -1,133 +1,82 @@
-package com.baxolino.apps.floats.core.transfer;
+package com.baxolino.apps.floats.core.transfer
 
-/*
-  Modified class from the spring library for Android
- */
+import java.io.IOException
+import java.net.DatagramSocket
+import java.net.ServerSocket
+import java.util.Random
 
-import java.io.IOException;
-import java.net.DatagramSocket;
-import java.net.ServerSocket;
-import java.util.Random;
+object SocketUtils {
+  /**
+   * The default minimum value for port ranges used when finding an available
+   * socket port.
+   */
+  private const val PORT_RANGE_MIN = 1024
 
-public class SocketUtils {
+  /**
+   * The default maximum value for port ranges used when finding an available
+   * socket port.
+   */
+  private const val PORT_RANGE_MAX = 65535
 
-    /**
-     * The default minimum value for port ranges used when finding an available
-     * socket port.
-     */
-    public static final int PORT_RANGE_MIN = 1024;
+  private const val PORT_RANGE = PORT_RANGE_MAX - PORT_RANGE_MIN
 
-    /**
-     * The default maximum value for port ranges used when finding an available
-     * socket port.
-     */
-    public static final int PORT_RANGE_MAX = 65535;
+  private val random = Random(System.currentTimeMillis())
 
-    private static final Random random = new Random(System.currentTimeMillis());
+  /**
+   * Determine if the specified port for this `SocketType` is
+   * currently available on `localhost`.
+   */
+  private fun isPortAvailable(port: Int): Boolean {
+    var sSocket: ServerSocket? = null
+    var dSocket: DatagramSocket? = null
 
-    public SocketUtils() {
-    }
+    try {
+      sSocket = ServerSocket(port)
+      sSocket.reuseAddress = true
 
-    /**
-     * Find an available TCP port randomly selected from the range
-     * [{@value #PORT_RANGE_MIN}, {@value #PORT_RANGE_MAX}].
-     * @return an available TCP port number
-     * @throws IllegalStateException if no available port could be found
-     */
-    public static int findAvailableTcpPort() {
-        return findAvailableTcpPort(PORT_RANGE_MIN);
-    }
+      dSocket = DatagramSocket(port)
+      dSocket.reuseAddress = true
 
-    /**
-     * Find an available TCP port randomly selected from the range
-     * [{@code minPort}, {@value #PORT_RANGE_MAX}].
-     * @param minPort the minimum port number
-     * @return an available TCP port number
-     * @throws IllegalStateException if no available port could be found
-     */
-    public static int findAvailableTcpPort(int minPort) {
-        return findAvailableTcpPort(minPort, PORT_RANGE_MAX);
-    }
+      return true
+    } catch (ignored: IOException) {
 
-    /**
-     * Find an available TCP port randomly selected from the range
-     * [{@code minPort}, {@code maxPort}].
-     * @param minPort the minimum port number
-     * @param maxPort the maximum port number
-     * @return an available TCP port number
-     * @throws IllegalStateException if no available port could be found
-     */
-    public static int findAvailableTcpPort(int minPort, int maxPort) {
-        return findAvailablePort(minPort, maxPort);
-    }
-
-    /**
-     * Determine if the specified port for this {@code SocketType} is
-     * currently available on {@code localhost}.
-     */
-    protected static boolean isPortAvailable(int port) {
-        ServerSocket ss = null;
-        DatagramSocket ds = null;
+    } finally {
+      dSocket?.close()
+      sSocket?.let {
         try {
-            ss = new ServerSocket(port);
-            ss.setReuseAddress(true);
-            ds = new DatagramSocket(port);
-            ds.setReuseAddress(true);
-            return true;
-        } catch (IOException ignored) {
-        } finally {
-            if (ds != null) {
-                ds.close();
-            }
-
-            if (ss != null) {
-                try {
-                    ss.close();
-                } catch (IOException e) {
-                    /* should not be thrown */
-                }
-            }
+          it.close()
+        } catch (ignored: IOException) {
+          // this should not be thrown
         }
-
-        return false;
+      }
     }
+    return false
+  }
 
-    /**
-     * Find a pseudo-random port number within the range
-     * [{@code minPort}, {@code maxPort}].
-     * @param minPort the minimum port number
-     * @param maxPort the maximum port number
-     * @return a random port number within the specified range
-     */
-    private static int findRandomPort(int minPort, int maxPort) {
-        int portRange = maxPort - minPort;
-        return minPort + random.nextInt(portRange + 1);
-    }
+  /**
+   * Find a pseudo-random port number
+   */
+  private fun findRandomPort(): Int {
+    val portRange = PORT_RANGE_MAX - PORT_RANGE_MIN
+    return PORT_RANGE_MIN + random.nextInt(portRange + 1)
+  }
 
-    /**
-     * Find an available port for this {@code SocketType}, randomly selected
-     * from the range [{@code minPort}, {@code maxPort}].
-     * @param minPort the minimum port number
-     * @param maxPort the maximum port number
-     * @return an available port number for this socket type
-     * @throws IllegalStateException if no available port could be found
-     */
-    static int findAvailablePort(int minPort, int maxPort) {
-
-        int portRange = maxPort - minPort;
-        int candidatePort;
-        int searchCounter = 0;
-        do {
-            if (searchCounter > portRange) {
-                throw new IllegalStateException(String.format(
-                        "Could not find an available TCP port in the range [%d, %d] after %d attempts",
-                        minPort, maxPort, searchCounter));
-            }
-            candidatePort = findRandomPort(minPort, maxPort);
-            searchCounter++;
-        } while (!isPortAvailable(candidatePort));
-
-        return candidatePort;
-    }
-
+  /**
+   * Finds available TCP port
+   */
+  fun findAvailableTcpPort(): Int {
+    var candidatePort: Int
+    var searchCounter = 0
+    do {
+      check(searchCounter <= PORT_RANGE) {
+        String.format(
+          "Could not find an available TCP port in the range [%d, %d] after %d attempts",
+          PORT_RANGE_MIN, PORT_RANGE_MAX, searchCounter
+        )
+      }
+      candidatePort = findRandomPort()
+      searchCounter++
+    } while (!isPortAvailable(candidatePort))
+    return candidatePort
+  }
 }
