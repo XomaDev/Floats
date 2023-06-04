@@ -1,20 +1,26 @@
 package com.baxolino.apps.floats.core.io;
 
-import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.util.Objects;
 
 public class BitOutputStream {
 
-  private final ByteArrayOutputStream output = new ByteArrayOutputStream();
+  private final OutputStream output;
 
   private int currentByte;
   public int bitsWritten = 0;
+
+  public BitOutputStream(OutputStream output) {
+    this.output = output;
+  }
 
   /**
    * Appends a bit to the current byte, writes the byte to stream
    * and resets it once reached len 8
    */
 
-  public BitOutputStream writeBit(int b) {
+  public BitOutputStream writeBit(int b) throws IOException {
     currentByte = (currentByte << 1) | b;
     bitsWritten++;
     if (bitsWritten == 8) {
@@ -23,7 +29,29 @@ public class BitOutputStream {
       bitsWritten = 0;
       currentByte = 0;
     }
+    return this;
+  }
 
+
+  /**
+   * Writes the full byte array to the stream
+   *
+   * @param b bytes to be written
+   */
+  public BitOutputStream write(byte[] b) throws IOException {
+    return write(b, 0, b.length);
+  }
+
+  /**
+   * Writes the byte array starting from offset
+   *
+   * @param b   bytes to be written
+   * @param off starting point
+   * @param len length of bytes to be written
+   */
+  public BitOutputStream write(byte[] b, int off, int len) throws IOException {
+    for (int i = 0; i < len; i++)
+      write(b[off + i]);
     return this;
   }
 
@@ -33,7 +61,7 @@ public class BitOutputStream {
    * @param n byte to be written
    */
 
-  public BitOutputStream write(int n) {
+  public BitOutputStream write(int n) throws IOException {
     n &= 0xff; // un-sign it
 
     // range: 0 ~ 256 only
@@ -43,16 +71,10 @@ public class BitOutputStream {
     return this;
   }
 
-  public BitOutputStream write(byte[] bytes) {
-    for (byte b : bytes)
-      write(b);
-    return this;
-  }
-
   /**
    * Writes 32-bit integer to output
    */
-  public BitOutputStream writeInt32(int n) {
+  public BitOutputStream writeInt32(int n) throws IOException {
     write(n >> 24);
     write(n >> 16);
     write(n >> 8);
@@ -65,20 +87,15 @@ public class BitOutputStream {
   /**
    * Writes a 16-bit short int to stream
    */
-  public BitOutputStream writeShort16(short n) {
+  public BitOutputStream writeShort16(short n) throws IOException {
     write(n >> 8);
     write((byte) n);
 
     return this;
   }
 
-  public void close() {
+  public void flush() throws IOException {
     if (bitsWritten != 0)
       output.write(currentByte);
-  }
-
-  public byte[] toBytes() {
-    close();
-    return output.toByteArray();
   }
 }
