@@ -15,10 +15,11 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import com.baxolino.apps.floats.core.files.FileRequest
-import com.baxolino.apps.floats.core.KRSystem
+import com.baxolino.apps.floats.core.TaskExecutor
 import com.baxolino.apps.floats.core.files.FileNameUtil
 import com.baxolino.apps.floats.core.files.FileReceiver
 import com.baxolino.apps.floats.core.files.RequestHandler
+import com.baxolino.apps.floats.core.transfer.SocketConnection
 import com.baxolino.apps.floats.tools.ThemeHelper
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.floatingactionbutton.FloatingActionButton
@@ -31,7 +32,7 @@ class SessionActivity : AppCompatActivity() {
     private const val TAG = "SessionActivity"
   }
 
-  private lateinit var system: KRSystem
+  private lateinit var system: TaskExecutor
 
   private lateinit var fileNameLabel: TextView
   private lateinit var fileSizeLabel: TextView
@@ -74,7 +75,9 @@ class SessionActivity : AppCompatActivity() {
         )
       )
     }
-    system = KRSystem.getInstance()
+    system = TaskExecutor.getInstance(
+      SocketConnection.getMainInstance(-1)
+    )
 
     fileNameLabel = findViewById(R.id.file_name)
     fileSizeLabel = findViewById(R.id.file_size)
@@ -86,7 +89,6 @@ class SessionActivity : AppCompatActivity() {
     lookForFileRequests()
 
     frameProgress = findViewById(R.id.progress_frame)
-//    system.startPeriodicAliveChecks()
 
     val onBackPressedCallback = object : OnBackPressedCallback(true) {
       override fun handleOnBackPressed() {

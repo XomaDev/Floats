@@ -13,8 +13,7 @@ import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.camera.core.ExperimentalGetImage
 import com.baxolino.apps.floats.camera.ScanActivity
-import com.baxolino.apps.floats.core.KRSystem
-import com.baxolino.apps.floats.core.KRSystem.KnowListener
+import com.baxolino.apps.floats.core.KnowEachOther
 import com.baxolino.apps.floats.core.transfer.SocketConnection
 import com.baxolino.apps.floats.core.transfer.SocketUtils
 import com.baxolino.apps.floats.tools.ThemeHelper
@@ -44,7 +43,7 @@ class HomeActivity : AppCompatActivity() {
   private lateinit var adapter: BluetoothAdapter
 
   private lateinit var deviceConnectionInfo: String
-  private lateinit var selfDeviceId: String
+  private lateinit var ourId: String
 
   private var localPort = -1
   private lateinit var connector: SocketConnection
@@ -63,7 +62,7 @@ class HomeActivity : AppCompatActivity() {
     val deviceId = Utils.getDeviceName(contentResolver)
 
     deviceText.text = deviceId
-    selfDeviceId = deviceId
+    ourId = deviceId
 
     val qrImageView = findViewById<ImageView>(R.id.qr_image)
 
@@ -77,10 +76,6 @@ class HomeActivity : AppCompatActivity() {
         SocketConnection.getIpv4(this).address
       ).int,
       localPort,
-      // TODO:
-      //  let's make it much more smaller by using alternative
-      //  method to embedding device id here
-      deviceId
     ).joinToString("\u0000")
 
     deviceConnectionInfo = connectionInfo
@@ -100,10 +95,8 @@ class HomeActivity : AppCompatActivity() {
       // we put it over here because, we dont want it called multiple
       // times
       connector.acceptOnPort {
-        Log.d(TAG, "Connection was accepted.")
-        onConnectionAccepted(
-          connector.socket.inetAddress.hostAddress!!
-        )
+        Log.d(TAG, "Accepted()")
+        onConnectionSuccessful()
       }
     }
   }
@@ -127,7 +120,6 @@ class HomeActivity : AppCompatActivity() {
         .hostAddress!!
 
       val port = args[1].toInt()
-      val deviceId = args[2]
 
       Log.d(TAG, "onScanResult: $args $ipv4Address")
       Toast.makeText(
@@ -136,62 +128,21 @@ class HomeActivity : AppCompatActivity() {
       ).show()
 
       connector.connectOnPort(port, ipv4Address) {
-        Log.d(TAG, "Connection was established")
-        onConnectionSuccessful(deviceId, ipv4Address)
+        Log.d(TAG, "Connected()")
+        onConnectionSuccessful()
       }
     }
   }
 
-  // called upon connection, from NsdFloats.kt
 
-  private fun onConnectionAccepted(hostAddress: String) {
-    val system = KRSystem.getInstance(selfDeviceId, connector)
-
-    // we are yet to find out who has connected us
-    system.readKnowRequest(object : KnowListener {
-      override fun received(deviceName: String) {
-        runOnUiThread { informConnection(deviceName, hostAddress) }
-      }
-
-      override fun timeout() {
-        runOnUiThread {
-          Toast.makeText(
-            applicationContext,
-            "Client failed to send to know request.",
-            Toast.LENGTH_SHORT
-          ).show()
-        }
-      }
-    })
-  }
-
-  // called upon successful connection request from
-  // NsdFloats.kt
-  private fun onConnectionSuccessful(deviceName: String, hostAddress: String) {
-    val system = KRSystem.getInstance(selfDeviceId, connector)
-    system.postKnowRequest(deviceName, {
-      // client received know-request
-      runOnUiThread {
-        informConnection(deviceName, hostAddress)
-      }
-    }, {
-      runOnUiThread {
-        Toast.makeText(
-          this,
-          "$deviceName did not respond to request.",
-          Toast.LENGTH_SHORT
-        ).show()
-      }
-    })
-  }
-
-
-  private fun informConnection(deviceName: String, hostAddress: String) {
-    startActivity(
-      Intent(this, SessionActivity::class.java)
-        .putExtra("deviceName", deviceName)
-        .putExtra("hostAddress", hostAddress)
-    )
+  private fun onConnectionSuccessful() {
+    KnowEachOther.initiate(ourId, connector) { name, host ->
+      startActivity(
+        Intent(this, SessionActivity::class.java)
+          .putExtra("deviceName", name)
+          .putExtra("hostAddress", host)
+      )
+    }
   }
 
   private fun generateQr(qrImageView: ImageView, text: String) {

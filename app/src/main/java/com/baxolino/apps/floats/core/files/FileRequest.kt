@@ -8,7 +8,7 @@ import android.util.Log
 import com.baxolino.apps.floats.core.Channel
 import com.baxolino.apps.floats.core.MultiChannelSystem
 import com.baxolino.apps.floats.core.transfer.SocketUtils
-import com.baxolino.apps.floats.core.io.BitOutputStream
+import com.baxolino.apps.floats.core.io.BitStream
 
 class FileRequest(
   private val fileInput: Uri,
@@ -24,7 +24,7 @@ class FileRequest(
     val localPort = SocketUtils.findAvailableTcpPort()
 
     val fileNameBytes = fileName.toByteArray()
-    val requestData = BitOutputStream()
+    val requestData = BitStream()
       .writeInt32(localPort)
       .writeInt32(fileLength)
       .writeInt32(fileNameBytes.size)
