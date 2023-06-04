@@ -86,7 +86,7 @@ class SessionActivity : AppCompatActivity() {
     lookForFileRequests()
 
     frameProgress = findViewById(R.id.progress_frame)
-    system.startPeriodicAliveChecks()
+//    system.startPeriodicAliveChecks()
 
     val onBackPressedCallback = object : OnBackPressedCallback(true) {
       override fun handleOnBackPressed() {

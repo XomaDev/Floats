@@ -42,18 +42,16 @@ public class MultiChannelSystem {
       return true;
     ByteChunk chunk = byteChunks.remove(0);
     try {
+      // the channel header
       stream.write(chunk.channel.bytes());
-      int blankSpots = Config.CHUNK_SIZE - chunk.bytes.length;
-      if (blankSpots < 0)
-        throw new RuntimeException("Bytes are more than chunk limit.");
+      int blockSize = chunk.bytes.length;
 
-      stream.write(blankSpots >> 8);
-      stream.write(blankSpots);
+      stream.write(blockSize >> 24);
+      stream.write(blockSize >> 16);
+      stream.write(blockSize >> 8);
+      stream.write(blockSize);
 
       stream.write(chunk.bytes);
-
-      while (blankSpots-- > 0)
-        stream.write(0);
     } catch (IOException e) {
       throw new RuntimeException(e);
     }

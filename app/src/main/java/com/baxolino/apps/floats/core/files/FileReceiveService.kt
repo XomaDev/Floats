@@ -59,6 +59,8 @@ class FileReceiveService : Service() {
   private val cancelRequestReceiver = CancelRequestReceiver(this)
 
   override fun onStartCommand(intent: Intent, flags: Int, startId: Int): Int {
+    Log.d(TAG, "onStartCommand()")
+
     val fileName = intent.getStringExtra("file_receive")!!
     fileNameShort = FileNameUtil.toShortDisplayName(fileName)
 

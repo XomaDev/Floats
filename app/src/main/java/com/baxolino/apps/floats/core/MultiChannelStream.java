@@ -58,8 +58,8 @@ public class MultiChannelStream {
         byte[] channel = new byte[Config.CHANNEL_SIZE];
         input.read(channel);
 
-        int blankSpots = input.readShort16();
-        byte[] chunk = readChunk(blankSpots);
+        int blockSize = input.readInt32();
+        byte[] chunk = readChunk(blockSize);
 
         DataInputStream passStream = channels.get(new Channel(channel));
 
@@ -67,7 +67,7 @@ public class MultiChannelStream {
           DataInputStream.ByteListener listener = passStream.getByteListener();
           passStream.addChunk(chunk);
           if (listener != null)
-            for (int i = 0, len = CHUNK_SIZE - blankSpots; i < len; i++)
+            for (int i = 0, len = CHUNK_SIZE - blockSize; i < len; i++)
               // break when listener returns true
               if (listener.onNewByteAvailable(chunk[i]))
                 break;
@@ -78,18 +78,11 @@ public class MultiChannelStream {
     }, 0, 50, TimeUnit.MILLISECONDS);
   }
 
-  private byte[] readChunk(int blankSpots) {
-    int allocateSize = CHUNK_SIZE - blankSpots;
-    byte[] chunk = new byte[allocateSize];
+  private byte[] readChunk(int blockSize) {
+    byte[] chunk = new byte[blockSize];
     int read = 0;
-    // TODO:
-    // read how much blank spots and only allocate
-    // whats required here
-    while (read != allocateSize)
+    while (read != blockSize)
       read += input.read(chunk);
-
-    //noinspection ResultOfMethodCallIgnored
-    input.skip(blankSpots);
     return chunk;
   }
 }

@@ -5,21 +5,14 @@ import android.net.ConnectivityManager
 import android.net.LinkProperties
 import android.util.Log
 import com.baxolino.apps.floats.core.Config
-import com.baxolino.apps.floats.core.encryption.AsymmetricEncryption
-import com.baxolino.apps.floats.core.encryption.CipherInputStream
-import com.baxolino.apps.floats.core.encryption.CipherOutputStream
 import java.io.InputStream
 import java.io.OutputStream
 import java.net.InetAddress
 import java.net.ServerSocket
 import java.net.Socket
-import java.security.KeyPair
-import java.util.concurrent.ScheduledThreadPoolExecutor
-import java.util.concurrent.TimeUnit
-import javax.crypto.Cipher
 import kotlin.concurrent.thread
 
-class SocketConnection (private val localPort: Int) {
+class SocketConnection(private val localPort: Int) {
 
   companion object {
     private const val TAG = "SocketConnection"
@@ -78,15 +71,6 @@ class SocketConnection (private val localPort: Int) {
   lateinit var input: InputStream
   lateinit var output: OutputStream
 
-  lateinit var secureInput: InputStream
-  lateinit var secureOutput: OutputStream
-
-
-  private val keys: KeyPair = AsymmetricEncryption.getKeyPair()
-
-  private lateinit var encryptCipher: Cipher
-  private lateinit var decryptCipher: Cipher
-
   fun acceptOnPort(onConnect: () -> Unit): SocketConnection {
     thread {
       val serverSocket = ServerSocket(localPort)
@@ -102,8 +86,8 @@ class SocketConnection (private val localPort: Int) {
   fun connectOnPort(port: Int, host: String, onConnect: () -> Unit): SocketConnection {
     thread {
       socket = Socket(host, port)
-      Log.d(TAG, "acceptOnPort() Connection was established.")
 
+      Log.d(TAG, "acceptOnPort() Connection was established.")
       onConnected(onConnect)
     }
     return this
@@ -123,82 +107,7 @@ class SocketConnection (private val localPort: Int) {
       sendBufferSize = Config.BUFFER_SIZE
       receiveBufferSize = Config.BUFFER_SIZE
     }
-
-    exchangeKeys(onFinish)
-  }
-
-  /**
-   * RSA (public keys) are exchanged with each
-   * other, (max delay = 50ms)
-   */
-  private fun exchangeKeys(onFinish: () -> Unit) {
-    // send the RSA public key to the other device
-    val public = keys.public
-    Log.d(TAG, "Sending Public Key")
-    Log.d(TAG, "Sending Public Key ${keys.public.encoded.contentToString()}")
-
-    public.encoded.apply {
-      // send the key size
-      output.let {
-        it.write(size shr 8 and 0xFF)
-        it.write(size and 0xFF)
-
-        it.write(this)
-      }
-    }
-    decryptCipher = AsymmetricEncryption.init(Cipher.DECRYPT_MODE, keys.private)
-
-    // receiving their public key
-    val executor = ScheduledThreadPoolExecutor(1)
-    executor.schedule({
-      Log.d(TAG, "exchangeKeys: ---------------------- " + input.available())
-      val publicKeyBytesLen =
-        (input.read() and 255 shl 8) or (input.read() and 255)
-
-      Log.d(TAG, "exchangeKeys: length = $publicKeyBytesLen")
-      val encryptionKeyBytes = ByteArray(publicKeyBytesLen)
-
-      var offset = 0
-      while (offset != publicKeyBytesLen)
-        offset += input.read(encryptionKeyBytes, offset, publicKeyBytesLen - offset)
-      Log.d(
-        TAG,
-        "exchangeKeys: Received $offset / $publicKeyBytesLen hash = ${
-          encryptionKeyBytes.contentToString()
-        }"
-      )
-
-      val encryptionKey = AsymmetricEncryption.getPublicKey(encryptionKeyBytes)
-      encryptCipher = AsymmetricEncryption.init(Cipher.ENCRYPT_MODE, encryptionKey)
-
-      Log.d(TAG, "Exchanged Public Key")
-
-      initSecureStreams()
-      doStreamTest()
-//      onFinish.invoke()
-
-      executor.shutdownNow()
-    }, 50, TimeUnit.MILLISECONDS)
-  }
-
-  private fun doStreamTest() {
-    secureOutput.write("hello".toByteArray())
-    secureOutput.write("akwd jiAW JdioAW JIOdjiojioaw ojid".toByteArray())
-    secureOutput.write("172398189273781278979388".toByteArray())
-    secureOutput.write("172398189273781278979388q298798q27837929783789".toByteArray())
-
-    val executor = ScheduledThreadPoolExecutor(1)
-    executor.schedule({
-      val buffer = ByteArray(secureInput.available())
-      secureInput.read(buffer)
-
-      Log.d(TAG, "doStreamTest: yeahh " + String(buffer))
-    }, 50 + 50, TimeUnit.MILLISECONDS)
-  }
-
-  private fun initSecureStreams() {
-    secureInput = CipherInputStream(input, decryptCipher)
-    secureOutput = CipherOutputStream(output, encryptCipher)
+    onFinish.invoke()
   }
 
   fun close() {
