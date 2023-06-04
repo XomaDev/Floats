@@ -9,12 +9,14 @@ import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.os.Build
+import android.os.Handler
 import android.os.IBinder
 import android.os.Message
 import android.os.Messenger
 import android.text.format.Formatter
 import android.util.Log
 import android.widget.RemoteViews
+import android.widget.Toast
 import androidx.annotation.RequiresApi
 import androidx.core.app.NotificationCompat
 import com.baxolino.apps.floats.R
@@ -180,6 +182,20 @@ class FileReceiveService : Service() {
 
   private fun onComplete() {
     // inform the user completion and stop the foreground service
+    Handler(mainLooper).post {
+      if (cancelled) {
+        Toast.makeText(
+          this, "File transfer was cancelled.",
+          Toast.LENGTH_LONG
+        ).show()
+      } else {
+        Toast.makeText(
+          this, "File was transferred",
+          Toast.LENGTH_LONG
+        ).show()
+      }
+    }
+
     messenger.send(
       Message.obtain().apply {
         what = 2
