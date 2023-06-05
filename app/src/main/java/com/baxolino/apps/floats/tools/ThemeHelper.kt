@@ -62,4 +62,14 @@ object ThemeHelper {
             }
         )
     }
+
+    fun variant70Color(context: Context): Int {
+        return context.getColor(
+            if (HAS_DYNAMIC_THEMING) {
+                com.google.android.material.R.color.material_dynamic_neutral_variant70
+            } else {
+                R.color.alt_variant_dark
+            }
+        )
+    }
 }
