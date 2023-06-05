@@ -127,7 +127,7 @@ class HomeActivity : AppCompatActivity() {
         "Connecting", Toast.LENGTH_SHORT
       ).show()
 
-      connector.connectOnPort(port, ipv4Address) {
+      connector.connectOnPort(port, ipv4Address, false) {
         Log.d(TAG, "Connected()")
         onConnectionSuccessful()
       }

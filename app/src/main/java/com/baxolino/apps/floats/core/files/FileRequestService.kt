@@ -18,6 +18,7 @@ import androidx.core.app.NotificationCompat
 import com.baxolino.apps.floats.R
 import com.baxolino.apps.floats.core.Config
 import com.baxolino.apps.floats.core.transfer.SocketConnection
+import com.baxolino.apps.floats.tools.ThemeHelper
 import java.io.InputStream
 import java.net.SocketException
 import java.util.concurrent.Executors
@@ -147,8 +148,9 @@ class FileRequestService : Service() {
       remoteLayout.setTextViewText(R.id.speed_notification, speed + "ps")
 
     return NotificationCompat.Builder(this, NOTIF_CHANNEL_ID)
-      .setSmallIcon(R.mipmap.ic_launcher)
+      .setSmallIcon(R.mipmap.upload)
       .setStyle(NotificationCompat.DecoratedCustomViewStyle())
+      .setColor(ThemeHelper.variant70Color(this))
       .setCustomContentView(remoteLayout)
       .setOngoing(true)
       .build()

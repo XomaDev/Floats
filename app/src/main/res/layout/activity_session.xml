@@ -45,7 +45,7 @@
 
             <LinearLayout
                 android:layout_gravity="center"
-                android:gravity="center"
+                android:gravity="end"
                 android:layout_weight="1"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content">
@@ -172,5 +172,6 @@
         android:layout_height="wrap_content"
         android:layout_gravity="bottom|end"
         android:layout_margin="16dp"
-        app:srcCompat="@drawable/plus_lg" />
+        app:srcCompat="@drawable/plus_lg"
+        android:contentDescription="Send file button" />
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

@@ -4,9 +4,13 @@ import android.util.Log
 import com.baxolino.apps.floats.core.Config
 import java.io.InputStream
 import java.io.OutputStream
+import java.net.InetSocketAddress
 import java.net.ServerSocket
 import java.net.Socket
+import java.net.SocketAddress
+import java.net.SocketTimeoutException
 import kotlin.concurrent.thread
+
 
 class SocketConnection(private val localPort: Int) {
 
@@ -44,12 +48,28 @@ class SocketConnection(private val localPort: Int) {
     return this
   }
 
-  fun connectOnPort(port: Int, host: String, onConnect: () -> Unit): SocketConnection {
+  fun connectOnPort(port: Int, host: String, retry: Boolean, onConnect: () -> Unit): SocketConnection {
     thread {
-      socket = Socket(host, port)
+      socket = Socket()
+      try {
+        // Create a SocketAddress with the host and port
+        val socketAddress: SocketAddress = InetSocketAddress(host, port)
 
-      Log.d(TAG, "acceptOnPort() Connection was established.")
-      onConnected(onConnect)
+        // Set the connection timeout
+        socket.connect(socketAddress, 5000)
+
+        Log.d(TAG, "acceptOnPort() Connection was established.")
+        onConnected(onConnect)
+      } catch (e: SocketTimeoutException) {
+        Log.d(TAG, "Socket Timeout Occurred")
+        if (retry)
+          connectOnPort(port, host, false, onConnect)
+      } catch (e: Exception) {
+        e.printStackTrace()
+        if (retry)
+          connectOnPort(port, host, false, onConnect)
+        Log.d(TAG, "I/O Exception ${e.message}")
+      }
     }
     return this
   }

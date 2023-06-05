@@ -8,6 +8,6 @@ public class Config {
     // 4 bytes contain channel Id
     public static final int CHANNEL_SIZE = 4;
 
-    public static final int BUFFER_SIZE = 1 << 22;
+    public static final int BUFFER_SIZE = 1 << 21;
 
 }

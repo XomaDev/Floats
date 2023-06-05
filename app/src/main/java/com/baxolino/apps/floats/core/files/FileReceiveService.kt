@@ -23,6 +23,7 @@ import com.baxolino.apps.floats.R
 import com.baxolino.apps.floats.core.Config
 import com.baxolino.apps.floats.core.transfer.SocketConnection
 import com.baxolino.apps.floats.core.io.NullOutputStream
+import com.baxolino.apps.floats.tools.ThemeHelper
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 import java.util.zip.GZIPInputStream
@@ -97,7 +98,11 @@ class FileReceiveService : Service() {
   private fun initSocketConnection(port: Int, host: String) {
     // does not matter what we pass to constructor over here
     connection = SocketConnection(0)
-      .connectOnPort(port, host) {
+      // sometimes what I think is, this code may be called earlier before
+      // the sender device is prepared, resulting in the below connection
+      // request failing
+      .connectOnPort(port, host, false) {
+        Log.d(TAG, "Connected()")
         receiveContents()
       }
   }
@@ -233,6 +238,7 @@ class FileReceiveService : Service() {
     return NotificationCompat.Builder(this, NOTIF_CHANNEL_ID)
       .setSmallIcon(R.mipmap.ic_launcher)
       .setStyle(NotificationCompat.DecoratedCustomViewStyle())
+      .setColor(ThemeHelper.variant70Color(this))
       .setCustomContentView(remoteLayout)
       .setOngoing(true)
       .build()
