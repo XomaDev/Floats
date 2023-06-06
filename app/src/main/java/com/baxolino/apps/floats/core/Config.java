@@ -10,4 +10,6 @@ public class Config {
 
     public static final int BUFFER_SIZE = 1 << 21;
 
+    public static final int ALT_BUFFER_SIZE = 1 << 20;
+
 }

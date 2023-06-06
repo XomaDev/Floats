@@ -53,6 +53,9 @@ class HomeActivity : AppCompatActivity() {
     super.onCreate(savedInstanceState)
 
     setContentView(R.layout.activity_home)
+    System.loadLibrary("native-lib")
+
+
     ThemeHelper.themeOfHomeActivity(this)
 
     val bluetoothManager = getSystemService(BluetoothManager::class.java)

@@ -19,14 +19,16 @@ import android.widget.RemoteViews
 import android.widget.Toast
 import androidx.annotation.RequiresApi
 import androidx.core.app.NotificationCompat
+import com.baxolino.apps.floats.NativeCpp
 import com.baxolino.apps.floats.R
-import com.baxolino.apps.floats.core.Config
-import com.baxolino.apps.floats.core.transfer.SocketConnection
+import com.baxolino.apps.floats.core.Config.BUFFER_SIZE
 import com.baxolino.apps.floats.core.io.NullOutputStream
+import com.baxolino.apps.floats.core.transfer.SocketConnection
 import com.baxolino.apps.floats.tools.ThemeHelper
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 import java.util.zip.GZIPInputStream
+import kotlin.concurrent.thread
 
 class FileReceiveService : Service() {
 
@@ -97,14 +99,19 @@ class FileReceiveService : Service() {
 
   private fun initSocketConnection(port: Int, host: String) {
     // does not matter what we pass to constructor over here
-    connection = SocketConnection(0)
-      // sometimes what I think is, this code may be called earlier before
-      // the sender device is prepared, resulting in the below connection
-      // request failing
-      .connectOnPort(port, host, false) {
-        Log.d(TAG, "Connected()")
-        receiveContents()
-      }
+//    connection = SocketConnection(0)
+//      // sometimes what I think is, this code may be called earlier before
+//      // the sender device is prepared, resulting in the below connection
+//      // request failing
+//      .connectOnPort(port, host, false) {
+//        Log.d(TAG, "Connected()")
+//        receiveContents()
+//      }
+    System.loadLibrary("native-lib")
+
+    thread {
+      Log.d(TAG, "initSocketConnection: " +     NativeCpp().connectToHost(host, port))
+    }
   }
 
   private fun receiveContents() {
@@ -118,20 +125,21 @@ class FileReceiveService : Service() {
     )
 
     val output = NullOutputStream()
-    val zipInput = GZIPInputStream(connection.input, Config.BUFFER_SIZE)
-    val buffer = ByteArray(Config.BUFFER_SIZE)
+//    val zipInput = GZIPInputStream(connection.input, BUFFER_SIZE)
+    val input = connection.input
+    val buffer = ByteArray(BUFFER_SIZE)
 
     var n = 0
-    var received = 0
-    while (!cancelled && zipInput.read(buffer).also { n = it } > 0) {
+    var nread = 0
+    while (!cancelled && input.read(buffer).also { n = it } > 0) {
       output.write(buffer, 0, n)
-      received += n
+      nread += n
 
-      onUpdateInfoNeeded(received)
+      onUpdateInfoNeeded(nread)
     }
     if (cancelled)
       return
-    zipInput.close()
+    input.close()
     connection.close()
 
     onComplete()
