@@ -19,15 +19,16 @@ import android.widget.RemoteViews
 import android.widget.Toast
 import androidx.annotation.RequiresApi
 import androidx.core.app.NotificationCompat
-import com.baxolino.apps.floats.NativeCpp
+import com.baxolino.apps.floats.core.NativeSocketClient
 import com.baxolino.apps.floats.R
 import com.baxolino.apps.floats.core.Config.BUFFER_SIZE
 import com.baxolino.apps.floats.core.io.NullOutputStream
 import com.baxolino.apps.floats.core.transfer.SocketConnection
 import com.baxolino.apps.floats.tools.ThemeHelper
+import java.io.File
+import java.nio.file.Files
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
-import java.util.zip.GZIPInputStream
 import kotlin.concurrent.thread
 
 class FileReceiveService : Service() {
@@ -63,6 +64,10 @@ class FileReceiveService : Service() {
 
   private val cancelRequestReceiver = CancelRequestReceiver(this)
 
+  init {
+    System.loadLibrary("native-lib")
+  }
+
   override fun onStartCommand(intent: Intent, flags: Int, startId: Int): Int {
     Log.d(TAG, "onStartCommand()")
 
@@ -93,25 +98,42 @@ class FileReceiveService : Service() {
     val port = intent.getIntExtra("port", -1)
     val hostAddress = intent.getStringExtra("host_address")!!
 
-    initSocketConnection(port, hostAddress)
+    thread {
+      initSocketConnection(port, hostAddress)
+    }
     return START_NOT_STICKY
   }
 
   private fun initSocketConnection(port: Int, host: String) {
-    // does not matter what we pass to constructor over here
-//    connection = SocketConnection(0)
-//      // sometimes what I think is, this code may be called earlier before
-//      // the sender device is prepared, resulting in the below connection
-//      // request failing
-//      .connectOnPort(port, host, false) {
-//        Log.d(TAG, "Connected()")
-//        receiveContents()
-//      }
-    System.loadLibrary("native-lib")
+    val temp = File.createTempFile(fileNameShort, ".gzip")
+    val result = NativeSocketClient()
+      .connectToHost(
+        object: NativeSocketClient.Callback {
+          override fun onStart() {
+            Log.d(TAG, "Started")
 
-    thread {
-      Log.d(TAG, "initSocketConnection: " +     NativeCpp().connectToHost(host, port))
+            timeStart = System.currentTimeMillis()
+            messenger.send(
+              Message.obtain().apply {
+                what = 0
+                data.putLong("time", timeStart)
+              }
+            )
+          }
+          override fun update(received: Int) {
+            onUpdateInfoNeeded(received)
+          }
+        },
+        temp.absolutePath,
+        host, port
+      )
+    if (result == "successful") {
+      Log.d(TAG, "Success! ${temp.length()}")
+    } else {
+      Log.d(TAG, "Message: $result")
     }
+    temp.deleteOnExit()
+    onComplete()
   }
 
   private fun receiveContents() {

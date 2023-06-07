@@ -14,10 +14,11 @@ import androidx.activity.OnBackPressedCallback
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
-import com.baxolino.apps.floats.core.files.FileRequest
+import com.baxolino.apps.floats.core.Config
 import com.baxolino.apps.floats.core.TaskExecutor
 import com.baxolino.apps.floats.core.files.FileNameUtil
 import com.baxolino.apps.floats.core.files.FileReceiver
+import com.baxolino.apps.floats.core.files.FileRequest
 import com.baxolino.apps.floats.core.files.RequestHandler
 import com.baxolino.apps.floats.core.transfer.SocketConnection
 import com.baxolino.apps.floats.tools.ThemeHelper
