@@ -7,13 +7,9 @@
 #include <fstream>
 #include <fcntl.h>
 
-extern "C"
-JNIEXPORT jstring JNICALL
-Java_com_baxolino_apps_floats_core_NativeSocketClient_connectToHost(JNIEnv *env, jobject thiz,
-                                                                    jobject callback,
-                                                                    jstring output,
-                                                                    jstring host,
-                                                                    jint port) {
+
+jstring receiveContentSocket(JNIEnv *env, jobject callback, jstring output, jstring host, jint port,
+                             bool retry) {
    const char *hostStr = env->GetStringUTFChars(host, nullptr);
    const char *outputPath = env->GetStringUTFChars(output, nullptr);
 
@@ -37,8 +33,22 @@ Java_com_baxolino_apps_floats_core_NativeSocketClient_connectToHost(JNIEnv *env,
 
 
    // Connect to the server
-   if (connect(sock, (struct sockaddr *) &serverAddress, sizeof(serverAddress)) < 0)
+   if (connect(sock, (struct sockaddr *) &serverAddress, sizeof(serverAddress)) < 0) {
+      if (retry) {
+         // we will retry connection again, the server may not be ready yet
+         // 1 second -> 1000000 seconds
+         usleep(1000000);
+
+         return receiveContentSocket(
+                 env,
+                 callback,
+                 output,
+                 host,
+                 port,
+                 false);
+      }
       return env->NewStringUTF("Failed to connect to the server.");
+   }
 
 
    // Open the output file
@@ -79,4 +89,21 @@ Java_com_baxolino_apps_floats_core_NativeSocketClient_connectToHost(JNIEnv *env,
    env->ReleaseStringUTFChars(host, hostStr);
    env->ReleaseStringUTFChars(output, outputPath);
    return env->NewStringUTF("successful");
+}
+
+
+extern "C"
+JNIEXPORT jstring JNICALL
+Java_com_baxolino_apps_floats_core_NativeSocketClient_connectToHost(JNIEnv *env, jobject thiz,
+                                                                    jobject callback,
+                                                                    jstring output,
+                                                                    jstring host,
+                                                                    jint port) {
+   return receiveContentSocket(
+           env,
+           callback,
+           output,
+           host,
+           port,
+           true);
 }
