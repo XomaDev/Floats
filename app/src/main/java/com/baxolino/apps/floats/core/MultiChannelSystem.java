@@ -19,8 +19,8 @@ public class MultiChannelSystem {
     this.stream = new BitOutputStream(stream);
   }
 
-  public void write(Channel channel, byte[] bytes) {
-    byteChunks.add(new ByteChunk(channel, bytes));
+  public void write(ChannelInfo channelInfo, byte[] bytes) {
+    byteChunks.add(new ByteChunk(channelInfo, bytes));
   }
 
   public void start() {
@@ -45,7 +45,7 @@ public class MultiChannelSystem {
     ByteChunk chunk = byteChunks.remove(0);
     try {
       // the channel header
-      stream.write(chunk.channel.bytes());
+      stream.write(chunk.channelInfo.bytes());
       int blockSize = chunk.bytes.length;
 
       stream.writeInt32(blockSize);
@@ -59,11 +59,11 @@ public class MultiChannelSystem {
 
   static class ByteChunk {
 
-    private final Channel channel;
+    private final ChannelInfo channelInfo;
     private final byte[] bytes;
 
-    public ByteChunk(Channel channel, byte[] bytes) {
-      this.channel = channel;
+    public ByteChunk(ChannelInfo channelInfo, byte[] bytes) {
+      this.channelInfo = channelInfo;
       this.bytes = bytes;
     }
   }

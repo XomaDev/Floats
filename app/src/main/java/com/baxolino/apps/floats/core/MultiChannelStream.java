@@ -16,7 +16,7 @@ import java.util.concurrent.TimeUnit;
 
 public class MultiChannelStream {
 
-  private final HashMap<Channel, DataInputStream> channels = new HashMap<>();
+  private final HashMap<ChannelInfo, DataInputStream> channels = new HashMap<>();
 
   private final BitInputStream input;
 
@@ -38,17 +38,17 @@ public class MultiChannelStream {
     };
   }
 
-  public void registerChannelStream(Channel channel, DataInputStream inputStream) {
-    Log.d("KRSystem", "registerChannelStream: register stream = " + Arrays.toString(channel.bytes()));
-    DataInputStream stream = channels.get(channel);
+  public void registerChannelStream(ChannelInfo channelInfo, DataInputStream inputStream) {
+    Log.d("KRSystem", "registerChannelStream: register stream = " + Arrays.toString(channelInfo.bytes()));
+    DataInputStream stream = channels.get(channelInfo);
     if (stream != null)
-      throw new IllegalStateException("Stream already registered = " + channel);
-    channels.put(channel, inputStream);
+      throw new IllegalStateException("Stream already registered = " + channelInfo);
+    channels.put(channelInfo, inputStream);
   }
 
 
-  public void forget(Channel channel) {
-    channels.remove(channel);
+  public void forget(ChannelInfo channelInfo) {
+    channels.remove(channelInfo);
   }
 
   public void start() {
@@ -61,7 +61,7 @@ public class MultiChannelStream {
         int blockSize = input.readInt32();
         byte[] chunk = readChunk(blockSize);
 
-        DataInputStream passStream = channels.get(new Channel(channel));
+        DataInputStream passStream = channels.get(new ChannelInfo(channel));
 
         if (passStream != null) {
           DataInputStream.ByteListener listener = passStream.getByteListener();

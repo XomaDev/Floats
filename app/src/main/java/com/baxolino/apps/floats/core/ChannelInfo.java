@@ -2,19 +2,19 @@ package com.baxolino.apps.floats.core;
 
 import java.util.Arrays;
 
-public class Channel {
+public class ChannelInfo {
 
-  public static final Channel FILE_REQUEST_CHANNEL = new Channel((byte) 2);
+  public static final ChannelInfo FILE_REQUEST_CHANNEL_INFO = new ChannelInfo((byte) 1);
 
   private final byte[] channel;
 
-  public Channel(byte[] channel) {
+  public ChannelInfo(byte[] channel) {
     if (channel.length != Config.CHANNEL_SIZE)
       throw new IllegalArgumentException("Wrong channel size");
     this.channel = channel;
   }
 
-  public Channel(byte b) {
+  public ChannelInfo(byte b) {
     channel = new byte[Config.CHANNEL_SIZE];
     channel[0] = b;
   }
@@ -27,8 +27,8 @@ public class Channel {
   public boolean equals(Object o) {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
-    Channel channel1 = (Channel) o;
-    return Arrays.equals(channel, channel1.channel);
+    ChannelInfo channelInfo1 = (ChannelInfo) o;
+    return Arrays.equals(channel, channelInfo1.channel);
   }
 
   @Override
