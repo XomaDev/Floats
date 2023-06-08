@@ -18,7 +18,7 @@ import android.util.Log
 import android.widget.Toast
 import androidx.annotation.RequiresApi
 import androidx.core.app.NotificationCompat
-import com.baxolino.apps.floats.core.NativeSocketClient
+import com.baxolino.apps.floats.core.NativeInterface
 import com.baxolino.apps.floats.R
 import com.baxolino.apps.floats.core.Info
 import com.baxolino.apps.floats.core.io.NullOutputStream
@@ -106,9 +106,9 @@ class FileReceiveService : Service() {
 
   private fun initSocketConnection(port: Int, host: String) {
     val temp = File.createTempFile(fileNameShort, ".gzip")
-    val result = NativeSocketClient()
+    val result = NativeInterface()
       .connectToHost(
-        object: NativeSocketClient.Callback {
+        object: NativeInterface.Callback {
           override fun onStart() {
             Log.d(TAG, "Started")
 

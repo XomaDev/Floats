@@ -1,6 +1,6 @@
 package com.baxolino.apps.floats.core
 
-class NativeSocketClient {
+class NativeInterface {
   
   interface Callback {
     fun onStart()
