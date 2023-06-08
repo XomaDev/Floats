@@ -91,14 +91,11 @@ jstring receiveContentSocket(JNIEnv *env, jobject callback, jstring output, jstr
    return env->NewStringUTF("successful");
 }
 
-
 extern "C"
-JNIEXPORT jstring JNICALL
-Java_com_baxolino_apps_floats_core_NativeSocketClient_connectToHost(JNIEnv *env, jobject thiz,
-                                                                    jobject callback,
-                                                                    jstring output,
-                                                                    jstring host,
-                                                                    jint port) {
+JNIEXPORT jstring
+Java_com_baxolino_apps_floats_core_NativeInterface_connectToHost(JNIEnv *env, jobject thiz,
+                                                                 jobject callback, jstring output,
+                                                                 jstring host, jint port) {
    return receiveContentSocket(
            env,
            callback,
