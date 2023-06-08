@@ -1,6 +1,6 @@
 package com.baxolino.apps.floats.core.files;
 
-import com.baxolino.apps.floats.core.Channel;
+import com.baxolino.apps.floats.core.ChannelInfo;
 import com.baxolino.apps.floats.core.MultiChannelStream;
 import com.baxolino.apps.floats.core.io.DataInputStream;
 
@@ -40,6 +40,6 @@ public class RequestHandler {
       listener.requested(new FileReceiver(port, name, lengthOfFile));
       return true;
     });
-    reader.registerChannelStream(Channel.FILE_REQUEST_CHANNEL, requests);
+    reader.registerChannelStream(ChannelInfo.FILE_REQUEST_CHANNEL_INFO, requests);
   }
 }

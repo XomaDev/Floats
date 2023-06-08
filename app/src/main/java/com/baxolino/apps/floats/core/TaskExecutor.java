@@ -11,14 +11,10 @@ import com.baxolino.apps.floats.core.transfer.SocketConnection;
 
 public class TaskExecutor {
 
-  public static @NonNull TaskExecutor getInstance(SocketConnection connection) {
-    return new TaskExecutor( connection);
-  }
-
   private final MultiChannelStream reader;
   private final MultiChannelSystem writer;
 
-  private TaskExecutor(SocketConnection connection) {
+  public TaskExecutor(SocketConnection connection) {
 
     reader = new MultiChannelStream(connection.input);
     writer = new MultiChannelSystem(connection.output);

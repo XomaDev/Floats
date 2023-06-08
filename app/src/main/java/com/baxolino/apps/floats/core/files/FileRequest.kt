@@ -5,7 +5,7 @@ import android.content.Intent
 import android.net.Uri
 import android.os.Build
 import android.util.Log
-import com.baxolino.apps.floats.core.Channel
+import com.baxolino.apps.floats.core.ChannelInfo
 import com.baxolino.apps.floats.core.MultiChannelSystem
 import com.baxolino.apps.floats.core.transfer.SocketUtils
 import com.baxolino.apps.floats.core.io.BitStream
@@ -30,7 +30,7 @@ class FileRequest(
       .writeInt32(fileNameBytes.size)
       .write(fileNameBytes)
       .toBytes()
-    writer.write(Channel.FILE_REQUEST_CHANNEL, requestData)
+    writer.write(ChannelInfo.FILE_REQUEST_CHANNEL_INFO, requestData)
 
     // the uploading world will be executed by the foreground service
     val service = Intent(context, FileRequestService::class.java)

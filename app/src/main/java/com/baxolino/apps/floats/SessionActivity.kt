@@ -14,7 +14,6 @@ import androidx.activity.OnBackPressedCallback
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
-import com.baxolino.apps.floats.core.Config
 import com.baxolino.apps.floats.core.TaskExecutor
 import com.baxolino.apps.floats.core.files.FileNameUtil
 import com.baxolino.apps.floats.core.files.FileReceiver
@@ -76,8 +75,8 @@ class SessionActivity : AppCompatActivity() {
         )
       )
     }
-    system = TaskExecutor.getInstance(
-      SocketConnection.getMainInstance(-1)
+    system = TaskExecutor(
+      SocketConnection.getMainSocket()
     )
 
     fileNameLabel = findViewById(R.id.file_name)
@@ -163,6 +162,7 @@ class SessionActivity : AppCompatActivity() {
       length.toLong()
     )
 
+    awaitingConnectionDialog?.dismiss()
     awaitingConnectionDialog = MaterialAlertDialogBuilder(this, R.style.FloatsCustomDialogTheme)
       .setTitle("Awaiting")
       .setMessage(getString(R.string.awaiting_transfer_text))

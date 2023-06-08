@@ -71,7 +71,7 @@ class HomeActivity : AppCompatActivity() {
 
     // create a new socket connection with the local port
     localPort = SocketUtils.findAvailableTcpPort()
-    connector = SocketConnection.getMainInstance(localPort)
+    connector = SocketConnection.getMainSocket(localPort)
 
 
     val connectionInfo = arrayOf(

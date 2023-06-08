@@ -19,7 +19,11 @@ class SocketConnection(private val localPort: Int) {
 
     private var mainSocket: SocketConnection? = null
 
-    fun getMainInstance(localPort: Int): SocketConnection {
+    fun getMainSocket(): SocketConnection {
+      return getMainSocket(-1)
+    }
+
+    fun getMainSocket(localPort: Int): SocketConnection {
       mainSocket?.let {
         return it
       }
