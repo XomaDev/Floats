@@ -132,10 +132,10 @@ class FileReceiveService : Service() {
       extract(temp)
     } else {
       cancelled = false
+      onComplete()
       Log.d(TAG, "Message: $result")
     }
     temp.deleteOnExit()
-    onComplete()
   }
 
   private fun extract(tempFile: File) {
@@ -162,6 +162,7 @@ class FileReceiveService : Service() {
 
     input.close()
     nullOutput.close()
+    Log.d(TAG, "Extraction Successful")
 
     // let them know, we finished
     messenger.send(
@@ -169,7 +170,7 @@ class FileReceiveService : Service() {
         what = 4
       }
     )
-    Log.d(TAG, "Extraction Successful")
+    onComplete()
   }
 
   private fun updateInfo(received: Int) {
@@ -270,7 +271,7 @@ class FileReceiveService : Service() {
       remoteLayout.setTextViewText(R.id.speed_notification, speed + "ps")
 
     return NotificationCompat.Builder(this, NOTIF_CHANNEL_ID)
-      .setSmallIcon(R.mipmap.ic_launcher)
+      .setSmallIcon(R.mipmap.download)
       .setStyle(NotificationCompat.DecoratedCustomViewStyle())
       .setColor(ThemeHelper.variant70Color(this))
       .setCustomContentView(remoteLayout)
