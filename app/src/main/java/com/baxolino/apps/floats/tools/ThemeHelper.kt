@@ -79,6 +79,6 @@ object ThemeHelper {
   fun getProgressBar(context: Context): RemoteViews {
     if (HAS_DYNAMIC_THEMING)
       return RemoteViews(context.packageName, R.layout.notification_progress_mtr)
-      return RemoteViews(context.packageName, R.layout.notification_progress)
+    return RemoteViews(context.packageName, R.layout.notification_progress)
   }
 }
