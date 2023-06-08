@@ -11,7 +11,6 @@ import android.os.Handler
 import android.os.IBinder
 import android.text.format.Formatter
 import android.util.Log
-import android.widget.RemoteViews
 import android.widget.Toast
 import androidx.annotation.RequiresApi
 import androidx.core.app.NotificationCompat
@@ -137,7 +136,7 @@ class FileRequestService : Service() {
   }
 
   private fun buildNotification(progress: Int, speed: String): Notification {
-    val remoteLayout = RemoteViews(packageName, R.layout.notification_progress)
+    val remoteLayout = ThemeHelper.getProgressBar(this)
     remoteLayout.setProgressBar(
       R.id.progress_notification,
       fileLength, progress, false

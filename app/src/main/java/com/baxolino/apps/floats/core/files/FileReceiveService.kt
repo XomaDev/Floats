@@ -26,7 +26,6 @@ import com.baxolino.apps.floats.core.io.NullOutputStream
 import com.baxolino.apps.floats.core.transfer.SocketConnection
 import com.baxolino.apps.floats.tools.ThemeHelper
 import java.io.File
-import java.nio.file.Files
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 import kotlin.concurrent.thread
@@ -255,7 +254,7 @@ class FileReceiveService : Service() {
 
   private fun createNotification(progress: Int, speed: String): Notification {
     // Get the layouts to use in the custom notification
-    val remoteLayout = RemoteViews(packageName, R.layout.notification_progress)
+    val remoteLayout = ThemeHelper.getProgressBar(this)
     remoteLayout.setProgressBar(
       R.id.progress_notification,
       fileLength, progress, false
