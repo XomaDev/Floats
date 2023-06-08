@@ -24,6 +24,7 @@ import com.baxolino.apps.floats.tools.ThemeHelper
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.google.android.material.progressindicator.CircularProgressIndicator
+import com.google.android.material.snackbar.Snackbar
 
 
 class SessionActivity : AppCompatActivity() {
@@ -44,7 +45,7 @@ class SessionActivity : AppCompatActivity() {
   private lateinit var progressBar: CircularProgressIndicator
   private lateinit var frameProgress: FrameLayout
 
-  private var awaitingConnectionDialog: AlertDialog? = null
+  private var awaitingExtractionDialog: AlertDialog? = null
 
   override fun onCreate(savedInstanceState: Bundle?) {
     super.onCreate(savedInstanceState)
@@ -105,12 +106,11 @@ class SessionActivity : AppCompatActivity() {
   private fun lookForFileRequests() {
     val listener = RequestHandler.RequestsListener {
       val receiver = it
-      runOnUiThread { onTransferRequested(it.name, it.length) }
+      val fname = it.name
+      runOnUiThread { onTransferRequested(fname, it.length) }
 
       it.setStartListener {
         runOnUiThread {
-          awaitingConnectionDialog?.dismiss()
-
           frameProgress.setOnLongClickListener {
             cancelFileTransfer(receiver)
             return@setOnLongClickListener true
@@ -130,6 +130,21 @@ class SessionActivity : AppCompatActivity() {
         runOnUiThread {
           fileNameLabel.text = "No files being received"
           fileSizeLabel.text = "(> ^_^)>"
+        }
+      }
+      it.setExtractionListener {
+        runOnUiThread {
+          awaitingExtractionDialog?.dismiss()
+          awaitingExtractionDialog = MaterialAlertDialogBuilder(this, R.style.FloatsCustomDialogTheme)
+            .setTitle("Extracting")
+            .setMessage("Extracting $fname, that we just received.")
+            .show()
+        }
+      }
+      it.setExtractionFinishedListener {
+        runOnUiThread {
+          awaitingExtractionDialog?.dismiss()
+          progressBar.setProgress(progressBar.max, true)
         }
       }
       it.receive(this)
@@ -161,12 +176,11 @@ class SessionActivity : AppCompatActivity() {
       applicationContext,
       length.toLong()
     )
-
-    awaitingConnectionDialog?.dismiss()
-    awaitingConnectionDialog = MaterialAlertDialogBuilder(this, R.style.FloatsCustomDialogTheme)
-      .setTitle("Awaiting")
-      .setMessage(getString(R.string.awaiting_transfer_text))
-      .show()
+    Snackbar.make(
+      findViewById(R.id.session_layout),
+      "Receiving $name",
+      Snackbar.LENGTH_LONG
+    ).show()
   }
 
   private var fileActivityResult = registerForActivityResult(

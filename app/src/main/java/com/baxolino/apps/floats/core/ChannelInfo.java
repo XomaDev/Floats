@@ -9,13 +9,13 @@ public class ChannelInfo {
   private final byte[] channel;
 
   public ChannelInfo(byte[] channel) {
-    if (channel.length != Config.CHANNEL_SIZE)
+    if (channel.length != Info.CHANNEL_SIZE)
       throw new IllegalArgumentException("Wrong channel size");
     this.channel = channel;
   }
 
   public ChannelInfo(byte b) {
-    channel = new byte[Config.CHANNEL_SIZE];
+    channel = new byte[Info.CHANNEL_SIZE];
     channel[0] = b;
   }
 

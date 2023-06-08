@@ -15,19 +15,20 @@ import android.os.Message
 import android.os.Messenger
 import android.text.format.Formatter
 import android.util.Log
-import android.widget.RemoteViews
 import android.widget.Toast
 import androidx.annotation.RequiresApi
 import androidx.core.app.NotificationCompat
 import com.baxolino.apps.floats.core.NativeSocketClient
 import com.baxolino.apps.floats.R
-import com.baxolino.apps.floats.core.Config.BUFFER_SIZE
+import com.baxolino.apps.floats.core.Info
 import com.baxolino.apps.floats.core.io.NullOutputStream
 import com.baxolino.apps.floats.core.transfer.SocketConnection
 import com.baxolino.apps.floats.tools.ThemeHelper
 import java.io.File
+import java.io.FileInputStream
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
+import java.util.zip.GZIPInputStream
 import kotlin.concurrent.thread
 
 class FileReceiveService : Service() {
@@ -120,7 +121,7 @@ class FileReceiveService : Service() {
             )
           }
           override fun update(received: Int) {
-            onUpdateInfoNeeded(received)
+            updateInfo(received)
           }
         },
         temp.absolutePath,
@@ -128,46 +129,50 @@ class FileReceiveService : Service() {
       )
     if (result == "successful") {
       Log.d(TAG, "Success! ${temp.length()}")
+      extract(temp)
     } else {
+      cancelled = false
       Log.d(TAG, "Message: $result")
     }
     temp.deleteOnExit()
     onComplete()
   }
 
-  private fun receiveContents() {
-    // send a message that receive is started through code 0
-    timeStart = System.currentTimeMillis()
+  private fun extract(tempFile: File) {
+    Log.d(TAG, "Extracting")
+    // let them know, we are extracting
     messenger.send(
       Message.obtain().apply {
-        what = 0
-        data.putLong("time", timeStart)
+        what = 3
       }
     )
 
-    val output = NullOutputStream()
-//    val zipInput = GZIPInputStream(connection.input, BUFFER_SIZE)
-    val input = connection.input
-    val buffer = ByteArray(BUFFER_SIZE)
+    // The content has been saved to a temp file,
+    // extract the data now
+    val nullOutput = NullOutputStream()
+    val input = GZIPInputStream(FileInputStream(tempFile), Info.BUFFER_SIZE)
 
-    var n = 0
-    var nread = 0
-    while (!cancelled && input.read(buffer).also { n = it } > 0) {
-      output.write(buffer, 0, n)
-      nread += n
-
-      onUpdateInfoNeeded(nread)
+    val buffer = ByteArray(Info.BUFFER_SIZE)
+    while (true) {
+      val bytesRead = input.read(buffer)
+      if (bytesRead == -1)
+        break
+      nullOutput.write(buffer, 0, bytesRead)
     }
-    if (cancelled)
-      return
-    input.close()
-    connection.close()
 
-    onComplete()
+    input.close()
+    nullOutput.close()
+
+    // let them know, we finished
+    messenger.send(
+      Message.obtain().apply {
+        what = 4
+      }
+    )
+    Log.d(TAG, "Extraction Successful")
   }
 
-  private fun onUpdateInfoNeeded(received: Int) {
-
+  private fun updateInfo(received: Int) {
     val progress = (received.toFloat().div(fileLength) * 100).toInt()
     var speed = ""
 

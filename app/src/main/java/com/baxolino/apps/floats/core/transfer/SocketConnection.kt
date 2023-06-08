@@ -1,7 +1,7 @@
 package com.baxolino.apps.floats.core.transfer
 
 import android.util.Log
-import com.baxolino.apps.floats.core.Config
+import com.baxolino.apps.floats.core.Info
 import java.io.InputStream
 import java.io.OutputStream
 import java.net.InetSocketAddress
@@ -89,8 +89,8 @@ class SocketConnection(private val localPort: Int) {
       if (!oobInline)
         oobInline = true
 
-      sendBufferSize = Config.BUFFER_SIZE
-      receiveBufferSize = Config.BUFFER_SIZE
+      sendBufferSize = Info.BUFFER_SIZE
+      receiveBufferSize = Info.BUFFER_SIZE
     }
     onFinish.invoke()
   }

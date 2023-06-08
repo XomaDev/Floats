@@ -17,6 +17,9 @@ class FileReceiver internal constructor(private val port: Int, val name: String,
   private lateinit var updateListener: () -> Unit
   private lateinit var finishedListener: () -> Unit
 
+  private lateinit var extractionBeganListener: () -> Unit
+  private lateinit var extractionFinishedListener: () -> Unit
+
   private var cancelled = false
 
   var startTime = 0L
@@ -37,6 +40,14 @@ class FileReceiver internal constructor(private val port: Int, val name: String,
 
   fun setFinishedListener(listener: () -> Unit) {
     finishedListener = listener
+  }
+
+  fun setExtractionListener(listener: () -> Unit) {
+    extractionBeganListener = listener
+  }
+
+  fun setExtractionFinishedListener(listener: () -> Unit) {
+    extractionFinishedListener = listener
   }
 
   fun cancel(context: Context) {
@@ -65,8 +76,17 @@ class FileReceiver internal constructor(private val port: Int, val name: String,
             updateListener.invoke()
           }
           2 -> {
-            // "finished" message
+            // "finished" message, but extraction still needs to be
+            // done
             finishedListener.invoke()
+          }
+          3 -> {
+            // "extraction" has began
+            extractionBeganListener.invoke()
+          }
+          4 -> {
+            // "extraction" was completed
+            extractionFinishedListener.invoke()
           }
         }
       }

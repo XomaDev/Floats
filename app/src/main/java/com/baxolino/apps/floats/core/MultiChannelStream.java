@@ -1,6 +1,6 @@
 package com.baxolino.apps.floats.core;
 
-import static com.baxolino.apps.floats.core.Config.CHUNK_SIZE;
+import static com.baxolino.apps.floats.core.Info.CHUNK_SIZE;
 
 import android.util.Log;
 
@@ -55,7 +55,7 @@ public class MultiChannelStream {
     ScheduledExecutorService service = Executors.newScheduledThreadPool(1);
     service.scheduleAtFixedRate(() -> {
       if (input.available() > 0) {
-        byte[] channel = new byte[Config.CHANNEL_SIZE];
+        byte[] channel = new byte[Info.CHANNEL_SIZE];
         input.read(channel);
 
         int blockSize = input.readInt32();

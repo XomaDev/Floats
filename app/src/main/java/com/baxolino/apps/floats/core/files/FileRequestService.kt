@@ -15,7 +15,7 @@ import android.widget.Toast
 import androidx.annotation.RequiresApi
 import androidx.core.app.NotificationCompat
 import com.baxolino.apps.floats.R
-import com.baxolino.apps.floats.core.Config
+import com.baxolino.apps.floats.core.Info
 import com.baxolino.apps.floats.core.transfer.SocketConnection
 import com.baxolino.apps.floats.tools.ThemeHelper
 import java.io.InputStream
@@ -84,7 +84,7 @@ class FileRequestService : Service() {
 
     val zipOutputStream = GZIPOutputStream(connection.output)
 
-    val buffer = ByteArray(Config.BUFFER_SIZE)
+    val buffer = ByteArray(Info.BUFFER_SIZE)
 
     var n = 0
     var written = 0
