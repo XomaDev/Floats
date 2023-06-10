@@ -1,7 +1,5 @@
 package com.baxolino.apps.floats.core;
 
-import static com.baxolino.apps.floats.core.Info.CHUNK_SIZE;
-
 import android.util.Log;
 
 import com.baxolino.apps.floats.core.io.BitInputStream;
@@ -67,7 +65,7 @@ public class MultiChannelStream {
           DataInputStream.ByteListener listener = passStream.getByteListener();
           passStream.addChunk(chunk);
           if (listener != null)
-            for (int i = 0, len = CHUNK_SIZE - blockSize; i < len; i++)
+            for (int i = 0; i < blockSize; i++)
               // break when listener returns true
               if (listener.onNewByteAvailable(chunk[i]))
                 break;
