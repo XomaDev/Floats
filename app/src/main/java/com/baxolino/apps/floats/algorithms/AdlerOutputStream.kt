@@ -1,44 +1,31 @@
-package com.baxolino.apps.floats.algorithms;
+package com.baxolino.apps.floats.algorithms
 
-import java.io.IOException;
-import java.io.OutputStream;
-import java.util.zip.Adler32;
+import java.io.OutputStream
+import java.util.zip.Adler32
 
-public class AdlerOutputStream extends OutputStream {
+class AdlerOutputStream(private val output: OutputStream) : OutputStream() {
 
-  private final Adler32 adler32 = new Adler32();
+  private val adler32 = Adler32()
 
+  val value: Long
+    get() = adler32.value
 
-  private final OutputStream output;
-
-  public AdlerOutputStream(OutputStream output) {
-    this.output = output;
+  override fun write(b: Int) {
+    output.write(b)
+    adler32.update(b)
   }
 
-  public long getValue() {
-    return adler32.getValue();
+  override fun write(b: ByteArray) {
+    output.write(b)
+    adler32.update(b)
   }
 
-  @Override
-  public void write(int b) throws IOException {
-    output.write(b);
-    adler32.update(b);
+  override fun write(b: ByteArray, off: Int, len: Int) {
+    output.write(b, off, len)
+    adler32.update(b, off, len)
   }
 
-  @Override
-  public void write(byte[] b) throws IOException {
-    output.write(b);
-    adler32.update(b);
-  }
-
-  @Override
-  public void write(byte[] b, int off, int len) throws IOException {
-    output.write(b, off, len);
-    adler32.update(b, off, len);
-  }
-
-  @Override
-  public void close() throws IOException {
-    output.close();
+  override fun close() {
+    output.close()
   }
 }

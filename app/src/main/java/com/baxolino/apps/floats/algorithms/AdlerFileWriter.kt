@@ -1,57 +1,52 @@
-package com.baxolino.apps.floats.algorithms;
+package com.baxolino.apps.floats.algorithms
 
-import android.util.Log;
+import android.util.Log
+import com.baxolino.apps.floats.core.Info
+import com.baxolino.apps.floats.core.io.BitStream
+import java.io.IOException
+import java.io.InputStream
+import java.io.OutputStream
+import java.util.Arrays
+import java.util.zip.GZIPOutputStream
 
-import androidx.annotation.NonNull;
+class AdlerFileWriter(private val input: InputStream, private val output: OutputStream) {
 
-import com.baxolino.apps.floats.core.Info;
-import com.baxolino.apps.floats.core.io.BitStream;
+  fun write(listener: (Int) -> Unit) {
+    val adlerOutputStream = AdlerOutputStream(output)
 
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.util.Arrays;
-import java.util.zip.Adler32;
-import java.util.zip.GZIPOutputStream;
+    val zipOutput = GZIPOutputStream(adlerOutputStream)
+    val buffer = ByteArray(Info.BUFFER_SIZE)
 
-public class AdlerFileWriter {
+    var read: Int
+    var written = 0
+    while (input.read(buffer).also { read = it } > 0) {
+      zipOutput.write(buffer, 0, read)
 
-  private static final String TAG = "AdlerFileWriter";
+      written += read
+      listener.invoke(written)
+    }
+    zipOutput.finish()
 
-  private final InputStream input;
+    // send the checksum over to the other
+    // device for verification; after sending bytes
+    val adlerCheckSum = adlerOutputStream.value
 
-  private final OutputStream output;
+    val checksum = BitStream()
+      .writeLong64(adlerCheckSum)
+      .toBytes()
 
-
-  public AdlerFileWriter(InputStream input, OutputStream output) {
-    this.input = input;
-    this.output = output;
-  }
-
-  public void write() throws IOException {
-    AdlerOutputStream adlerOutputStream = new AdlerOutputStream(output);
-    GZIPOutputStream zipOutput = new GZIPOutputStream(adlerOutputStream);
-
-    byte[] buffer = new byte[Info.BUFFER_SIZE];
-
-    int read;
-    while ((read = input.read(buffer)) > 0)
-      zipOutput.write(buffer, 0, read);
-    zipOutput.finish();
-
-    long adlerCheckSum = adlerOutputStream.getValue();
-    byte[] checksum = new BitStream()
-            .writeLong64(adlerCheckSum)
-            .toBytes();
-    Log.d(TAG, "CheckSum = " + adlerCheckSum + " | " + Arrays.toString(checksum));
+    Log.d(TAG, "CheckSum = " + adlerCheckSum + " | " + Arrays.toString(checksum))
 
     output.write(
-            new BitStream()
-                    .writeLong64(adlerCheckSum)
-                    .toBytes()
-    );
-    output.close();
-    input.close();
+      BitStream()
+        .writeLong64(adlerCheckSum)
+        .toBytes()
+    )
+    output.close()
+    input.close()
+  }
+
+  companion object {
+    private const val TAG = "AdlerFileWriter"
   }
 }
