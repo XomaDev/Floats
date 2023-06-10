@@ -127,11 +127,17 @@ class FileReceiveService : Service() {
         temp.absolutePath,
         host, port
       )
-    if (result == "successful") {
-      Log.d(TAG, "Success! ${temp.length()}")
+    if ("success" in result!!) {
+      Log.d(TAG, "Success! ${temp.length()} res_message: $result")
       extract(temp)
     } else {
-      cancelled = false
+      cancelled = true
+
+      messenger.send(
+        Message.obtain().apply {
+          what = 5
+        }
+      )
       onComplete()
       Log.d(TAG, "Message: $result")
     }
@@ -206,20 +212,8 @@ class FileReceiveService : Service() {
 
   // called by CancelRequestReceiver
   private fun cancelled() {
-    // send a cancel request to the sender
-    Thread {
-      // service operators on the main thread
-      connection.socket.sendUrgentData(0)
-    }.start()
-    val executor = Executors.newScheduledThreadPool(1)
-
-    // now stop receiving after 4 ms, by this time, the
-    // sender should have stopped adding more data
-    executor.schedule({
-      cancelled = true
-
-      unregisterWithStop()
-    }, 40, TimeUnit.MILLISECONDS)
+    cancelled = true
+    unregisterWithStop()
   }
 
   private fun onComplete() {
@@ -227,7 +221,7 @@ class FileReceiveService : Service() {
     Handler(mainLooper).post {
       Toast.makeText(
         this,
-        if (cancelled) "File transfer was cancelled."
+        if (cancelled) "File transfer was disrupted."
         else "File was transferred",
         Toast.LENGTH_LONG
       ).show()

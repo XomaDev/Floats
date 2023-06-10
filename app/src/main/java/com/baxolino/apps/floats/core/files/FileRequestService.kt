@@ -15,6 +15,7 @@ import android.widget.Toast
 import androidx.annotation.RequiresApi
 import androidx.core.app.NotificationCompat
 import com.baxolino.apps.floats.R
+import com.baxolino.apps.floats.algorithms.AdlerFileWriter
 import com.baxolino.apps.floats.core.Info
 import com.baxolino.apps.floats.core.transfer.SocketConnection
 import com.baxolino.apps.floats.tools.ThemeHelper
@@ -82,33 +83,8 @@ class FileRequestService : Service() {
 
     timeStart = System.currentTimeMillis()
 
-    val zipOutputStream = GZIPOutputStream(connection.output)
-
-    val buffer = ByteArray(Info.BUFFER_SIZE)
-
-    var n = 0
-    var written = 0
-
-    // read the buffer from the file and write them to sender
-    while (!cancelled && input.read(buffer).also { n = it } > 0) {
-      try {
-        zipOutputStream.write(buffer, 0, n)
-        written += n
-        onUpdateInfoRequired(written)
-      } catch (e: SocketException) {
-        // BrokenPipe: this error is thrown when the receiver abruptly
-        // closes the connection, we have few ms before the client is fully closed
-        Log.d(TAG, "Failed while uploading file contents")
-        break
-      }
-    }
-
-    input.close()
-
-    if (!cancelled) {
-      zipOutputStream.finish()
-      zipOutputStream.close()
-    }
+    AdlerFileWriter(input, connection.output)
+      .write()
 
     connection.close()
     onComplete()
