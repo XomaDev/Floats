@@ -7,6 +7,7 @@ import android.os.Handler
 import android.os.Looper
 import android.os.Message
 import android.os.Messenger
+import android.util.Log
 import com.baxolino.apps.floats.SessionActivity
 
 
@@ -19,6 +20,8 @@ class FileReceiver internal constructor(private val port: Int, val name: String,
 
   private lateinit var extractionBeganListener: () -> Unit
   private lateinit var extractionFinishedListener: () -> Unit
+
+  private lateinit var disruptionListener: () -> Unit
 
   private var cancelled = false
 
@@ -48,6 +51,10 @@ class FileReceiver internal constructor(private val port: Int, val name: String,
 
   fun setExtractionFinishedListener(listener: () -> Unit) {
     extractionFinishedListener = listener
+  }
+
+  fun setDisruptionListener(listener: () -> Unit) {
+    disruptionListener = listener
   }
 
   fun cancel(context: Context) {
@@ -87,6 +94,11 @@ class FileReceiver internal constructor(private val port: Int, val name: String,
           4 -> {
             // "extraction" was completed
             extractionFinishedListener.invoke()
+          }
+          5 -> {
+            // when file transfer was disrupted or was not
+            // properly transferred
+            disruptionListener.invoke()
           }
         }
       }

@@ -1,5 +1,6 @@
 package com.baxolino.apps.floats.camera
 
+import android.annotation.SuppressLint
 import android.util.Log
 import android.widget.Toast
 import androidx.camera.core.ExperimentalGetImage
@@ -10,14 +11,13 @@ import com.google.mlkit.vision.barcode.BarcodeScanning
 import com.google.mlkit.vision.barcode.common.Barcode
 import com.google.mlkit.vision.common.InputImage
 
-@ExperimentalGetImage
 class ImageAnalyzer(private val scanActivity: ScanActivity) : ImageAnalysis.Analyzer {
-
 
     companion object {
         private const val TAG = "ImageAnalyzer"
     }
 
+    @SuppressLint("UnsafeOptInUsageError")
     override fun analyze(imageProxy: ImageProxy) {
         val mediaImage = imageProxy.image
         if (mediaImage != null) {

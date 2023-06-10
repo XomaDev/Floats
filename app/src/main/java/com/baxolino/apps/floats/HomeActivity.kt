@@ -1,7 +1,6 @@
 package com.baxolino.apps.floats
 
 import android.annotation.SuppressLint
-import android.bluetooth.BluetoothAdapter
 import android.bluetooth.BluetoothManager
 import android.content.Intent
 import android.os.Bundle
@@ -10,7 +9,6 @@ import android.widget.ImageView
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
-import androidx.camera.core.ExperimentalGetImage
 import com.baxolino.apps.floats.camera.ScanActivity
 import com.baxolino.apps.floats.core.KnowEachOther
 import com.baxolino.apps.floats.core.transfer.SocketConnection
@@ -28,19 +26,21 @@ import com.github.alexzhirkevich.customqrgenerator.vector.style.QrVectorFrameSha
 import com.github.alexzhirkevich.customqrgenerator.vector.style.QrVectorPixelShape
 import com.github.alexzhirkevich.customqrgenerator.vector.style.QrVectorShapes
 import com.google.android.material.button.MaterialButton
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import java.net.InetAddress
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
 
 
-@ExperimentalGetImage
 class HomeActivity : AppCompatActivity() {
 
   companion object {
+    init {
+      System.loadLibrary("native-lib")
+    }
+
     private const val TAG = "HomeActivity"
   }
-
-  private lateinit var adapter: BluetoothAdapter
 
   private lateinit var deviceConnectionInfo: String
   private lateinit var ourId: String
@@ -53,13 +53,8 @@ class HomeActivity : AppCompatActivity() {
     super.onCreate(savedInstanceState)
 
     setContentView(R.layout.activity_home)
-    System.loadLibrary("native-lib")
-
 
     ThemeHelper.themeOfHomeActivity(this)
-
-    val bluetoothManager = getSystemService(BluetoothManager::class.java)
-    adapter = bluetoothManager.adapter
 
     val deviceText = findViewById<TextView>(R.id.device_label)
     val deviceId = Utils.getDeviceName(contentResolver)
@@ -71,6 +66,8 @@ class HomeActivity : AppCompatActivity() {
 
     // create a new socket connection with the local port
     localPort = SocketUtils.findAvailableTcpPort()
+
+    Log.d(TAG, "Port[$localPort]")
     connector = SocketConnection.getMainSocket(localPort)
 
 
@@ -101,6 +98,19 @@ class HomeActivity : AppCompatActivity() {
         Log.d(TAG, "Accepted()")
         onConnectionSuccessful()
       }
+    }
+    if (intent.hasExtra("event_disconnect")) {
+      val device = intent.getStringExtra("event_disconnect")
+      // we are disconnected from a device we
+      // were once connected to
+
+      MaterialAlertDialogBuilder(this, R.style.FloatsCustomDialogTheme)
+        .setTitle("Disconnected")
+        .setMessage("Connection to device $device was broken.")
+        .setPositiveButton("Dismiss") { dialog, _ ->
+          dialog.dismiss()
+        }
+        .show()
     }
   }
 

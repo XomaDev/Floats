@@ -15,7 +15,7 @@ import com.baxolino.apps.floats.HomeActivity
 import com.baxolino.apps.floats.R
 
 
-@ExperimentalGetImage class ScanActivity : AppCompatActivity() {
+class ScanActivity : AppCompatActivity() {
 
     companion object {
         private const val TAG = "ScanActivity"
