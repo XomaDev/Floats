@@ -47,6 +47,8 @@ class SessionActivity : AppCompatActivity() {
 
   private var awaitingExtractionDialog: AlertDialog? = null
 
+  private var receiver: FileReceiver? = null
+
   override fun onCreate(savedInstanceState: Bundle?) {
     super.onCreate(savedInstanceState)
     setContentView(R.layout.activity_session)
@@ -76,8 +78,9 @@ class SessionActivity : AppCompatActivity() {
         )
       )
     }
+    val connection = SocketConnection.getMainSocket()
     system = TaskExecutor(
-      SocketConnection.getMainSocket()
+      connection
     )
 
     fileNameLabel = findViewById(R.id.file_name)
@@ -106,6 +109,8 @@ class SessionActivity : AppCompatActivity() {
   private fun lookForFileRequests() {
     val listener = RequestHandler.RequestsListener {
       val receiver = it
+      this.receiver = it
+
       val fname = it.name
       runOnUiThread { onTransferRequested(fname, it.length) }
 
@@ -135,16 +140,23 @@ class SessionActivity : AppCompatActivity() {
       it.setExtractionListener {
         runOnUiThread {
           awaitingExtractionDialog?.dismiss()
-          awaitingExtractionDialog = MaterialAlertDialogBuilder(this, R.style.FloatsCustomDialogTheme)
-            .setTitle("Extracting")
-            .setMessage("Extracting $fname, that we just received.")
-            .show()
+          awaitingExtractionDialog =
+            MaterialAlertDialogBuilder(this, R.style.FloatsCustomDialogTheme)
+              .setTitle("Extracting")
+              .setMessage("Extracting $fname, that we just received.")
+              .show()
         }
       }
       it.setExtractionFinishedListener {
         runOnUiThread {
           awaitingExtractionDialog?.dismiss()
           progressBar.setProgress(progressBar.max, true)
+        }
+      }
+      it.setDisruptionListener {
+        runOnUiThread {
+          Log.d(TAG, "lookForFileRequests: disrupted")
+          progressBar.setProgress(0, true)
         }
       }
       it.receive(this)

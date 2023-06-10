@@ -33,6 +33,10 @@ class SocketConnection(private val localPort: Int) {
           return this
         }
     }
+
+    fun clear() {
+      mainSocket = null
+    }
   }
 
   lateinit var socket: Socket
