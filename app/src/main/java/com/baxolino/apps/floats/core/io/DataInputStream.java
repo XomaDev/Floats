@@ -4,8 +4,15 @@ import java.util.LinkedList;
 
 public class DataInputStream extends BitInputStream {
 
+  private final boolean save;
+
   public DataInputStream() {
+    this(true);
+  }
+
+  public DataInputStream(boolean save) {
     super(null);
+    this.save = save;
   }
 
 
@@ -37,6 +44,8 @@ public class DataInputStream extends BitInputStream {
   }
 
   public void addChunk(byte[] bytes) {
+    if (!save)
+      return;
     available += bytes.length;
     series.add(new Bytes(bytes));
     reachedEOS = false;
