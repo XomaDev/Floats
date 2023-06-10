@@ -16,14 +16,11 @@ import androidx.annotation.RequiresApi
 import androidx.core.app.NotificationCompat
 import com.baxolino.apps.floats.R
 import com.baxolino.apps.floats.algorithms.AdlerFileWriter
-import com.baxolino.apps.floats.core.Info
 import com.baxolino.apps.floats.core.transfer.SocketConnection
 import com.baxolino.apps.floats.tools.ThemeHelper
 import java.io.InputStream
-import java.net.SocketException
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
-import java.util.zip.GZIPOutputStream
 
 class FileRequestService : Service() {
 
@@ -84,13 +81,15 @@ class FileRequestService : Service() {
     timeStart = System.currentTimeMillis()
 
     AdlerFileWriter(input, connection.output)
-      .write()
+      .write {
+        onUpdateProgressInfo(it)
+      }
 
     connection.close()
     onComplete()
   }
 
-  private fun onUpdateInfoRequired(written: Int) {
+  private fun onUpdateProgressInfo(written: Int) {
     var speed = ""
 
     val difference = (System.currentTimeMillis() - timeStart)
