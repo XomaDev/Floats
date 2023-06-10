@@ -62,6 +62,19 @@ public class BitStream {
   }
 
 
+  public BitStream writeLong64(long n) {
+    write((int) (n >> 56));
+    write((int) (n >> 48));
+    write((int) (n >> 40));
+    write((int) (n >> 32));
+    write((int) (n >> 24));
+    write((int) (n >> 16));
+    write((int) (n >> 8));
+    write((int) n);
+
+    return this;
+  }
+
   /**
    * Writes a 16-bit short int to stream
    */
