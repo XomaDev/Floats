@@ -1,7 +1,6 @@
 package com.baxolino.apps.floats
 
 import android.annotation.SuppressLint
-import android.bluetooth.BluetoothManager
 import android.content.Intent
 import android.os.Bundle
 import android.util.Log

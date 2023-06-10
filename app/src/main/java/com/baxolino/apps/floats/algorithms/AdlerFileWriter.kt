@@ -3,7 +3,6 @@ package com.baxolino.apps.floats.algorithms
 import android.util.Log
 import com.baxolino.apps.floats.core.Info
 import com.baxolino.apps.floats.core.io.BitStream
-import java.io.IOException
 import java.io.InputStream
 import java.io.OutputStream
 import java.util.Arrays

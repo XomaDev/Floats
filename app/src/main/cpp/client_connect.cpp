@@ -9,6 +9,7 @@
 
 
 constexpr uint32_t MOD_ADLER = 65521;
+constexpr int BUFFER_SIZE = 1000000;
 
 jstring receiveContentSocket(JNIEnv *env, jobject callback, jstring output, jstring host, jint port,
                              bool retry) {
@@ -63,8 +64,7 @@ jstring receiveContentSocket(JNIEnv *env, jobject callback, jstring output, jstr
    env->CallVoidMethod(callback, env->GetMethodID(clazz, "onStart", "()V"));
 
    // Read and save data to the output file
-   constexpr int bufferSize = 1000000;
-   char *buffer = new char[bufferSize];
+   char *buffer = new char[BUFFER_SIZE];
 
    ssize_t nRead = 0;
    ssize_t bytesRead;
@@ -79,7 +79,7 @@ jstring receiveContentSocket(JNIEnv *env, jobject callback, jstring output, jstr
    uint32_t a = 1;
    uint32_t b = 0;
 
-   while ((bytesRead = read(sock, buffer, bufferSize)) > 0) {
+   while ((bytesRead = read(sock, buffer, BUFFER_SIZE)) > 0) {
       if (lastRead) {
          // process the previous last 8 bytes
          for (char last8Byte: last8Bytes) {
