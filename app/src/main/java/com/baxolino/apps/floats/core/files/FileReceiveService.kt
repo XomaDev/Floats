@@ -17,7 +17,7 @@ import android.util.Log
 import android.widget.Toast
 import androidx.annotation.RequiresApi
 import androidx.core.app.NotificationCompat
-import com.baxolino.apps.floats.core.NativeInterface
+import com.baxolino.apps.floats.core.NativeFileInterface
 import com.baxolino.apps.floats.R
 import com.baxolino.apps.floats.core.files.MessageReceiver.Companion.RECEIVE_ACTION
 import com.baxolino.apps.floats.tools.ThemeHelper
@@ -94,9 +94,9 @@ class FileReceiveService : Service() {
 
   private fun initSocketConnection(port: Int, host: String) {
     val temp = File.createTempFile(fileNameShort, ".deflate")
-    val result = NativeInterface()
+    val result = NativeFileInterface()
       .receiveFile(
-        object : NativeInterface.Callback {
+        object : NativeFileInterface.Callback {
           override fun onStart() {
             Log.d(TAG, "Started")
 
@@ -165,7 +165,7 @@ class FileReceiveService : Service() {
   private fun cancelled() {
     cancelled = true
 
-    NativeInterface()
+    NativeFileInterface()
       // cancels any ongoing file receiving
       .cancelFileReceive()
     unregisterWithStop()

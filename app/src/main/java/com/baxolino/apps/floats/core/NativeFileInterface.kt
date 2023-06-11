@@ -1,6 +1,6 @@
 package com.baxolino.apps.floats.core
 
-class NativeInterface {
+class NativeFileInterface {
   
   interface Callback {
     fun onStart()
@@ -10,11 +10,11 @@ class NativeInterface {
   
   external fun receiveFile(
     callback: Callback,
-    output: String?,
+    output: String,
     expectedSize: Int,
-    host: String?,
+    host: String,
     port: Int
-  ): String?
+  ): String
 
   external fun cancelFileReceive()
 }

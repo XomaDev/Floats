@@ -14,7 +14,7 @@ bool wasCancelled = false;
 
 extern "C"
 JNIEXPORT void JNICALL
-Java_com_baxolino_apps_floats_core_NativeInterface_cancelFileReceive(JNIEnv *env, jobject thiz) {
+Java_com_baxolino_apps_floats_core_NativeFileInterface_cancelFileReceive(JNIEnv *env, jobject thiz) {
    wasCancelled = true;
 }
 
@@ -116,7 +116,7 @@ jstring receiveContentSocket(JNIEnv *env,
    env->ReleaseStringUTFChars(output, outputPath);
 
    if (sizeExpected != (int) nRead) {
-      return env->NewStringUTF("Transfer was disrupted.");
+      return env->NewStringUTF(("Transfer was disrupted. " + std::to_string(nRead)).c_str());
    }
 
    return env->NewStringUTF("successful [matches length]");
@@ -124,11 +124,12 @@ jstring receiveContentSocket(JNIEnv *env,
 
 extern "C"
 JNIEXPORT jstring
-Java_com_baxolino_apps_floats_core_NativeInterface_receiveFile(JNIEnv *env, jobject thiz,
-                                                               jobject callback, jstring output,
-                                                               jint expectedSize,
-                                                               jstring host,
-                                                               jint port) {
+Java_com_baxolino_apps_floats_core_NativeFileInterface_receiveFile(JNIEnv *env, jobject thiz,
+                                                                   jobject callback,
+                                                                   jstring output,
+                                                                   jint expectedSize,
+                                                                   jstring host,
+                                                                   jint port) {
    wasCancelled = false;
 
    return receiveContentSocket(
