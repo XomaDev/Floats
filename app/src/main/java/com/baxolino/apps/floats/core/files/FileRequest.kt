@@ -7,6 +7,7 @@ import android.os.Build
 import android.util.Log
 import com.baxolino.apps.floats.core.ChannelInfo
 import com.baxolino.apps.floats.core.MultiChannelSystem
+import com.baxolino.apps.floats.core.TaskExecutor
 import com.baxolino.apps.floats.core.transfer.SocketUtils
 import com.baxolino.apps.floats.core.io.BitStream
 
@@ -20,7 +21,7 @@ class FileRequest(
     Log.d(TAG, "$TAG($fileInput)")
   }
 
-  fun execute(context: Context, writer: MultiChannelSystem) {
+  fun execute(context: Context, exec: TaskExecutor) {
     val localPort = SocketUtils.findAvailableTcpPort()
 
     val fileNameBytes = fileName.toByteArray()
@@ -30,7 +31,15 @@ class FileRequest(
       .writeInt32(fileNameBytes.size)
       .write(fileNameBytes)
       .toBytes()
-    writer.write(ChannelInfo.FILE_REQUEST_CHANNEL_INFO, requestData)
+    exec.writer.write(ChannelInfo.FILE_REQUEST_CHANNEL_INFO, requestData)
+
+    exec.registerOnCancel(localPort) {
+      Log.d(TAG, "Cancellation Requested")
+      context.sendBroadcast(Intent()
+        .apply {
+          action = FileRequestService.CANCEL_REQUEST_ACTION
+        })
+    }
 
     // the uploading world will be executed by the foreground service
     val service = Intent(context, FileRequestService::class.java)

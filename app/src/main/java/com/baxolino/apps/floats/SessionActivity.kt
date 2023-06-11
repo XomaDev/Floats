@@ -18,6 +18,7 @@ import com.baxolino.apps.floats.core.TaskExecutor
 import com.baxolino.apps.floats.core.files.FileNameUtil
 import com.baxolino.apps.floats.core.files.FileReceiver
 import com.baxolino.apps.floats.core.files.FileRequest
+import com.baxolino.apps.floats.core.files.MessageReceiver
 import com.baxolino.apps.floats.core.files.RequestHandler
 import com.baxolino.apps.floats.core.transfer.SocketConnection
 import com.baxolino.apps.floats.tools.ThemeHelper
@@ -33,7 +34,7 @@ class SessionActivity : AppCompatActivity() {
     private const val TAG = "SessionActivity"
   }
 
-  private lateinit var system: TaskExecutor
+  private lateinit var executor: TaskExecutor
 
   private lateinit var fileNameLabel: TextView
   private lateinit var fileSizeLabel: TextView
@@ -48,6 +49,11 @@ class SessionActivity : AppCompatActivity() {
   private var awaitingExtractionDialog: AlertDialog? = null
 
   private var receiver: FileReceiver? = null
+
+  // we don't use this to receive messages here,
+  // we are required to call onPause() and onResume()
+  // lifecycles on it
+  private val messageReceiver = MessageReceiver()
 
   override fun onCreate(savedInstanceState: Bundle?) {
     super.onCreate(savedInstanceState)
@@ -79,7 +85,7 @@ class SessionActivity : AppCompatActivity() {
       )
     }
     val connection = SocketConnection.getMainSocket()
-    system = TaskExecutor(
+    executor = TaskExecutor(
       connection
     )
 
@@ -161,7 +167,7 @@ class SessionActivity : AppCompatActivity() {
       }
       it.receive(this)
     }
-    system.register(RequestHandler(listener))
+    executor.register(RequestHandler(listener))
   }
 
   private fun cancelFileTransfer(receiver: FileReceiver) {
@@ -170,7 +176,7 @@ class SessionActivity : AppCompatActivity() {
       getString(R.string.transfer_cancelled_receiver), Toast.LENGTH_LONG
     ).show()
 
-    receiver.cancel(this)
+    receiver.cancel(this, executor)
 
     // TODO:
     //  when we really implement the saving mechanism
@@ -230,7 +236,7 @@ class SessionActivity : AppCompatActivity() {
     val request = FileRequest(
       uri, fileName, fileLength
     )
-    system.execute(applicationContext, request)
+    executor.execute(applicationContext, request)
   }
 
   private fun Uri.get(property: String): String {
@@ -249,5 +255,15 @@ class SessionActivity : AppCompatActivity() {
       return fileName
     }
     throw Error("Something Went Wrong File Querying Name")
+  }
+
+  override fun onResume() {
+    super.onResume()
+    messageReceiver.onResume(this)
+  }
+
+  override fun onPause() {
+    super.onPause()
+    messageReceiver.onPause(this)
   }
 }

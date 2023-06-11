@@ -4,7 +4,10 @@ import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.Service
+import android.content.BroadcastReceiver
+import android.content.Context
 import android.content.Intent
+import android.content.IntentFilter
 import android.net.Uri
 import android.os.Build
 import android.os.Handler
@@ -18,11 +21,24 @@ import com.baxolino.apps.floats.R
 import com.baxolino.apps.floats.algorithms.AdlerFileWriter
 import com.baxolino.apps.floats.core.transfer.SocketConnection
 import com.baxolino.apps.floats.tools.ThemeHelper
-import java.io.InputStream
-import java.util.concurrent.Executors
-import java.util.concurrent.TimeUnit
 
 class FileRequestService : Service() {
+
+  companion object {
+    private const val TAG = "FileRequestService"
+
+    private const val NOTIF_CHANNEL_ID = "I/O Transmission"
+    private const val NOTIF_CHANNEL_NAME = "File Transfer"
+
+    const val CANCEL_REQUEST_ACTION = "request_cancel"
+
+    class CancelRequestListener(private val service: FileRequestService) : BroadcastReceiver() {
+      override fun onReceive(context: Context, intent: Intent) {
+        Log.d(TAG, "Received Cancel Post Request")
+        service.onCancelled()
+      }
+    }
+  }
 
   private lateinit var notificationManager: NotificationManager
 
@@ -36,6 +52,10 @@ class FileRequestService : Service() {
   private var cancelled = false
   private lateinit var fileNameShort: String
 
+  private lateinit var adlerFileWriter: AdlerFileWriter
+
+  private val cancelRequestReceiver = CancelRequestListener(this)
+
   override fun onStartCommand(intent: Intent, flags: Int, startId: Int): Int {
     Log.d(TAG, "onStartCommand()")
 
@@ -47,10 +67,11 @@ class FileRequestService : Service() {
 
     fileLength = intent.getIntExtra("file_length", -1)
 
-    notificationManager = getSystemService(NotificationManager::class.java) as
-            NotificationManager
+    notificationManager = getSystemService(NotificationManager::class.java)
     notificationId = fileName.hashCode()
+
     createForeground(notificationId)
+    registerReceiver(cancelRequestReceiver, IntentFilter(CANCEL_REQUEST_ACTION))
 
     initSocketConnection(uri, localPort)
     return START_NOT_STICKY
@@ -59,7 +80,6 @@ class FileRequestService : Service() {
   private fun initSocketConnection(uri: Uri, localPort: Int) {
     connection = SocketConnection(localPort)
       .acceptOnPort {
-        lookForAbortRequests()
         uploadFileContents(uri)
       }
   }
@@ -80,13 +100,17 @@ class FileRequestService : Service() {
 
     timeStart = System.currentTimeMillis()
 
-    AdlerFileWriter(input, connection.output)
-      .write {
-        onUpdateProgressInfo(it)
-      }
-
+    adlerFileWriter = AdlerFileWriter(input, connection.output)
+    adlerFileWriter.write {
+      onUpdateProgressInfo(it)
+    }
     connection.close()
     onComplete()
+  }
+
+  private fun onCancelled() {
+    cancelled = true
+    adlerFileWriter.cancel()
   }
 
   private fun onUpdateProgressInfo(written: Int) {
@@ -134,7 +158,7 @@ class FileRequestService : Service() {
     Handler(mainLooper).post {
       if (cancelled) {
         Toast.makeText(
-          this, "File transfer was cancelled.",
+          this, "File transfer was was cancelled.",
           Toast.LENGTH_LONG
         ).show()
       } else {
@@ -144,25 +168,15 @@ class FileRequestService : Service() {
         ).show()
       }
     }
+    unregisterWithStop()
+  }
 
-    // inform the user completion and stop the foreground service
+  private fun unregisterWithStop() {
     stopForeground(STOP_FOREGROUND_REMOVE)
+
+    unregisterReceiver(cancelRequestReceiver)
   }
 
-  private fun lookForAbortRequests() {
-    val input: InputStream = connection.input
-    val service = Executors.newScheduledThreadPool(1)
-
-    service.scheduleAtFixedRate({
-      if (input.available() > 0) {
-        Log.d(TAG, "Transfer was cancelled")
-
-        input.read()
-        cancelled = true
-        service.shutdownNow()
-      }
-    }, 0, 20, TimeUnit.MILLISECONDS)
-  }
 
   @RequiresApi(Build.VERSION_CODES.O)
   private fun createChannel() {
@@ -176,12 +190,5 @@ class FileRequestService : Service() {
 
   override fun onBind(intent: Intent): IBinder? {
     return null
-  }
-
-  companion object {
-    private const val TAG = "FileRequestService"
-
-    private const val NOTIF_CHANNEL_ID = "I/O Transmission"
-    private const val NOTIF_CHANNEL_NAME = "File Transfer"
   }
 }

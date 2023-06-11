@@ -12,15 +12,17 @@ import java.util.zip.DeflaterOutputStream
 
 class AdlerFileWriter(private val input: InputStream, private val output: OutputStream) {
 
+  private var cancelled = false
+
   fun write(listener: (Int) -> Unit) {
     val adlerOutputStream = AdlerOutputStream(output)
 
     val zipOutput = DeflaterOutputStream(adlerOutputStream, Deflater(FILTERED))
     val buffer = ByteArray(Info.BUFFER_SIZE)
 
-    var read: Int
+    var read = -1
     var written = 0
-    while (input.read(buffer).also { read = it } > 0) {
+    while (!cancelled && input.read(buffer).also { read = it } > 0) {
       zipOutput.write(buffer, 0, read)
 
       written += read
@@ -45,6 +47,10 @@ class AdlerFileWriter(private val input: InputStream, private val output: Output
     )
     output.close()
     input.close()
+  }
+
+  fun cancel() {
+    cancelled = true
   }
 
   companion object {

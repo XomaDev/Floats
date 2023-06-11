@@ -11,8 +11,17 @@
 constexpr uint32_t MOD_ADLER = 65521;
 constexpr int BUFFER_SIZE = 1000000;
 
+bool wasCancelled = false;
+
+extern "C"
+JNIEXPORT void JNICALL
+Java_com_baxolino_apps_floats_core_NativeInterface_cancel(JNIEnv *env, jobject thiz) {
+   wasCancelled = true;
+}
+
 jstring receiveContentSocket(JNIEnv *env, jobject callback, jstring output, jstring host, jint port,
                              bool retry) {
+
    const char *hostStr = env->GetStringUTFChars(host, nullptr);
    const char *outputPath = env->GetStringUTFChars(output, nullptr);
 
@@ -54,13 +63,17 @@ jstring receiveContentSocket(JNIEnv *env, jobject callback, jstring output, jstr
       return env->NewStringUTF("Failed to connect to the server.");
    }
 
+   jclass clazz = env->GetObjectClass(callback);
+
+   env->CallVoidMethod(callback,
+                       env->GetMethodID(clazz, "debug", "(I)V"), 1);
+
 
    // Open the output file
    int outputFile = open(outputPathStr.c_str(), O_WRONLY | O_CREAT | O_TRUNC, 0644);
    if (outputFile == -1)
       return env->NewStringUTF("Failed to open output file.");
 
-   jclass clazz = env->GetObjectClass(callback);
    env->CallVoidMethod(callback, env->GetMethodID(clazz, "onStart", "()V"));
 
    // Read and save data to the output file
@@ -79,7 +92,7 @@ jstring receiveContentSocket(JNIEnv *env, jobject callback, jstring output, jstr
    uint32_t a = 1;
    uint32_t b = 0;
 
-   while ((bytesRead = read(sock, buffer, BUFFER_SIZE)) > 0) {
+   while (!wasCancelled && (bytesRead = read(sock, buffer, BUFFER_SIZE)) > 0) {
       if (lastRead) {
          // process the previous last 8 bytes
          for (char last8Byte: last8Bytes) {
@@ -115,6 +128,13 @@ jstring receiveContentSocket(JNIEnv *env, jobject callback, jstring output, jstr
       nRead += bytesRead;
       env->CallVoidMethod(callback, methodId, nRead);
       lastRead = true;
+   }
+   if (wasCancelled) {
+      jmethodID cancelId = env->GetMethodID(clazz, "cancelled", "()V");
+      env->CallVoidMethod(callback, cancelId);
+
+
+      return env->NewStringUTF("Was Cancelled");
    }
 
    uint32_t receivedChecksum = (b << 16) | a;
@@ -153,6 +173,8 @@ JNIEXPORT jstring
 Java_com_baxolino_apps_floats_core_NativeInterface_connectToHost(JNIEnv *env, jobject thiz,
                                                                  jobject callback, jstring output,
                                                                  jstring host, jint port) {
+   wasCancelled = false;
+
    return receiveContentSocket(
            env,
            callback,

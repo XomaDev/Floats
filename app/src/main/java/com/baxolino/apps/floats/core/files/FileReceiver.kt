@@ -1,19 +1,19 @@
 package com.baxolino.apps.floats.core.files
 
-import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
-import android.content.ServiceConnection
 import android.os.Build
-import android.os.Handler
-import android.os.IBinder
-import android.os.Looper
-import android.os.Message
-import android.os.Messenger
+import android.os.Bundle
+import android.util.Log
 import com.baxolino.apps.floats.SessionActivity
+import com.baxolino.apps.floats.core.TaskExecutor
 
 
 class FileReceiver internal constructor(private val port: Int, val name: String, val length: Int) {
+
+  companion object {
+    private const val TAG = "FileReceiver"
+  }
 
   private lateinit var startListener: () -> Unit
 
@@ -33,7 +33,12 @@ class FileReceiver internal constructor(private val port: Int, val name: String,
   // formatted transfer speed like 7 Mb(ps)
   var transferSpeed = ""
 
-  private val handler = EventHandler(this)
+  init {
+    Log.d(TAG, "Receiving On Port $port")
+    MessageReceiver.listener = { what, arg1, data ->
+      onMessageReceived(what, arg1, data)
+    }
+  }
 
   fun setStartListener(listener: () -> Unit) {
     startListener = listener
@@ -59,50 +64,44 @@ class FileReceiver internal constructor(private val port: Int, val name: String,
     disruptionListener = listener
   }
 
-  fun cancel(context: Context) {
+  fun cancel(context: Context, exec: TaskExecutor) {
     cancelled = true
 
-    context.sendBroadcast(Intent()
-      .apply {
-        action = FileReceiveService.CANCEL_REQUEST_ACTION
-      })
+    exec.writeCanel(port)
+    context.sendBroadcast(Intent(FileReceiveService.CANCEL_RECEIVE_ACTION))
   }
 
-  class EventHandler(private val receiver: FileReceiver) : Handler(Looper.getMainLooper()) {
-    override fun handleMessage(message: Message) {
-      receiver.apply {
-        when (message.what) {
-          0 -> {
-            // "started" message
-            startTime = message.data.getLong("time")
-            startListener.invoke()
-          }
-          1 -> {
-            // "update" message
-            progress = message.arg1
-            transferSpeed = message.data.getString("speed", "")
+  private fun onMessageReceived(what: Int, arg1: Int, data: Bundle) {
+    when (what) {
+      0 -> {
+        // "started" message
+        startTime = data.getLong("time")
+        startListener.invoke()
+      }
+      1 -> {
+        // "update" message
+        progress = arg1
+        transferSpeed = data.getString("speed", "")
 
-            updateListener.invoke()
-          }
-          2 -> {
-            // "finished" message, but extraction still needs to be
-            // done
-            finishedListener.invoke()
-          }
-          3 -> {
-            // "extraction" has began
-            extractionBeganListener.invoke()
-          }
-          4 -> {
-            // "extraction" was completed
-            extractionFinishedListener.invoke()
-          }
-          5 -> {
-            // when file transfer was disrupted or was not
-            // properly transferred
-            disruptionListener.invoke()
-          }
-        }
+        updateListener.invoke()
+      }
+      2 -> {
+        // "finished" message, but extraction still needs to be
+        // done
+        finishedListener.invoke()
+      }
+      3 -> {
+        // "extraction" has began
+        extractionBeganListener.invoke()
+      }
+      4 -> {
+        // "extraction" was completed
+        extractionFinishedListener.invoke()
+      }
+      5 -> {
+        // when file transfer was disrupted or was not
+        // properly transferred
+        disruptionListener.invoke()
       }
     }
   }
@@ -113,7 +112,6 @@ class FileReceiver internal constructor(private val port: Int, val name: String,
       .putExtra("file_length", length)
       .putExtra("port", port)
       .putExtra("host_address", session.hostAddress)
-      .putExtra("handler", Messenger(handler))
 
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
       session.startForegroundService(service)

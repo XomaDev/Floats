@@ -9,10 +9,9 @@ import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.os.Build
+import android.os.Bundle
 import android.os.Handler
 import android.os.IBinder
-import android.os.Message
-import android.os.Messenger
 import android.text.format.Formatter
 import android.util.Log
 import android.widget.Toast
@@ -21,12 +20,11 @@ import androidx.core.app.NotificationCompat
 import com.baxolino.apps.floats.core.NativeInterface
 import com.baxolino.apps.floats.R
 import com.baxolino.apps.floats.core.Info
+import com.baxolino.apps.floats.core.files.MessageReceiver.Companion.RECEIVE_ACTION
 import com.baxolino.apps.floats.core.io.NullOutputStream
-import com.baxolino.apps.floats.core.transfer.SocketConnection
 import com.baxolino.apps.floats.tools.ThemeHelper
 import java.io.File
 import java.io.FileInputStream
-import java.util.zip.GZIPInputStream
 import java.util.zip.InflaterInputStream
 import kotlin.concurrent.thread
 
@@ -38,9 +36,9 @@ class FileReceiveService : Service() {
     private const val NOTIF_CHANNEL_ID = "I/O Transmission"
     private const val NOTIF_CHANNEL_NAME = "File Transfer"
 
-    const val CANCEL_REQUEST_ACTION = "request_cancel"
+    const val CANCEL_RECEIVE_ACTION = "cancel_receive"
 
-    class CancelRequestReceiver(private val service: FileReceiveService) : BroadcastReceiver() {
+    class CancelReceiveListener(private val service: FileReceiveService) : BroadcastReceiver() {
       override fun onReceive(context: Context, intent: Intent) {
         Log.d(TAG, "Received Cancel Request")
         service.cancelled()
@@ -50,7 +48,6 @@ class FileReceiveService : Service() {
 
   private lateinit var notificationManager: NotificationManager
 
-  private lateinit var messenger: Messenger
 
   private var notificationId: Int = 7
   private var fileLength = 0
@@ -60,7 +57,9 @@ class FileReceiveService : Service() {
   private var timeStart = 0L
   private var cancelled = false
 
-  private val cancelRequestReceiver = CancelRequestReceiver(this)
+  private var hasStopped = false
+
+  private val cancelReceiveListener = CancelReceiveListener(this)
 
   init {
     System.loadLibrary("native-lib")
@@ -79,11 +78,6 @@ class FileReceiveService : Service() {
       // this should not happen
       return START_NOT_STICKY
     }
-    messenger = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-      intent.getParcelableExtra("handler", Messenger::class.java)!!
-    } else {
-      intent.getParcelableExtra("handler")!!
-    }
 
     notificationManager = getSystemService(NotificationManager::class.java) as
             NotificationManager
@@ -91,7 +85,7 @@ class FileReceiveService : Service() {
     notificationId = fileName.hashCode()
     createForeground(notificationId)
 
-    registerReceiver(cancelRequestReceiver, IntentFilter(CANCEL_REQUEST_ACTION))
+    registerReceiver(cancelReceiveListener, IntentFilter(CANCEL_RECEIVE_ACTION))
 
     val port = intent.getIntExtra("port", -1)
     val hostAddress = intent.getStringExtra("host_address")!!
@@ -103,23 +97,31 @@ class FileReceiveService : Service() {
   }
 
   private fun initSocketConnection(port: Int, host: String) {
-    val temp = File.createTempFile(fileNameShort, ".gzip")
+    val temp = File.createTempFile(fileNameShort, ".deflate")
     val result = NativeInterface()
       .connectToHost(
-        object: NativeInterface.Callback {
+        object : NativeInterface.Callback {
           override fun onStart() {
             Log.d(TAG, "Started")
 
             timeStart = System.currentTimeMillis()
-            messenger.send(
-              Message.obtain().apply {
-                what = 0
-                data.putLong("time", timeStart)
-              }
-            )
+
+            // let them know, we are starting
+            message(0, -1, Bundle().apply {
+              putLong("time", timeStart)
+            })
           }
+
           override fun update(received: Int) {
             updateInfo(received)
+          }
+
+          override fun cancelled() {
+            Log.d(TAG, "Received Cancel Callback")
+          }
+
+          override fun debug(string: Int) {
+            Log.d(TAG, "Debug Stage = $string")
           }
         },
         temp.absolutePath,
@@ -131,11 +133,9 @@ class FileReceiveService : Service() {
     } else {
       cancelled = true
 
-      messenger.send(
-        Message.obtain().apply {
-          what = 5
-        }
-      )
+      // let them know, we failed
+      message(5)
+
       onComplete()
       Log.d(TAG, "Message: $result")
     }
@@ -145,11 +145,7 @@ class FileReceiveService : Service() {
   private fun extract(tempFile: File) {
     Log.d(TAG, "Extracting")
     // let them know, we are extracting
-    messenger.send(
-      Message.obtain().apply {
-        what = 3
-      }
-    )
+    message(3)
 
     // The content has been saved to a temp file,
     // extract the data now
@@ -169,11 +165,7 @@ class FileReceiveService : Service() {
     Log.d(TAG, "Extraction Successful")
 
     // let them know, we finished
-    messenger.send(
-      Message.obtain().apply {
-        what = 4
-      }
-    )
+    message(4)
     onComplete()
   }
 
@@ -199,18 +191,18 @@ class FileReceiveService : Service() {
 
     // this sends the progress and transfer speed
     // to the activity
-    messenger.send(
-      Message.obtain().apply {
-        what = 1
-        arg1 = progress
-        data.putString("speed", speed)
-      }
-    )
+    message(1, progress, Bundle().apply {
+      putString("speed", speed)
+    })
   }
 
   // called by CancelRequestReceiver
   private fun cancelled() {
     cancelled = true
+
+    NativeInterface()
+      // cancels any ongoing file receiving
+      .cancel()
     unregisterWithStop()
   }
 
@@ -225,18 +217,33 @@ class FileReceiveService : Service() {
       ).show()
     }
 
-    messenger.send(
-      Message.obtain().apply {
-        what = 2
-      }
-    )
+    message(2)
     unregisterWithStop()
   }
 
-  private fun unregisterWithStop() {
-    stopForeground(STOP_FOREGROUND_REMOVE)
+  private fun message(what: Int) {
+    message(what, -1)
+  }
 
-    unregisterReceiver(cancelRequestReceiver)
+  private fun message(what: Int, arg1: Int) {
+    message(what, arg1, Bundle())
+  }
+
+  private fun message(what: Int, arg1: Int, data: Bundle) {
+    sendBroadcast(
+      Intent(RECEIVE_ACTION)
+        .putExtra("what", what)
+        .putExtra("arg1", arg1)
+        .putExtra("bundle_data", data)
+    )
+  }
+
+  private fun unregisterWithStop() {
+    if (hasStopped)
+      return
+    hasStopped = true
+    stopForeground(STOP_FOREGROUND_REMOVE)
+    unregisterReceiver(cancelReceiveListener)
   }
 
   private fun createForeground(notificationId: Int) {
