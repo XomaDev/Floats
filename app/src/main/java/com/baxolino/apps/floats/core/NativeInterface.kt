@@ -13,6 +13,7 @@ class NativeInterface {
   external fun connectToHost(
     callback: Callback,
     output: String?,
+    expectedSize: Int,
     host: String?,
     port: Int
   ): String?

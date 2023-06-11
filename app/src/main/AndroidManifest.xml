@@ -39,6 +39,7 @@
             android:theme="@style/Theme.Floats" />
 
         <activity
+            android:hardwareAccelerated="true"
             android:name=".HomeActivity"
             android:exported="true">
             <intent-filter>

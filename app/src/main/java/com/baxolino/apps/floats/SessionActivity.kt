@@ -142,6 +142,7 @@ class SessionActivity : AppCompatActivity() {
           fileNameLabel.text = "No files being received"
           fileSizeLabel.text = "(> ^_^)>"
         }
+        it.reset(this)
       }
       it.setExtractionListener {
         runOnUiThread {

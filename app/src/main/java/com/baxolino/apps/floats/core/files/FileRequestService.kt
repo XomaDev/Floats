@@ -18,7 +18,8 @@ import android.widget.Toast
 import androidx.annotation.RequiresApi
 import androidx.core.app.NotificationCompat
 import com.baxolino.apps.floats.R
-import com.baxolino.apps.floats.algorithms.AdlerFileWriter
+import com.baxolino.apps.floats.core.Info
+import com.baxolino.apps.floats.core.io.BitStream
 import com.baxolino.apps.floats.core.transfer.SocketConnection
 import com.baxolino.apps.floats.tools.ThemeHelper
 
@@ -51,8 +52,6 @@ class FileRequestService : Service() {
 
   private var cancelled = false
   private lateinit var fileNameShort: String
-
-  private lateinit var adlerFileWriter: AdlerFileWriter
 
   private val cancelRequestReceiver = CancelRequestListener(this)
 
@@ -100,17 +99,26 @@ class FileRequestService : Service() {
 
     timeStart = System.currentTimeMillis()
 
-    adlerFileWriter = AdlerFileWriter(input, connection.output)
-    adlerFileWriter.write {
-      onUpdateProgressInfo(it)
+    val output = connection.output
+    val buffer = ByteArray(Info.BUFFER_SIZE)
+
+    var nread = -1
+    var wrote = 0
+    while (!cancelled && input.read(buffer).also { nread = it } > 0) {
+      output.write(buffer, 0, nread)
+
+      wrote += nread
+      onUpdateProgressInfo(wrote)
     }
+    output.close()
+    input.close()
+
     connection.close()
     onComplete()
   }
 
   private fun onCancelled() {
     cancelled = true
-    adlerFileWriter.cancel()
   }
 
   private fun onUpdateProgressInfo(written: Int) {

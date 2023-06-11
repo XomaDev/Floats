@@ -19,13 +19,9 @@ import androidx.annotation.RequiresApi
 import androidx.core.app.NotificationCompat
 import com.baxolino.apps.floats.core.NativeInterface
 import com.baxolino.apps.floats.R
-import com.baxolino.apps.floats.core.Info
 import com.baxolino.apps.floats.core.files.MessageReceiver.Companion.RECEIVE_ACTION
-import com.baxolino.apps.floats.core.io.NullOutputStream
 import com.baxolino.apps.floats.tools.ThemeHelper
 import java.io.File
-import java.io.FileInputStream
-import java.util.zip.InflaterInputStream
 import kotlin.concurrent.thread
 
 class FileReceiveService : Service() {
@@ -125,48 +121,21 @@ class FileReceiveService : Service() {
           }
         },
         temp.absolutePath,
+        fileLength,
         host, port
       )
     if ("success" in result!!) {
       Log.d(TAG, "Success! ${temp.length()} res_message: $result")
-      extract(temp)
     } else {
       cancelled = true
 
       // let them know, we failed
-      message(5)
+      message(3)
 
-      onComplete()
       Log.d(TAG, "Message: $result")
     }
-    temp.deleteOnExit()
-  }
-
-  private fun extract(tempFile: File) {
-    Log.d(TAG, "Extracting")
-    // let them know, we are extracting
-    message(3)
-
-    // The content has been saved to a temp file,
-    // extract the data now
-    val nullOutput = NullOutputStream()
-    val input = InflaterInputStream(FileInputStream(tempFile))
-
-    val buffer = ByteArray(Info.BUFFER_SIZE)
-    while (true) {
-      val bytesRead = input.read(buffer)
-      if (bytesRead == -1)
-        break
-      nullOutput.write(buffer, 0, bytesRead)
-    }
-
-    input.close()
-    nullOutput.close()
-    Log.d(TAG, "Extraction Successful")
-
-    // let them know, we finished
-    message(4)
     onComplete()
+    temp.deleteOnExit()
   }
 
   private fun updateInfo(received: Int) {

@@ -86,24 +86,21 @@ class FileReceiver internal constructor(private val port: Int, val name: String,
         updateListener.invoke()
       }
       2 -> {
-        // "finished" message, but extraction still needs to be
-        // done
+        // "finished" message, even if failed
         finishedListener.invoke()
       }
       3 -> {
-        // "extraction" has began
-        extractionBeganListener.invoke()
-      }
-      4 -> {
-        // "extraction" was completed
-        extractionFinishedListener.invoke()
-      }
-      5 -> {
         // when file transfer was disrupted or was not
         // properly transferred
         disruptionListener.invoke()
       }
     }
+  }
+
+  fun reset(context: Context) {
+    context.stopService(
+      Intent(context, FileReceiveService::class.java)
+    )
   }
 
   fun receive(session: SessionActivity) {
