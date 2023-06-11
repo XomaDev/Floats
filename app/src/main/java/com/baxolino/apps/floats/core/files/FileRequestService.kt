@@ -50,6 +50,8 @@ class FileRequestService : Service() {
   private var timeStart = 0L
 
   private var cancelled = false
+
+  private lateinit var fileName: String
   private lateinit var fileNameShort: String
 
   private val cancelRequestReceiver = CancelRequestListener(this)
@@ -58,7 +60,7 @@ class FileRequestService : Service() {
     Log.d(TAG, "onStartCommand()")
 
     val uri = Uri.parse(intent.getStringExtra("file_uri"))
-    val fileName = intent.getStringExtra("file_name")!!
+    fileName = intent.getStringExtra("file_name")!!
     val localPort = intent.getIntExtra("local_port", -1)
 
     fileNameShort = FileNameUtil.toShortDisplayName(fileName)
@@ -179,8 +181,20 @@ class FileRequestService : Service() {
   }
 
   private fun unregisterWithStop() {
-    stopForeground(STOP_FOREGROUND_REMOVE)
 
+    if (cancelled) {
+      stopForeground(STOP_FOREGROUND_REMOVE)
+    } else {
+      val notification = NotificationCompat.Builder(this, NOTIF_CHANNEL_ID)
+        .setSmallIcon(R.mipmap.check)
+        .setContentTitle("File sent")
+        .setContentText("$fileName was sent.")
+        .setColor(ThemeHelper.variant70Color(this))
+        .build()
+      notificationManager.notify(notificationId, notification)
+
+      stopForeground(STOP_FOREGROUND_DETACH)
+    }
     unregisterReceiver(cancelRequestReceiver)
   }
 

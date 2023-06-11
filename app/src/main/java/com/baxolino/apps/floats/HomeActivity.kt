@@ -52,7 +52,6 @@ class HomeActivity : AppCompatActivity() {
     super.onCreate(savedInstanceState)
 
     setContentView(R.layout.activity_home)
-
     ThemeHelper.themeOfHomeActivity(this)
 
     val deviceText = findViewById<TextView>(R.id.device_label)

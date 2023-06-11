@@ -48,7 +48,8 @@ class FileReceiveService : Service() {
   private var notificationId: Int = 7
   private var fileLength = 0
 
-  private var fileNameShort = ""
+  private lateinit var fileName: String
+  private lateinit var fileNameShort: String
 
   private var timeStart = 0L
   private var cancelled = false
@@ -64,7 +65,7 @@ class FileReceiveService : Service() {
   override fun onStartCommand(intent: Intent, flags: Int, startId: Int): Int {
     Log.d(TAG, "onStartCommand()")
 
-    val fileName = intent.getStringExtra("file_receive")!!
+    fileName = intent.getStringExtra("file_receive")!!
     fileNameShort = FileNameUtil.toShortDisplayName(fileName)
 
     fileLength = intent.getIntExtra("file_length", -1)
@@ -120,7 +121,7 @@ class FileReceiveService : Service() {
         fileLength,
         host, port
       )
-    if ("success" in result!!) {
+    if ("success" in result) {
       Log.d(TAG, "Success! ${temp.length()} res_message: $result")
     } else {
       cancelled = true
@@ -135,6 +136,8 @@ class FileReceiveService : Service() {
   }
 
   private fun updateInfo(received: Int) {
+    if (hasStopped)
+      return
     val progress = (received.toFloat().div(fileLength) * 100).toInt()
     var speed = ""
 
@@ -207,7 +210,20 @@ class FileReceiveService : Service() {
     if (hasStopped)
       return
     hasStopped = true
-    stopForeground(STOP_FOREGROUND_REMOVE)
+    if (cancelled) {
+      stopForeground(STOP_FOREGROUND_REMOVE)
+    } else {
+      val notification = NotificationCompat.Builder(this, NOTIF_CHANNEL_ID)
+        .setSmallIcon(R.mipmap.check)
+        .setContentTitle("File received")
+        .setContentText("$fileName was received.")
+        .setColor(ThemeHelper.variant70Color(this))
+        .build()
+      notificationManager.notify(notificationId, notification)
+
+      stopForeground(STOP_FOREGROUND_DETACH)
+    }
+
     unregisterReceiver(cancelReceiveListener)
   }
 
