@@ -77,7 +77,7 @@ jstring receiveContentSocket(JNIEnv *env, jobject callback, jstring output, jstr
    env->CallVoidMethod(callback, env->GetMethodID(clazz, "onStart", "()V"));
 
    // Read and save data to the output file
-   char *buffer = new char[BUFFER_SIZE];
+   char buffer[BUFFER_SIZE];
 
    ssize_t nRead = 0;
    ssize_t bytesRead;
@@ -86,29 +86,37 @@ jstring receiveContentSocket(JNIEnv *env, jobject callback, jstring output, jstr
 
    char last8Bytes[8];
    memset(last8Bytes, 0, sizeof(last8Bytes));
-   bool lastRead = false;
-
 
    uint32_t a = 1;
    uint32_t b = 0;
 
-   while (!wasCancelled && (bytesRead = read(sock, buffer, BUFFER_SIZE)) > 0) {
-      if (lastRead) {
-         // process the previous last 8 bytes
-         for (char last8Byte: last8Bytes) {
-            a += last8Byte;
-            if (a >= MOD_ADLER)
-               a -= MOD_ADLER;
+   int readTotalLastBytes = 0;
 
-            b += a;
-            if (b >= MOD_ADLER)
-               b -= MOD_ADLER;
-         }
+   while (!wasCancelled && (bytesRead = read(sock, buffer, BUFFER_SIZE)) > 0) {
+      for (int i = 0; i < readTotalLastBytes; i++) {
+         char c = last8Bytes[i];
+
+         a += c;
+         if (a >= MOD_ADLER)
+            a -= MOD_ADLER;
+
+         b += a;
+         if (b >= MOD_ADLER)
+            b -= MOD_ADLER;
       }
 
-      memcpy(last8Bytes, buffer + (bytesRead - 8), 8);
+      ssize_t bytesWritten1 = write(outputFile, last8Bytes, readTotalLastBytes);
+      if (bytesWritten1 != readTotalLastBytes) {
+         close(outputFile);
+         close(sock);
+         return env->NewStringUTF(("Failed to write to output file." + std::to_string(bytesWritten1)).c_str());
+      }
 
-      for (size_t i = 0, len = bytesRead - 8; i < len; ++i) {
+      int min = std::min((int) bytesRead, 8);
+      readTotalLastBytes = min;
+      memcpy(last8Bytes, buffer + (bytesRead - min), min);
+
+      for (size_t i = 0, len = bytesRead - min; i < len; ++i) {
          a += buffer[i];
          if (a >= MOD_ADLER)
             a -= MOD_ADLER;
@@ -118,16 +126,15 @@ jstring receiveContentSocket(JNIEnv *env, jobject callback, jstring output, jstr
             b -= MOD_ADLER;
       }
 
-      ssize_t bytesWritten = write(outputFile, buffer, bytesRead);
-      if (bytesWritten != bytesRead) {
+      ssize_t bytesWritten = write(outputFile, buffer, bytesRead - min);
+      if (bytesWritten != bytesRead - min) {
          close(outputFile);
          close(sock);
-         return env->NewStringUTF("Failed to write to output file.");
+         return env->NewStringUTF(("Failed to write to output file. " + std::to_string(bytesWritten)).c_str());
       }
 
       nRead += bytesRead;
       env->CallVoidMethod(callback, methodId, nRead);
-      lastRead = true;
    }
    if (wasCancelled) {
       jmethodID cancelId = env->GetMethodID(clazz, "cancelled", "()V");
@@ -154,7 +161,6 @@ jstring receiveContentSocket(JNIEnv *env, jobject callback, jstring output, jstr
 
    // Close the socket
    close(sock);
-   delete[] buffer;
 
    env->ReleaseStringUTFChars(host, hostStr);
    env->ReleaseStringUTFChars(output, outputPath);
@@ -165,7 +171,7 @@ jstring receiveContentSocket(JNIEnv *env, jobject callback, jstring output, jstr
                                 std::to_string(receivedChecksum) + "]").c_str());
    }
 
-   return env->NewStringUTF("successful");
+   return env->NewStringUTF("successful [matches checksum]");
 }
 
 extern "C"
