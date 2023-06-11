@@ -34,6 +34,9 @@ class FileRequest(
     exec.writer.write(ChannelInfo.FILE_REQUEST_CHANNEL_INFO, requestData)
 
     exec.registerOnCancel(localPort) {
+      // look for cancel requests from the receiver,
+      // this will invoke the native class at the end to
+      // stop sending data and eventually ending the service
       Log.d(TAG, "Cancellation Requested")
       context.sendBroadcast(Intent()
         .apply {
