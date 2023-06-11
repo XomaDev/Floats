@@ -26,9 +26,8 @@ import com.baxolino.apps.floats.core.transfer.SocketConnection
 import com.baxolino.apps.floats.tools.ThemeHelper
 import java.io.File
 import java.io.FileInputStream
-import java.util.concurrent.Executors
-import java.util.concurrent.TimeUnit
 import java.util.zip.GZIPInputStream
+import java.util.zip.InflaterInputStream
 import kotlin.concurrent.thread
 
 class FileReceiveService : Service() {
@@ -51,7 +50,6 @@ class FileReceiveService : Service() {
 
   private lateinit var notificationManager: NotificationManager
 
-  private lateinit var connection: SocketConnection
   private lateinit var messenger: Messenger
 
   private var notificationId: Int = 7
@@ -156,7 +154,7 @@ class FileReceiveService : Service() {
     // The content has been saved to a temp file,
     // extract the data now
     val nullOutput = NullOutputStream()
-    val input = GZIPInputStream(FileInputStream(tempFile), Info.BUFFER_SIZE)
+    val input = InflaterInputStream(FileInputStream(tempFile))
 
     val buffer = ByteArray(Info.BUFFER_SIZE)
     while (true) {

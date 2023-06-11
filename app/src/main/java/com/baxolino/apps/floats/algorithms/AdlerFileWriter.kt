@@ -6,14 +6,16 @@ import com.baxolino.apps.floats.core.io.BitStream
 import java.io.InputStream
 import java.io.OutputStream
 import java.util.Arrays
-import java.util.zip.GZIPOutputStream
+import java.util.zip.Deflater
+import java.util.zip.Deflater.FILTERED
+import java.util.zip.DeflaterOutputStream
 
 class AdlerFileWriter(private val input: InputStream, private val output: OutputStream) {
 
   fun write(listener: (Int) -> Unit) {
     val adlerOutputStream = AdlerOutputStream(output)
 
-    val zipOutput = GZIPOutputStream(adlerOutputStream)
+    val zipOutput = DeflaterOutputStream(adlerOutputStream, Deflater(FILTERED))
     val buffer = ByteArray(Info.BUFFER_SIZE)
 
     var read: Int
