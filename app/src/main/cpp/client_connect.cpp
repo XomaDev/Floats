@@ -14,7 +14,7 @@ bool wasCancelled = false;
 
 extern "C"
 JNIEXPORT void JNICALL
-Java_com_baxolino_apps_floats_core_NativeInterface_cancel(JNIEnv *env, jobject thiz) {
+Java_com_baxolino_apps_floats_core_NativeInterface_cancelFileReceive(JNIEnv *env, jobject thiz) {
    wasCancelled = true;
 }
 
@@ -69,10 +69,6 @@ jstring receiveContentSocket(JNIEnv *env,
       return env->NewStringUTF("Failed to connect to the server.");
    }
 
-   jclass clazz = env->GetObjectClass(callback);
-
-   env->CallVoidMethod(callback,
-                       env->GetMethodID(clazz, "debug", "(I)V"), 1);
 
 
    // Open the output file
@@ -80,6 +76,7 @@ jstring receiveContentSocket(JNIEnv *env,
    if (outputFile == -1)
       return env->NewStringUTF("Failed to open output file.");
 
+   jclass clazz = env->GetObjectClass(callback);
    env->CallVoidMethod(callback, env->GetMethodID(clazz, "onStart", "()V"));
 
    // Read and save data to the output file
@@ -122,16 +119,16 @@ jstring receiveContentSocket(JNIEnv *env,
       return env->NewStringUTF("Transfer was disrupted.");
    }
 
-   return env->NewStringUTF("successful [matches checksum]");
+   return env->NewStringUTF("successful [matches length]");
 }
 
 extern "C"
 JNIEXPORT jstring
-Java_com_baxolino_apps_floats_core_NativeInterface_connectToHost(JNIEnv *env, jobject thiz,
-                                                                 jobject callback, jstring output,
-                                                                 jint expectedSize,
-                                                                 jstring host,
-                                                                 jint port) {
+Java_com_baxolino_apps_floats_core_NativeInterface_receiveFile(JNIEnv *env, jobject thiz,
+                                                               jobject callback, jstring output,
+                                                               jint expectedSize,
+                                                               jstring host,
+                                                               jint port) {
    wasCancelled = false;
 
    return receiveContentSocket(

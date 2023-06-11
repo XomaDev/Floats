@@ -6,11 +6,9 @@ class NativeInterface {
     fun onStart()
     fun update(received: Int)
     fun cancelled()
-
-    fun debug(s: Int)
   }
   
-  external fun connectToHost(
+  external fun receiveFile(
     callback: Callback,
     output: String?,
     expectedSize: Int,
@@ -18,5 +16,5 @@ class NativeInterface {
     port: Int
   ): String?
 
-  external fun cancel()
+  external fun cancelFileReceive()
 }

@@ -95,7 +95,7 @@ class FileReceiveService : Service() {
   private fun initSocketConnection(port: Int, host: String) {
     val temp = File.createTempFile(fileNameShort, ".deflate")
     val result = NativeInterface()
-      .connectToHost(
+      .receiveFile(
         object : NativeInterface.Callback {
           override fun onStart() {
             Log.d(TAG, "Started")
@@ -114,10 +114,6 @@ class FileReceiveService : Service() {
 
           override fun cancelled() {
             Log.d(TAG, "Received Cancel Callback")
-          }
-
-          override fun debug(string: Int) {
-            Log.d(TAG, "Debug Stage = $string")
           }
         },
         temp.absolutePath,
@@ -171,7 +167,7 @@ class FileReceiveService : Service() {
 
     NativeInterface()
       // cancels any ongoing file receiving
-      .cancel()
+      .cancelFileReceive()
     unregisterWithStop()
   }
 
