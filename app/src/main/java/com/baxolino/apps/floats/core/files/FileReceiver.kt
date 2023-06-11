@@ -20,9 +20,6 @@ class FileReceiver internal constructor(private val port: Int, val name: String,
   private lateinit var updateListener: () -> Unit
   private lateinit var finishedListener: () -> Unit
 
-  private lateinit var extractionBeganListener: () -> Unit
-  private lateinit var extractionFinishedListener: () -> Unit
-
   private lateinit var disruptionListener: () -> Unit
 
   private var cancelled = false
@@ -50,14 +47,6 @@ class FileReceiver internal constructor(private val port: Int, val name: String,
 
   fun setFinishedListener(listener: () -> Unit) {
     finishedListener = listener
-  }
-
-  fun setExtractionListener(listener: () -> Unit) {
-    extractionBeganListener = listener
-  }
-
-  fun setExtractionFinishedListener(listener: () -> Unit) {
-    extractionFinishedListener = listener
   }
 
   fun setDisruptionListener(listener: () -> Unit) {

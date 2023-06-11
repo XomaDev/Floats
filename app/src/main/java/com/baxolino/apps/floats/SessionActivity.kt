@@ -46,7 +46,6 @@ class SessionActivity : AppCompatActivity() {
   private lateinit var progressBar: CircularProgressIndicator
   private lateinit var frameProgress: FrameLayout
 
-  private var awaitingExtractionDialog: AlertDialog? = null
 
   private var receiver: FileReceiver? = null
 
@@ -143,22 +142,6 @@ class SessionActivity : AppCompatActivity() {
           fileSizeLabel.text = "(> ^_^)>"
         }
         it.reset(this)
-      }
-      it.setExtractionListener {
-        runOnUiThread {
-          awaitingExtractionDialog?.dismiss()
-          awaitingExtractionDialog =
-            MaterialAlertDialogBuilder(this, R.style.FloatsCustomDialogTheme)
-              .setTitle("Extracting")
-              .setMessage("Extracting $fname, that we just received.")
-              .show()
-        }
-      }
-      it.setExtractionFinishedListener {
-        runOnUiThread {
-          awaitingExtractionDialog?.dismiss()
-          progressBar.setProgress(progressBar.max, true)
-        }
       }
       it.setDisruptionListener {
         runOnUiThread {
