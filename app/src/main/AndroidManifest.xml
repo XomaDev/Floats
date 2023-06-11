@@ -30,6 +30,7 @@
         android:theme="@style/Theme.Floats"
         tools:targetApi="31">
         <activity
+            android:hardwareAccelerated="true"
             android:name=".SessionActivity"
             android:exported="false" />
         <activity
@@ -39,7 +40,6 @@
             android:theme="@style/Theme.Floats" />
 
         <activity
-            android:hardwareAccelerated="true"
             android:name=".HomeActivity"
             android:exported="true">
             <intent-filter>
