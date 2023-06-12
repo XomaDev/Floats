@@ -12,6 +12,7 @@ import android.net.Uri
 import android.os.Build
 import android.os.Handler
 import android.os.IBinder
+import android.os.Looper
 import android.text.format.Formatter
 import android.util.Log
 import android.widget.Toast
@@ -79,9 +80,20 @@ class FileRequestService : Service() {
 
   private fun initSocketConnection(uri: Uri, localPort: Int) {
     connection = SocketConnection(localPort)
-      .acceptOnPort {
+      .acceptOnPort(2500, {
         uploadFileContents(uri)
-      }
+      }, {
+        // connection was timed out
+        Handler(Looper.getMainLooper()).post {
+          Toast.makeText(
+            this,
+            "Failed to send file.",
+            Toast.LENGTH_LONG
+          ).show()
+          cancelled = true
+          unregisterWithStop()
+        }
+      })
   }
 
   private fun createForeground(notificationId: Int) {
