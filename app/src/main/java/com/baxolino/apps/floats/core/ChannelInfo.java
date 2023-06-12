@@ -1,5 +1,7 @@
 package com.baxolino.apps.floats.core;
 
+import com.baxolino.apps.floats.core.transfer.Info;
+
 import java.util.Arrays;
 
 public class ChannelInfo {

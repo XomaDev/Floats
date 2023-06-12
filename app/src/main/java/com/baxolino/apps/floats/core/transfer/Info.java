@@ -1,4 +1,4 @@
-package com.baxolino.apps.floats.core;
+package com.baxolino.apps.floats.core.transfer;
 
 public class Info {
 

@@ -1,7 +1,8 @@
-package com.baxolino.apps.floats.core;
+package com.baxolino.apps.floats.core.transfer;
 
 import android.util.Log;
 
+import com.baxolino.apps.floats.core.ChannelInfo;
 import com.baxolino.apps.floats.core.io.BitInputStream;
 import com.baxolino.apps.floats.core.io.DataInputStream;
 
