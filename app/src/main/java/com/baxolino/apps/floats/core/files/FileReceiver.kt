@@ -56,7 +56,7 @@ class FileReceiver internal constructor(private val port: Int, val name: String,
   fun cancel(context: Context, exec: TaskExecutor) {
     cancelled = true
 
-    exec.writeCanel(port)
+    exec.respond(port)
     context.sendBroadcast(Intent(FileReceiveService.CANCEL_RECEIVE_ACTION))
   }
 
