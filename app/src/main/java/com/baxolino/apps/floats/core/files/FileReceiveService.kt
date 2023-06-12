@@ -95,7 +95,7 @@ class FileReceiveService : Service() {
 
   private fun initSocketConnection(port: Int, host: String) {
     val temp = File.createTempFile(fileNameShort, ".deflate")
-    val result = NativeFileInterface()
+    val result = NativeFileInterface
       .receiveFile(
         object : NativeFileInterface.Callback {
           override fun onStart() {
@@ -121,7 +121,7 @@ class FileReceiveService : Service() {
         fileLength,
         host, port
       )
-    if ("success" in result) {
+    if ("success" in result!!) {
       Log.d(TAG, "Success! ${temp.length()} res_message: $result")
     } else {
       cancelled = true
@@ -168,7 +168,7 @@ class FileReceiveService : Service() {
   private fun cancelled() {
     cancelled = true
 
-    NativeFileInterface()
+    NativeFileInterface
       // cancels any ongoing file receiving
       .cancelFileReceive()
     unregisterWithStop()
@@ -187,23 +187,6 @@ class FileReceiveService : Service() {
 
     message(2)
     unregisterWithStop()
-  }
-
-  private fun message(what: Int) {
-    message(what, -1)
-  }
-
-  private fun message(what: Int, arg1: Int) {
-    message(what, arg1, Bundle())
-  }
-
-  private fun message(what: Int, arg1: Int, data: Bundle) {
-    sendBroadcast(
-      Intent(RECEIVE_ACTION)
-        .putExtra("what", what)
-        .putExtra("arg1", arg1)
-        .putExtra("bundle_data", data)
-    )
   }
 
   private fun unregisterWithStop() {
@@ -225,6 +208,23 @@ class FileReceiveService : Service() {
     }
 
     unregisterReceiver(cancelReceiveListener)
+  }
+
+  private fun message(what: Int) {
+    message(what, -1)
+  }
+
+  private fun message(what: Int, arg1: Int) {
+    message(what, arg1, Bundle())
+  }
+
+  private fun message(what: Int, arg1: Int, data: Bundle) {
+    sendBroadcast(
+      Intent(RECEIVE_ACTION)
+        .putExtra("what", what)
+        .putExtra("arg1", arg1)
+        .putExtra("bundle_data", data)
+    )
   }
 
   private fun createForeground(notificationId: Int) {
