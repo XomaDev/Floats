@@ -1,6 +1,4 @@
-package com.baxolino.apps.floats.core;
-
-import com.baxolino.apps.floats.core.transfer.Info;
+package com.baxolino.apps.floats.core.transfer;
 
 import java.util.Arrays;
 

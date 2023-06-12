@@ -1,6 +1,5 @@
 package com.baxolino.apps.floats.core.transfer;
 
-import com.baxolino.apps.floats.core.ChannelInfo;
 import com.baxolino.apps.floats.core.io.BitOutputStream;
 
 import java.io.IOException;
