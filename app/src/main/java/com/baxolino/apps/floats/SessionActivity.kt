@@ -29,7 +29,6 @@ import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.google.android.material.progressindicator.CircularProgressIndicator
 import com.google.android.material.snackbar.Snackbar
-import kotlin.concurrent.thread
 
 
 class SessionActivity : AppCompatActivity() {

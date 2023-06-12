@@ -76,11 +76,14 @@ class SessionService : Service() {
         init()
       }
     } else {
-      val host = intent.getStringExtra("host")!!
-      connection.connectOnPort(port, host, retry = true) {
-        Log.d(TAG, "Connected()")
-        init()
-      }
+      val executor = ScheduledThreadPoolExecutor(1)
+      executor.schedule({
+        val host = intent.getStringExtra("host")!!
+        connection.connectOnPort(port, host, retry = true) {
+          Log.d(TAG, "Connected()")
+          init()
+        }
+      }, 1, TimeUnit.SECONDS)
     }
     return START_NOT_STICKY
   }
@@ -110,7 +113,7 @@ class SessionService : Service() {
     }, 0, 1, TimeUnit.MILLISECONDS)
 
     executor.scheduleAtFixedRate({
-      if ((System.currentTimeMillis() - lastHeartBeat) >= 3500) {
+      if ((System.currentTimeMillis() - lastHeartBeat) >= 5000) {
         Log.d(TAG, "Stopped receiving heart beats")
         executor.shutdownNow()
 

@@ -194,6 +194,7 @@ class FileReceiveService : Service() {
       return
     hasStopped = true
     if (cancelled) {
+      Log.d(TAG, "Stopping with remove")
       stopForeground(STOP_FOREGROUND_REMOVE)
     } else {
       val notification = NotificationCompat.Builder(this, NOTIF_CHANNEL_ID)
@@ -204,6 +205,7 @@ class FileReceiveService : Service() {
         .build()
       notificationManager.notify(notificationId, notification)
 
+      Log.d(TAG, "Stopping detach")
       stopForeground(STOP_FOREGROUND_DETACH)
     }
 
