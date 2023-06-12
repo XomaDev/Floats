@@ -50,6 +50,9 @@ public class MultiChannelStream {
   }
 
   public void start() {
+    // TODO:
+    //  we must stop executing this at
+    //  one point
     ScheduledExecutorService service = Executors.newScheduledThreadPool(1);
     service.scheduleAtFixedRate(() -> {
       if (input.available() > 0) {

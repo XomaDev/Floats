@@ -1,7 +1,5 @@
 package com.baxolino.apps.floats.core;
 
-import android.util.Log;
-
 import com.baxolino.apps.floats.core.io.BitOutputStream;
 
 import java.io.IOException;

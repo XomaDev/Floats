@@ -12,8 +12,8 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.OnBackPressedCallback
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
+import com.baxolino.apps.floats.core.Heartbeat
 import com.baxolino.apps.floats.core.TaskExecutor
 import com.baxolino.apps.floats.core.files.FileNameUtil
 import com.baxolino.apps.floats.core.files.FileReceiver
@@ -26,6 +26,7 @@ import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.google.android.material.progressindicator.CircularProgressIndicator
 import com.google.android.material.snackbar.Snackbar
+import kotlin.concurrent.thread
 
 
 class SessionActivity : AppCompatActivity() {
@@ -88,6 +89,28 @@ class SessionActivity : AppCompatActivity() {
       connection
     )
 
+    thread {
+      Heartbeat.beat(executor) {
+        // reset the instance
+        SocketConnection.clear()
+
+        // TODO:
+        // we have to close it
+        connection.close()
+        startActivity(
+          Intent(
+            this,
+            HomeActivity::class.java
+          ).putExtra(
+            "event_disconnect",
+            deviceName
+          ).setFlags(
+            Intent.FLAG_ACTIVITY_CLEAR_TOP
+          )
+        )
+      }
+    }
+
     fileNameLabel = findViewById(R.id.file_name)
     fileSizeLabel = findViewById(R.id.file_size)
 
@@ -112,14 +135,13 @@ class SessionActivity : AppCompatActivity() {
   }
 
   private fun lookForFileRequests() {
-    val listener = RequestHandler.RequestsListener {
-      val receiver = it
-      this.receiver = it
+    val listener = { receiver: FileReceiver ->
+      this.receiver = receiver
 
-      val fname = it.name
-      runOnUiThread { onTransferRequested(fname, it.length) }
+      val fname = receiver.name
+      runOnUiThread { onTransferRequested(fname, receiver.length) }
 
-      it.setStartListener {
+      receiver.setStartListener {
         runOnUiThread {
           frameProgress.setOnLongClickListener {
             cancelFileTransfer(receiver)
@@ -127,29 +149,29 @@ class SessionActivity : AppCompatActivity() {
           }
         }
       }
-      it.setUpdateListener {
+      receiver.setUpdateListener {
         runOnUiThread {
-          progressBar.setProgress(it.progress, true)
-          if (it.transferSpeed.isNotEmpty())
-            transferSpeedText.text = "${it.transferSpeed}ps"
+          progressBar.setProgress(receiver.progress, true)
+          if (receiver.transferSpeed.isNotEmpty())
+            transferSpeedText.text = "${receiver.transferSpeed}ps"
         }
       }
-      it.setFinishedListener {
+      receiver.setFinishedListener {
         frameProgress.setOnLongClickListener(null)
 
         runOnUiThread {
           fileNameLabel.text = "No files being received"
           fileSizeLabel.text = "(> ^_^)>"
         }
-        it.reset(this)
+        receiver.reset(this)
       }
-      it.setDisruptionListener {
+      receiver.setDisruptionListener {
         runOnUiThread {
           Log.d(TAG, "lookForFileRequests: disrupted")
           progressBar.setProgress(0, true)
         }
       }
-      it.receive(this)
+      receiver.receive(this)
     }
     executor.register(RequestHandler(listener))
   }

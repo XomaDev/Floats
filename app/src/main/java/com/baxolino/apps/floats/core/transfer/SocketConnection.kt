@@ -44,13 +44,22 @@ class SocketConnection(private val localPort: Int) {
   lateinit var input: InputStream
   lateinit var output: OutputStream
 
-  fun acceptOnPort(onConnect: () -> Unit): SocketConnection {
+  fun acceptOnPort(onConnect: () -> Unit) {
+    acceptOnPort(-1, onConnect, null)
+  }
+
+  fun acceptOnPort(timeout: Int, onConnect: () -> Unit, onTimeout: (() -> Unit)?): SocketConnection {
     thread {
       val serverSocket = ServerSocket(localPort)
-      socket = serverSocket.accept()
-
-      Log.d(TAG, "acceptOnPort() Connection was accepted.")
-
+      if (timeout != -1)
+        serverSocket.soTimeout = timeout
+      try {
+        socket = serverSocket.accept()
+        Log.d(TAG, "acceptOnPort() Connection was accepted.")
+      } catch (e: SocketTimeoutException) {
+        Log.d(TAG, "Timed out while accepting.")
+        onTimeout?.invoke()
+      }
       onConnected(onConnect)
     }
     return this

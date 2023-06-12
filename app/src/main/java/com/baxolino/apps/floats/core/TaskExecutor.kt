@@ -6,6 +6,7 @@ import com.baxolino.apps.floats.core.files.RequestHandler
 import com.baxolino.apps.floats.core.io.BitStream
 import com.baxolino.apps.floats.core.io.DataInputStream
 import com.baxolino.apps.floats.core.transfer.SocketConnection
+import java.util.concurrent.ScheduledThreadPoolExecutor
 
 class TaskExecutor(connection: SocketConnection) {
 
@@ -25,10 +26,10 @@ class TaskExecutor(connection: SocketConnection) {
   // this looks for incoming file requests that contains
   // the file name followed by the file length
   fun register(handler: RequestHandler) {
-    handler.setReader(reader)
+    handler.setReader(reader, this)
   }
 
-  fun writeCanel(port: Int) {
+  fun respond(port: Int) {
     writer.write(
       ChannelInfo(
         BitStream()
@@ -39,7 +40,7 @@ class TaskExecutor(connection: SocketConnection) {
     )
   }
 
-  fun registerOnCancel(port: Int, listener: () -> Unit) {
+  fun register(port: Int, forgetAfter: Boolean, listener: () -> Unit) {
     val dataInputStream = DataInputStream()
 
     val channel = ChannelInfo(
@@ -54,8 +55,19 @@ class TaskExecutor(connection: SocketConnection) {
 
     dataInputStream.setByteListener {
       listener.invoke()
-      reader.forget(channel)
+      if (forgetAfter)
+        reader.forget(channel)
       return@setByteListener true
     }
+  }
+
+  fun unregister(port: Int) {
+    reader.forget(
+      ChannelInfo(
+            BitStream()
+              .writeInt32(port)
+              .toBytes()
+            )
+    )
   }
 }
