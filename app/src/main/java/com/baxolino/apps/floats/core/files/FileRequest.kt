@@ -5,7 +5,7 @@ import android.content.Intent
 import android.net.Uri
 import android.os.Build
 import android.util.Log
-import com.baxolino.apps.floats.core.ChannelInfo
+import com.baxolino.apps.floats.core.transfer.ChannelInfo
 import com.baxolino.apps.floats.core.TaskExecutor
 import com.baxolino.apps.floats.core.transfer.SocketUtils
 import com.baxolino.apps.floats.core.io.BitStream

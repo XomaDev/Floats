@@ -10,13 +10,21 @@ import java.util.concurrent.TimeUnit
 object KnowEachOther {
   private const val TAG = "KnowEachOther"
 
-  fun initiate(name: String, connector: SocketConnection, knew: (String, String) -> Unit) {
+  fun initiate(
+    name: String,
+    localPort: Int,
+    connector: SocketConnection,
+    knew: (String, String, Int) -> Unit
+  ) {
     val nameContent = name.toByteArray()
 
-    BitOutputStream(connector.output)
-      .writeShort16(nameContent.size.toShort())
-      .write(nameContent)
-      .flush()
+    BitOutputStream(connector.output).apply {
+      writeShort16(nameContent.size.toShort())
+      write(nameContent)
+      if (localPort != -1)
+        writeInt32(localPort)
+      flush()
+    }
 
     val executor = ScheduledThreadPoolExecutor(1)
     executor.schedule({
@@ -30,8 +38,12 @@ object KnowEachOther {
         offset += bitInput.read(buffer, offset, length - offset)
 
       val other = String(buffer)
+
+      var portReceived = -1
+      if (localPort == -1)
+        portReceived = bitInput.readInt32()
       Log.d(TAG, "Other: $other")
-      knew.invoke(other, connector.socket.inetAddress.hostAddress!!)
+      knew.invoke(other, connector.socket.inetAddress.hostAddress!!, portReceived)
     }, 10, TimeUnit.MILLISECONDS)
   }
 }

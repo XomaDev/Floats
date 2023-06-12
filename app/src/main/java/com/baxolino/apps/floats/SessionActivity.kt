@@ -1,6 +1,9 @@
 package com.baxolino.apps.floats
 
+import android.content.BroadcastReceiver
+import android.content.Context
 import android.content.Intent
+import android.content.IntentFilter
 import android.net.Uri
 import android.os.Bundle
 import android.os.Handler
@@ -13,7 +16,7 @@ import android.widget.Toast
 import androidx.activity.OnBackPressedCallback
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
-import com.baxolino.apps.floats.core.Heartbeat
+import com.baxolino.apps.floats.core.SessionService
 import com.baxolino.apps.floats.core.TaskExecutor
 import com.baxolino.apps.floats.core.files.FileNameUtil
 import com.baxolino.apps.floats.core.files.FileReceiver
@@ -35,7 +38,8 @@ class SessionActivity : AppCompatActivity() {
     private const val TAG = "SessionActivity"
   }
 
-  private lateinit var executor: TaskExecutor
+
+  private lateinit var deviceName: String
 
   private lateinit var fileNameLabel: TextView
   private lateinit var fileSizeLabel: TextView
@@ -47,13 +51,42 @@ class SessionActivity : AppCompatActivity() {
   private lateinit var progressBar: CircularProgressIndicator
   private lateinit var frameProgress: FrameLayout
 
-
   private var receiver: FileReceiver? = null
+
+  private val connection = SocketConnection.getMainSocket()
+  private var executor = TaskExecutor(connection)
 
   // we don't use this to receive messages here,
   // we are required to call onPause() and onResume()
   // lifecycles on it
   private val messageReceiver = MessageReceiver()
+
+  private val onDisconnectReceiver = object : BroadcastReceiver() {
+    override fun onReceive(context: Context?, intent: Intent?) {
+      Log.d(TAG, "Disconnect broadcast received")
+
+      // clear the main socket connection
+      // instance; or it gets messed up
+      SocketConnection.clear()
+
+      // close the connection
+      connection.close()
+
+      // open the HomeActivity and notify the disconnect
+      // event to the user
+      startActivity(
+        Intent(
+          this@SessionActivity,
+          HomeActivity::class.java
+        ).putExtra(
+          "event_disconnect",
+          deviceName
+        ).setFlags(
+          Intent.FLAG_ACTIVITY_CLEAR_TOP
+        )
+      )
+    }
+  }
 
   override fun onCreate(savedInstanceState: Bundle?) {
     super.onCreate(savedInstanceState)
@@ -68,7 +101,7 @@ class SessionActivity : AppCompatActivity() {
 
 
     // or else we are just testing
-    val deviceName = intent.getStringExtra("deviceName")
+    deviceName = intent.getStringExtra("deviceName")!!
     hostAddress = intent.getStringExtra("hostAddress")!!
 
     val label = findViewById<TextView>(R.id.label)
@@ -84,32 +117,6 @@ class SessionActivity : AppCompatActivity() {
         )
       )
     }
-    val connection = SocketConnection.getMainSocket()
-    executor = TaskExecutor(
-      connection
-    )
-
-    thread {
-      Heartbeat.beat(executor) {
-        // reset the instance
-        SocketConnection.clear()
-
-        // TODO:
-        // we have to close it
-        connection.close()
-        startActivity(
-          Intent(
-            this,
-            HomeActivity::class.java
-          ).putExtra(
-            "event_disconnect",
-            deviceName
-          ).setFlags(
-            Intent.FLAG_ACTIVITY_CLEAR_TOP
-          )
-        )
-      }
-    }
 
     fileNameLabel = findViewById(R.id.file_name)
     fileSizeLabel = findViewById(R.id.file_size)
@@ -118,9 +125,9 @@ class SessionActivity : AppCompatActivity() {
 
     progressBar = findViewById(R.id.progress_bar)
 
-    lookForFileRequests()
-
     frameProgress = findViewById(R.id.progress_frame)
+
+    lookForFileRequests()
 
     val onBackPressedCallback = object : OnBackPressedCallback(true) {
       override fun handleOnBackPressed() {
@@ -266,10 +273,18 @@ class SessionActivity : AppCompatActivity() {
   override fun onResume() {
     super.onResume()
     messageReceiver.onResume(this)
+    registerReceiver(
+      onDisconnectReceiver, IntentFilter(
+        SessionService.DISCONNECT_BROADCAST_ACTION
+      )
+    )
   }
 
   override fun onPause() {
     super.onPause()
     messageReceiver.onPause(this)
+    unregisterReceiver(
+      onDisconnectReceiver
+    )
   }
 }

@@ -53,6 +53,10 @@
             android:name="preloaded_fonts"
             android:resource="@array/preloaded_fonts" />
 
+        <service android:name=".core.SessionService"
+            android:process=":shizuka"
+            android:exported="false"/>
+
         <service android:name=".core.files.FileRequestService"
             android:process=":doraemon"
             android:exported="false"/>

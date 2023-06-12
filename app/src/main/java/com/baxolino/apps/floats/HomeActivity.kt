@@ -2,6 +2,7 @@ package com.baxolino.apps.floats
 
 import android.annotation.SuppressLint
 import android.content.Intent
+import android.os.Build
 import android.os.Bundle
 import android.util.Log
 import android.widget.ImageView
@@ -10,6 +11,7 @@ import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import com.baxolino.apps.floats.camera.ScanActivity
 import com.baxolino.apps.floats.core.KnowEachOther
+import com.baxolino.apps.floats.core.SessionService
 import com.baxolino.apps.floats.core.transfer.SocketConnection
 import com.baxolino.apps.floats.core.transfer.SocketUtils
 import com.baxolino.apps.floats.tools.ThemeHelper
@@ -94,9 +96,9 @@ class HomeActivity : AppCompatActivity() {
 
       // we put it over here because, we don't want it called multiple
       // times
-      connector.acceptOnPort {
+      connector.acceptOnPort(localPort) {
         Log.d(TAG, "Accepted()")
-        onConnectionSuccessful()
+        onConnectionSuccessful(true)
       }
     }
     if (intent.hasExtra("event_disconnect")) {
@@ -142,14 +144,34 @@ class HomeActivity : AppCompatActivity() {
 
       connector.connectOnPort(port, ipv4Address, false) {
         Log.d(TAG, "Connected()")
-        onConnectionSuccessful()
+        onConnectionSuccessful(false)
       }
     }
   }
 
+  private fun onConnectionSuccessful(isServer: Boolean) {
+    var localPort = -1
+    if (isServer) {
+      // if we are the server, we are the one who creates
+      // and send to the client
+      localPort = SocketUtils.findAvailableTcpPort()
+    }
+    KnowEachOther.initiate(
+      ourId,
+      if (isServer) localPort else -1, connector
+    )
+    { name, host, hostPort ->
+      // hostPort is valid if we are client
+      val service = Intent(this, SessionService::class.java)
+        .putExtra("partner_device", name)
+        .putExtra("server", isServer)
+        .putExtra("host", host)
+        .putExtra("port", if (isServer) localPort else hostPort)
 
-  private fun onConnectionSuccessful() {
-    KnowEachOther.initiate(ourId, connector) { name, host ->
+      if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
+        startForegroundService(service)
+      else startService(service)
+
       startActivity(
         Intent(this, SessionActivity::class.java)
           .putExtra("deviceName", name)

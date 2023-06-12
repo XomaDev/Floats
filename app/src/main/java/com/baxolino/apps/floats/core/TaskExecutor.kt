@@ -1,17 +1,21 @@
 package com.baxolino.apps.floats.core
 
 import android.content.Context
+import com.baxolino.apps.floats.core.transfer.MultiChannelStream
+import com.baxolino.apps.floats.core.transfer.MultiChannelSystem
 import com.baxolino.apps.floats.core.files.FileRequest
 import com.baxolino.apps.floats.core.files.RequestHandler
 import com.baxolino.apps.floats.core.io.BitStream
 import com.baxolino.apps.floats.core.io.DataInputStream
+import com.baxolino.apps.floats.core.transfer.ChannelInfo
 import com.baxolino.apps.floats.core.transfer.SocketConnection
-import java.util.concurrent.ScheduledThreadPoolExecutor
 
 class TaskExecutor(connection: SocketConnection) {
 
-  val reader = MultiChannelStream(connection.input)
-  val writer = MultiChannelSystem(connection.output)
+  val reader =
+    MultiChannelStream(connection.input)
+  val writer =
+    MultiChannelSystem(connection.output)
 
   init {
     reader.start()
@@ -64,10 +68,10 @@ class TaskExecutor(connection: SocketConnection) {
   fun unregister(port: Int) {
     reader.forget(
       ChannelInfo(
-            BitStream()
-              .writeInt32(port)
-              .toBytes()
-            )
+        BitStream()
+          .writeInt32(port)
+          .toBytes()
+      )
     )
   }
 }

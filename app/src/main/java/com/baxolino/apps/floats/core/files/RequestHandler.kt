@@ -1,7 +1,7 @@
 package com.baxolino.apps.floats.core.files
 
-import com.baxolino.apps.floats.core.ChannelInfo
-import com.baxolino.apps.floats.core.MultiChannelStream
+import com.baxolino.apps.floats.core.transfer.ChannelInfo
+import com.baxolino.apps.floats.core.transfer.MultiChannelStream
 import com.baxolino.apps.floats.core.TaskExecutor
 import com.baxolino.apps.floats.core.io.DataInputStream
 import com.baxolino.apps.floats.core.io.DataInputStream.ByteListener

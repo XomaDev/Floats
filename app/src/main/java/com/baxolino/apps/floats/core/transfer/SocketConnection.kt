@@ -1,7 +1,6 @@
 package com.baxolino.apps.floats.core.transfer
 
 import android.util.Log
-import com.baxolino.apps.floats.core.Info
 import java.io.InputStream
 import java.io.OutputStream
 import java.net.InetSocketAddress
@@ -12,7 +11,7 @@ import java.net.SocketTimeoutException
 import kotlin.concurrent.thread
 
 
-class SocketConnection(private val localPort: Int) {
+class SocketConnection {
 
   companion object {
     private const val TAG = "SocketConnection"
@@ -27,7 +26,7 @@ class SocketConnection(private val localPort: Int) {
       mainSocket?.let {
         return it
       }
-      SocketConnection(localPort)
+      SocketConnection()
         .apply {
           mainSocket = this
           return this
@@ -44,11 +43,11 @@ class SocketConnection(private val localPort: Int) {
   lateinit var input: InputStream
   lateinit var output: OutputStream
 
-  fun acceptOnPort(onConnect: () -> Unit) {
-    acceptOnPort(-1, onConnect, null)
+  fun acceptOnPort(localPort: Int, onConnect: () -> Unit) {
+    acceptOnPort(localPort, -1, onConnect, null)
   }
 
-  fun acceptOnPort(timeout: Int, onConnect: () -> Unit, onTimeout: (() -> Unit)?): SocketConnection {
+  fun acceptOnPort(localPort: Int, timeout: Int, onConnect: () -> Unit, onTimeout: (() -> Unit)?): SocketConnection {
     thread {
       val serverSocket = ServerSocket(localPort)
       if (timeout != -1)

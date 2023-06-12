@@ -19,7 +19,7 @@ import android.widget.Toast
 import androidx.annotation.RequiresApi
 import androidx.core.app.NotificationCompat
 import com.baxolino.apps.floats.R
-import com.baxolino.apps.floats.core.Info
+import com.baxolino.apps.floats.core.transfer.Info
 import com.baxolino.apps.floats.core.transfer.SocketConnection
 import com.baxolino.apps.floats.tools.ThemeHelper
 
@@ -79,8 +79,8 @@ class FileRequestService : Service() {
   }
 
   private fun initSocketConnection(uri: Uri, localPort: Int) {
-    connection = SocketConnection(localPort)
-      .acceptOnPort(2500, {
+    connection = SocketConnection()
+      .acceptOnPort(localPort, 2500, {
         uploadFileContents(uri)
       }, {
         // connection was timed out
