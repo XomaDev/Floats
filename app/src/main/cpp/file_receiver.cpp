@@ -54,8 +54,8 @@ jstring receiveContentSocket(JNIEnv *env,
    if (connect(sock, (struct sockaddr *) &serverAddress, sizeof(serverAddress)) < 0) {
       if (retry) {
          // we will retry connection again, the server may not be ready yet
-         // 1 second -> 1000000 seconds
-         usleep(1000000);
+         // .5 second -> 500000 micro secs
+         usleep(500000);
 
          return receiveContentSocket(
                  env,
