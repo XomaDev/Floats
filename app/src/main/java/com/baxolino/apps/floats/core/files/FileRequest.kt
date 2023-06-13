@@ -23,15 +23,6 @@ class FileRequest(
   fun execute(context: Context, exec: TaskExecutor) {
     val localPort = SocketUtils.findAvailableTcpPort()
 
-    val fileNameBytes = fileName.toByteArray()
-    val requestData = BitStream()
-      .writeInt32(localPort)
-      .writeInt32(fileLength)
-      .writeInt32(fileNameBytes.size)
-      .write(fileNameBytes)
-      .toBytes()
-    exec.writer.write(ChannelInfo.FILE_REQUEST_CHANNEL_INFO, requestData)
-
     val service = Intent(context, FileRequestService::class.java)
       .putExtra("file_uri", fileInput.toString())
       .putExtra("file_name", fileName)
@@ -41,6 +32,23 @@ class FileRequest(
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
       context.startForegroundService(service)
     else context.startService(service)
+
+    val fileNameBytes = fileName.toByteArray()
+    val requestData = BitStream()
+      .writeInt32(localPort)
+      .writeInt32(fileLength)
+      .writeInt32(fileNameBytes.size)
+      .write(fileNameBytes)
+      .toBytes()
+
+    // the FileRequestService will send a message back when ready; then
+    // we will inform the receiver
+    MessageReceiver.requestListener = {
+      Log.d(TAG, "Server ready")
+      exec.writer.write(ChannelInfo.FILE_REQUEST_CHANNEL_INFO, requestData)
+      // reset it after used
+      MessageReceiver.requestListener = null
+    }
 
     exec.register(localPort, forgetAfter = true) {
       // it was a cancel request

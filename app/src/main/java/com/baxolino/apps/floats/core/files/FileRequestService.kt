@@ -22,6 +22,7 @@ import com.baxolino.apps.floats.R
 import com.baxolino.apps.floats.core.transfer.Info
 import com.baxolino.apps.floats.core.transfer.SocketConnection
 import com.baxolino.apps.floats.tools.ThemeHelper
+import java.io.InputStream
 
 class FileRequestService : Service() {
 
@@ -58,7 +59,7 @@ class FileRequestService : Service() {
   private val cancelRequestReceiver = CancelRequestListener(this)
 
   override fun onStartCommand(intent: Intent, flags: Int, startId: Int): Int {
-    Log.d(TAG, "onStartCommand()")
+    Log.d(TAG, "onStartCommand() $cancelled")
 
     val uri = Uri.parse(intent.getStringExtra("file_uri"))
     fileName = intent.getStringExtra("file_name")!!
@@ -79,12 +80,17 @@ class FileRequestService : Service() {
   }
 
   private fun initSocketConnection(uri: Uri, localPort: Int) {
+    // we have to be ready instantly; so we pre-open it
+    val input = contentResolver.openInputStream(uri)!!
+
     connection = SocketConnection()
-      .acceptOnPort(localPort, 2500, {
-        uploadFileContents(uri)
+      .acceptOnPort(localPort, 12000, {
+        uploadFileContents(input)
       }, {
-        // connection was timed out
+        // connection was timed out; this generally
+        // does not happen
         Handler(Looper.getMainLooper()).post {
+          Log.d(TAG, "Connection was timed out")
           Toast.makeText(
             this,
             "Failed to send file.",
@@ -94,6 +100,11 @@ class FileRequestService : Service() {
           unregisterWithStop()
         }
       })
+    sendBroadcast(
+      Intent(
+        MessageReceiver.RECEIVE_ACTION
+      ).putExtra("type", 1)
+    )
   }
 
   private fun createForeground(notificationId: Int) {
@@ -104,11 +115,8 @@ class FileRequestService : Service() {
     startForeground(notificationId, buildNotification(0, ""))
   }
 
-  private fun uploadFileContents(uri: Uri) {
+  private fun uploadFileContents(input: InputStream) {
     Log.d(TAG, "uploadFileContents()")
-    val input = contentResolver.openInputStream(
-      uri
-    )!!
 
     timeStart = System.currentTimeMillis()
 
@@ -179,7 +187,7 @@ class FileRequestService : Service() {
     Handler(mainLooper).post {
       if (cancelled) {
         Toast.makeText(
-          this, "File transfer was was cancelled.",
+          this, "File transfer was cancelled.",
           Toast.LENGTH_LONG
         ).show()
       } else {
@@ -193,7 +201,7 @@ class FileRequestService : Service() {
   }
 
   private fun unregisterWithStop() {
-
+    unregisterReceiver(cancelRequestReceiver)
     if (cancelled) {
       stopForeground(STOP_FOREGROUND_REMOVE)
     } else {
@@ -207,7 +215,8 @@ class FileRequestService : Service() {
 
       stopForeground(STOP_FOREGROUND_DETACH)
     }
-    unregisterReceiver(cancelRequestReceiver)
+    // it causes problems if we don't do this
+    stopSelf()
   }
 
 

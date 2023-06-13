@@ -32,7 +32,7 @@ class FileReceiver internal constructor(private val port: Int, val name: String,
 
   init {
     Log.d(TAG, "Receiving On Port $port")
-    MessageReceiver.listener = { what, arg1, data ->
+    MessageReceiver.receiveListener = { what, arg1, data ->
       onMessageReceived(what, arg1, data)
     }
   }

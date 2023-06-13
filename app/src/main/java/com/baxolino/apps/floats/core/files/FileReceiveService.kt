@@ -193,6 +193,8 @@ class FileReceiveService : Service() {
     if (hasStopped)
       return
     hasStopped = true
+
+    unregisterReceiver(cancelReceiveListener)
     if (cancelled) {
       Log.d(TAG, "Stopping with remove")
       stopForeground(STOP_FOREGROUND_REMOVE)
@@ -208,8 +210,8 @@ class FileReceiveService : Service() {
       Log.d(TAG, "Stopping detach")
       stopForeground(STOP_FOREGROUND_DETACH)
     }
-
-    unregisterReceiver(cancelReceiveListener)
+    // it's important that we do this
+    stopSelf()
   }
 
   private fun message(what: Int) {
@@ -223,6 +225,7 @@ class FileReceiveService : Service() {
   private fun message(what: Int, arg1: Int, data: Bundle) {
     sendBroadcast(
       Intent(RECEIVE_ACTION)
+        .putExtra("type", 0)
         .putExtra("what", what)
         .putExtra("arg1", arg1)
         .putExtra("bundle_data", data)

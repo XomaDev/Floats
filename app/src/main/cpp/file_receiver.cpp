@@ -12,9 +12,22 @@ constexpr int BUFFER_SIZE = 1000000;
 
 bool wasCancelled = false;
 
+
+int
+readBytes(
+        bool retried,
+        JNIEnv *pEnv,
+        jobject callback,
+        int sock,
+        int file,
+        ssize_t read,
+        jmethodID methodId
+);
+
 extern "C"
 JNIEXPORT void JNICALL
-Java_com_baxolino_apps_floats_core_NativeFileInterface_cancelFileReceive(JNIEnv *env, jobject thiz) {
+Java_com_baxolino_apps_floats_core_NativeFileInterface_cancelFileReceive(JNIEnv *env,
+                                                                         jobject thiz) {
    wasCancelled = true;
 }
 
@@ -79,25 +92,23 @@ jstring receiveContentSocket(JNIEnv *env,
    jclass clazz = env->GetObjectClass(callback);
    env->CallVoidMethod(callback, env->GetMethodID(clazz, "onStart", "()V"));
 
-   // Read and save data to the output file
-   char buffer[BUFFER_SIZE];
-
    ssize_t nRead = 0;
-   ssize_t bytesRead;
 
    jmethodID methodId = env->GetMethodID(clazz, "update", "(I)V");
 
-   while ((bytesRead = read(sock, buffer, BUFFER_SIZE)) > 0) {
-      ssize_t bytesWritten = write(outputFile, buffer, bytesRead);
-      if (bytesWritten != bytesRead) {
-         close(outputFile);
-         close(sock);
-         return env->NewStringUTF(("Failed to write to output file. " + std::to_string(bytesWritten)).c_str());
-      }
-
-      nRead += bytesRead;
-      env->CallVoidMethod(callback, methodId, nRead);
+   int result = readBytes(
+           false,
+           env,
+           callback,
+           sock,
+           outputFile,
+           nRead,
+           methodId
+   );
+   if (result == -1) {
+      return env->NewStringUTF(("Failed to write to file: " + std::to_string(result)).c_str());
    }
+
    if (wasCancelled) {
       jmethodID cancelId = env->GetMethodID(clazz, "cancelled", "()V");
       env->CallVoidMethod(callback, cancelId);
@@ -115,12 +126,58 @@ jstring receiveContentSocket(JNIEnv *env,
    env->ReleaseStringUTFChars(host, hostStr);
    env->ReleaseStringUTFChars(output, outputPath);
 
-   if (sizeExpected != (int) nRead) {
-      return env->NewStringUTF(("Transfer was disrupted. " + std::to_string(nRead)).c_str());
+   if (sizeExpected != result) {
+      return env->NewStringUTF(("Transfer was disrupted. " + std::to_string(result)).c_str());
    }
 
    return env->NewStringUTF("successful [matches length]");
 }
+
+
+int readBytes(
+        bool retried,
+        JNIEnv *env,
+        jobject callback,
+        int sock,
+        int outputFile,
+        ssize_t nRead,
+        jmethodID methodId
+) {
+   char buffer[BUFFER_SIZE];
+
+   ssize_t bytesRead;
+   while ((bytesRead = read(sock, buffer, BUFFER_SIZE)) > 0) {
+      ssize_t bytesWritten = write(outputFile, buffer, bytesRead);
+      if (bytesWritten != bytesRead) {
+         close(outputFile);
+         close(sock);
+         return -1;
+      }
+      nRead += bytesRead;
+      env->CallVoidMethod(callback, methodId, nRead);
+   }
+   if (nRead == 0) {
+      // sometimes what happens is, the sender device is sometimes
+      // slow to start uploading file contents; so we retry receiving
+      // it, one more time
+      if (!retried) {
+         // .5 second -> 500000 micro secs
+         usleep(4000000);
+         return readBytes(
+                 true,
+                 env,
+                 callback,
+                 sock,
+                 outputFile,
+                 nRead,
+                 methodId
+         );
+      }
+      return -2;
+   }
+   return nRead;
+}
+
 
 extern "C"
 JNIEXPORT jstring
