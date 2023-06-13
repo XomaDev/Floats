@@ -26,18 +26,21 @@ readBytes(
 
 extern "C"
 JNIEXPORT void JNICALL
-Java_com_baxolino_apps_floats_core_NativeFileInterface_cancelFileReceive(JNIEnv *env,
-                                                                         jobject thiz) {
+Java_com_baxolino_apps_floats_core_NativeFileInterface_cancelFileReceive(
+        JNIEnv *env,
+        jobject thiz) {
    wasCancelled = true;
 }
 
-jstring receiveContentSocket(JNIEnv *env,
-                             jobject callback,
-                             jstring output,
-                             jint expectedSize,
-                             jstring host,
-                             jint port,
-                             bool retry) {
+jstring receiveContentSocket(
+        JNIEnv *env,
+        jobject callback,
+        jstring output,
+        jint expectedSize,
+        jstring host,
+        jint port,
+        bool retry
+) {
 
    const char *hostStr = env->GetStringUTFChars(host, nullptr);
    const char *outputPath = env->GetStringUTFChars(output, nullptr);
