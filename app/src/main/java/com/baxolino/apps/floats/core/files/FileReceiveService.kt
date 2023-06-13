@@ -94,7 +94,12 @@ class FileReceiveService : Service() {
   }
 
   private fun initSocketConnection(port: Int, host: String) {
-    val temp = File.createTempFile(fileNameShort, ".deflate")
+    val file = File(
+      getExternalFilesDir(null), "${
+        System.currentTimeMillis()
+      } $fileName"
+    )
+    Log.d(TAG, "Path = $file")
     val result = NativeFileInterface
       .receiveFile(
         object : NativeFileInterface.Callback {
@@ -117,12 +122,12 @@ class FileReceiveService : Service() {
             Log.d(TAG, "Received Cancel Callback")
           }
         },
-        temp.absolutePath,
+        file.absolutePath,
         fileLength,
         host, port
       )
     if ("success" in result!!) {
-      Log.d(TAG, "Success! ${temp.length()} res_message: $result")
+      Log.d(TAG, "Success! ${file.length()} res_message: $result")
     } else {
       cancelled = true
 
@@ -132,7 +137,6 @@ class FileReceiveService : Service() {
       Log.d(TAG, "Message: $result")
     }
     onComplete()
-    temp.deleteOnExit()
   }
 
   private fun updateInfo(received: Int) {
