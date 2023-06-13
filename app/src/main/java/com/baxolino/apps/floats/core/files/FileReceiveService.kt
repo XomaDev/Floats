@@ -10,6 +10,8 @@ import android.content.Intent
 import android.content.IntentFilter
 import android.os.Build
 import android.os.Bundle
+import android.os.Environment
+import android.os.Environment.getExternalStoragePublicDirectory
 import android.os.Handler
 import android.os.IBinder
 import android.text.format.Formatter
@@ -95,7 +97,7 @@ class FileReceiveService : Service() {
 
   private fun initSocketConnection(port: Int, host: String) {
     val file = File(
-      getExternalFilesDir(null), "${
+      getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS), "${
         System.currentTimeMillis()
       } $fileName"
     )
