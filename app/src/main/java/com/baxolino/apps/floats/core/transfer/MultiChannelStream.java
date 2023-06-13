@@ -14,6 +14,7 @@ import java.util.concurrent.TimeUnit;
 
 public class MultiChannelStream {
 
+  private final ScheduledExecutorService service = Executors.newScheduledThreadPool(1);
   private final HashMap<ChannelInfo, DataInputStream> channels = new HashMap<>();
 
   private final BitInputStream input;
@@ -50,10 +51,6 @@ public class MultiChannelStream {
   }
 
   public void start() {
-    // TODO:
-    //  we must stop executing this at
-    //  one point
-    ScheduledExecutorService service = Executors.newScheduledThreadPool(1);
     service.scheduleAtFixedRate(() -> {
       if (input.available() > 0) {
         byte[] channel = new byte[Info.CHANNEL_SIZE];
@@ -77,6 +74,10 @@ public class MultiChannelStream {
         }
       }
     }, 0, 50, TimeUnit.MILLISECONDS);
+  }
+
+  public void stop() {
+    service.shutdownNow();
   }
 
   private byte[] readChunk(int blockSize) {

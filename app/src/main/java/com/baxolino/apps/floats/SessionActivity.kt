@@ -70,6 +70,7 @@ class SessionActivity : AppCompatActivity() {
 
       // close the connection
       connection.close()
+      executor.stopStreams()
 
       // open the HomeActivity and notify the disconnect
       // event to the user

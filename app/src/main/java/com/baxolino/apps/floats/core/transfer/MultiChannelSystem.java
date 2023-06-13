@@ -11,6 +11,8 @@ import java.util.concurrent.TimeUnit;
 
 public class MultiChannelSystem {
 
+  private boolean running = true;
+
   private final BitOutputStream stream;
 
   private final ArrayList<ByteChunk> byteChunks = new ArrayList<>();
@@ -27,17 +29,23 @@ public class MultiChannelSystem {
     for (;;) {
       if (write()) {
         // tries to write again
-        if (write()) {
+        if (write() && !running) {
           // we will check if there is any other
           // pending data after 1 second
           ScheduledExecutorService service = Executors.newScheduledThreadPool(1);
-          service.schedule(this::start, 70, TimeUnit.MILLISECONDS);
+          service.schedule(() -> {
+            service.shutdownNow();
+            start();
+          }, 70, TimeUnit.MILLISECONDS);
           break;
         }
       }
     }
   }
 
+  public void stop() {
+    running = false;
+  }
 
   private boolean write() {
     if (byteChunks.isEmpty())

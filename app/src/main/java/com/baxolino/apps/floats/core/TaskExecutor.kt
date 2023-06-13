@@ -65,13 +65,8 @@ class TaskExecutor(connection: SocketConnection) {
     }
   }
 
-  fun unregister(port: Int) {
-    reader.forget(
-      ChannelInfo(
-        BitStream()
-          .writeInt32(port)
-          .toBytes()
-      )
-    )
+  fun stopStreams() {
+    reader.stop()
+    writer.stop()
   }
 }
