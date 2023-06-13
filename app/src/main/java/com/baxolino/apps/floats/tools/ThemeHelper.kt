@@ -19,13 +19,6 @@ object ThemeHelper {
 
   fun themeOfHomeActivity(homeActivity: HomeActivity) {
     if (!HAS_DYNAMIC_THEMING) return
-    val gearImageView = homeActivity.findViewById<ImageView>(R.id.gear)
-    gearImageView.backgroundTintList = ColorStateList.valueOf(
-      homeActivity.getColor(
-        com.google.android.material.R.color.material_dynamic_neutral_variant60
-      )
-    )
-
     val qrImageView = homeActivity.findViewById<ImageView>(R.id.qr_image)
     qrImageView.backgroundTintList = ColorStateList.valueOf(
       homeActivity.getColor(

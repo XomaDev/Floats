@@ -4,6 +4,7 @@ import android.annotation.SuppressLint
 import android.content.Intent
 import android.os.Build
 import android.os.Bundle
+import android.text.Html
 import android.util.Log
 import android.widget.ImageView
 import android.widget.TextView
@@ -72,7 +73,6 @@ class HomeActivity : AppCompatActivity() {
     Log.d(TAG, "Port[$localPort]")
     connector = SocketConnection.getMainSocket(localPort)
 
-
     val connectionInfo = arrayOf(
       ByteBuffer.wrap(
         getIpv4(this).address
@@ -82,6 +82,12 @@ class HomeActivity : AppCompatActivity() {
 
     deviceConnectionInfo = connectionInfo
     generateQr(qrImageView, connectionInfo)
+
+    findViewById<TextView>(R.id.documents_tip).text =
+      Html.fromHtml(
+        "Files go to the <b>Documents</b> folder.",
+        Html.FROM_HTML_SEPARATOR_LINE_BREAK_PARAGRAPH
+      )
 
     if (intent.hasExtra("content")) {
       onScanResult()

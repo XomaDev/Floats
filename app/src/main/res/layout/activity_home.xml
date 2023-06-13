@@ -30,32 +30,17 @@
             android:textSize="30sp"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
-
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_gravity="center"
-            android:gravity="end">
-
-            <ImageView
-                android:id="@+id/gear"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-
-                android:layout_gravity="center"
-                android:background="@drawable/gear"
-                android:backgroundTint="@color/alt_variant_60" />
-        </LinearLayout>
     </LinearLayout>
 
     <ScrollView
-        android:orientation="vertical"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content">
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
         <LinearLayout
             android:layout_width="match_parent"
-            android:gravity="center"
             android:layout_height="wrap_content"
+            android:gravity="center"
             android:orientation="vertical">
 
             <TextView
@@ -76,9 +61,9 @@
                 android:layout_width="wrap_content"
                 android:layout_height="match_parent"
                 android:layout_marginTop="25dp"
-                android:textAlignment="center"
                 android:fontFamily="@font/inter"
-                android:text="Scan the code above from another device to connect." />
+                android:text="Scan the code above from another device to connect."
+                android:textAlignment="center" />
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/scanButton"
@@ -88,6 +73,14 @@
                 android:fontFamily="@font/inter"
                 android:text="Scan from another device"
                 app:icon="@drawable/qr_code_scan" />
+
+            <TextView
+                android:id="@+id/documents_tip"
+                android:layout_marginTop="25dp"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:fontFamily="@font/inter"
+                android:text=""/>
         </LinearLayout>
     </ScrollView>
 </LinearLayout>
