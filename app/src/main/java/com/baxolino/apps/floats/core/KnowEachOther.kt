@@ -44,6 +44,8 @@ object KnowEachOther {
         portReceived = bitInput.readInt32()
       Log.d(TAG, "Other: $other")
       knew.invoke(other, connector.socket.inetAddress.hostAddress!!, portReceived)
+
+      executor.shutdownNow()
     }, 10, TimeUnit.MILLISECONDS)
   }
 }

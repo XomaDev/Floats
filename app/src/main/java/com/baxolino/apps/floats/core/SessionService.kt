@@ -81,6 +81,7 @@ class SessionService : Service() {
         val host = intent.getStringExtra("host")!!
         connection.connectOnPort(port, host, retry = true) {
           Log.d(TAG, "Connected()")
+          executor.shutdownNow()
           init()
         }
       }, 1, TimeUnit.SECONDS)
