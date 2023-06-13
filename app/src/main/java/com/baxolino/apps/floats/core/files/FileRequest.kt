@@ -7,6 +7,7 @@ import android.os.Build
 import android.util.Log
 import com.baxolino.apps.floats.core.transfer.ChannelInfo
 import com.baxolino.apps.floats.core.TaskExecutor
+import com.baxolino.apps.floats.core.files.FileRequestService.Companion.CANCEL_REQUEST_ACTION
 import com.baxolino.apps.floats.core.transfer.SocketUtils
 import com.baxolino.apps.floats.core.io.BitStream
 
@@ -55,10 +56,7 @@ class FileRequest(
       // this will invoke the native class at the end to
       // stop sending data and eventually ending the service
       Log.d(TAG, "Cancellation Requested")
-      context.sendBroadcast(Intent()
-        .apply {
-          action = FileRequestService.CANCEL_REQUEST_ACTION
-        })
+      context.sendBroadcast(Intent(CANCEL_REQUEST_ACTION))
     }
   }
 
