@@ -29,7 +29,7 @@ public class MultiChannelSystem {
     for (;;) {
       if (write()) {
         // tries to write again
-        if (write() && !running) {
+        if (write() && running) {
           // we will check if there is any other
           // pending data after 1 second
           ScheduledExecutorService service = Executors.newScheduledThreadPool(1);
