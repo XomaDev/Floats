@@ -97,11 +97,20 @@ class FileReceiveService : Service() {
   }
 
   private fun initSocketConnection(port: Int, host: String) {
-    val file = File(
-      getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS), "${
-        System.currentTimeMillis()
-      } $fileName"
+    val externalStorageDir = getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS)
+    var file = File(
+      externalStorageDir, fileName
     )
+    var count = 1
+    while (file.exists()) {
+      // if there is already a file, like hello.txt, it'll save it as
+      // (1) hello.txt
+      file = File(
+        externalStorageDir,
+        "($count) $fileName"
+      )
+      count++
+    }
     Log.d(TAG, "Path = $file")
     val result = NativeFileInterface
       .receiveFile(
