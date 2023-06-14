@@ -194,6 +194,7 @@ class SessionService : Service() {
       .setContentIntent(sessionIntent)
       .addAction(R.mipmap.x_lg, "Disconnect", disconnectPendingIntent)
       .setColor(ThemeHelper.variant70Color(this))
+      .setOngoing(true)
       .build()
     startForeground(
       10101, notification
