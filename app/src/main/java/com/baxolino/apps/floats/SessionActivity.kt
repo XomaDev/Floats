@@ -136,8 +136,6 @@ class SessionActivity : AppCompatActivity() {
         moveTaskToBack(true)
       }
     }
-    // TODO:
-    //  when connection is lost open back Home Activity
     onBackPressedDispatcher.addCallback(this, onBackPressedCallback)
   }
 
