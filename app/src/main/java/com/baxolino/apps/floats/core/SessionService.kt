@@ -14,6 +14,7 @@ import android.util.Log
 import androidx.annotation.RequiresApi
 import androidx.core.app.NotificationCompat
 import com.baxolino.apps.floats.R
+import com.baxolino.apps.floats.SessionActivity
 import com.baxolino.apps.floats.core.transfer.SocketConnection
 import com.baxolino.apps.floats.tools.ThemeHelper
 import java.io.InputStream
@@ -40,6 +41,7 @@ class SessionService : Service() {
   }
 
   private lateinit var partner: String
+  private lateinit var host: String
 
   private val connection = SocketConnection()
 
@@ -79,7 +81,7 @@ class SessionService : Service() {
     } else {
       val executor = ScheduledThreadPoolExecutor(1)
       executor.schedule({
-        val host = intent.getStringExtra("host")!!
+        host = intent.getStringExtra("host")!!
         connection.connectOnPort(port, host, retry = true) {
           Log.d(TAG, "Connected()")
           executor.shutdownNow()
@@ -104,6 +106,7 @@ class SessionService : Service() {
             Log.d(TAG, "Beat")
             lastHeartBeat = System.currentTimeMillis()
           }
+
           MANUAL_DISCONNECT_MESSAGE -> {
             Log.d(TAG, "Manual disconnect")
             executor.shutdownNow()
@@ -168,10 +171,26 @@ class SessionService : Service() {
       PendingIntent.FLAG_IMMUTABLE
     )
 
+
+    val sessionIntent =
+      PendingIntent.getActivity(
+        this,
+        0,
+        Intent(this, SessionActivity::class.java)
+          .setFlags(
+            Intent.FLAG_ACTIVITY_CLEAR_TOP
+                    or Intent.FLAG_ACTIVITY_SINGLE_TOP
+          )
+          .putExtra("deviceName", partner)
+          .putExtra("hostAddress", host),
+        PendingIntent.FLAG_MUTABLE
+      )
+
     val notification = NotificationCompat.Builder(this, NOTIF_CHANNEL_ID)
       .setSmallIcon(R.mipmap.broadcast)
       .setContentTitle("Device connected")
       .setContentText("Connected to $partner")
+      .setContentIntent(sessionIntent)
       .addAction(R.mipmap.x_lg, "Disconnect", disconnectPendingIntent)
       .setColor(ThemeHelper.variant70Color(this))
       .build()
