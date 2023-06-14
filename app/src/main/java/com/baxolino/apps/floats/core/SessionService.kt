@@ -66,6 +66,8 @@ class SessionService : Service() {
     manager = getSystemService(NotificationManager::class.java)
 
     partner = intent.getStringExtra("partner_device")!!
+    host = intent.getStringExtra("host")!!
+
     Log.d(TAG, "Session with $partner")
 
     val isServer = intent.getBooleanExtra("server", false)
@@ -81,7 +83,6 @@ class SessionService : Service() {
     } else {
       val executor = ScheduledThreadPoolExecutor(1)
       executor.schedule({
-        host = intent.getStringExtra("host")!!
         connection.connectOnPort(port, host, retry = true) {
           Log.d(TAG, "Connected()")
           executor.shutdownNow()
