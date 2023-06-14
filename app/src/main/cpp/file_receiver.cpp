@@ -89,8 +89,11 @@ jstring receiveContentSocket(
 
    // Open the output file
    int outputFile = open(outputPathStr.c_str(), O_WRONLY | O_CREAT | O_TRUNC, 0644);
-   if (outputFile == -1)
-      return env->NewStringUTF("Failed to open output file.");
+   if (outputFile == -1) {
+      // Failed to open the output file
+      const char* errorMessage = strerror(errno);
+      return env->NewStringUTF(errorMessage);
+   }
 
    jclass clazz = env->GetObjectClass(callback);
    env->CallVoidMethod(callback, env->GetMethodID(clazz, "onStart", "()V"));
