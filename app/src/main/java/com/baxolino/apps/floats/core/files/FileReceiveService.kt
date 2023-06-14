@@ -25,6 +25,7 @@ import com.baxolino.apps.floats.core.files.MessageReceiver.Companion.RECEIVE_ACT
 import com.baxolino.apps.floats.tools.ThemeHelper
 import java.io.File
 import kotlin.concurrent.thread
+import kotlin.random.Random
 
 class FileReceiveService : Service() {
 
@@ -201,22 +202,16 @@ class FileReceiveService : Service() {
     hasStopped = true
 
     unregisterReceiver(cancelReceiveListener)
-    if (cancelled) {
-      Log.d(TAG, "Stopping with remove")
-      stopForeground(STOP_FOREGROUND_REMOVE)
-    } else {
-      val notification = NotificationCompat.Builder(this, NOTIF_CHANNEL_ID)
-        .setSmallIcon(R.mipmap.check)
-        .setContentTitle("File received")
-        .setContentText("$fileName was received.")
-        .setColor(ThemeHelper.variant70Color(this))
-        .build()
-      notificationManager.notify(notificationId, notification)
+    stopForeground(STOP_FOREGROUND_REMOVE)
 
-      Log.d(TAG, "Stopping detach")
-      stopForeground(STOP_FOREGROUND_DETACH)
-    }
-    // it's important that we do this
+    val notification = NotificationCompat.Builder(this, NOTIF_CHANNEL_ID)
+      .setSmallIcon(R.mipmap.check)
+      .setContentTitle("File received")
+      .setContentText("$fileName was received.")
+      .setColor(ThemeHelper.variant70Color(this))
+      .build()
+    notificationManager.notify(Random.nextInt(), notification)
+
     stopSelf()
   }
 

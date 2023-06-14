@@ -23,6 +23,7 @@ import com.baxolino.apps.floats.core.transfer.Info
 import com.baxolino.apps.floats.core.transfer.SocketConnection
 import com.baxolino.apps.floats.tools.ThemeHelper
 import java.io.InputStream
+import kotlin.random.Random
 
 class FileRequestService : Service() {
 
@@ -202,20 +203,16 @@ class FileRequestService : Service() {
 
   private fun unregisterWithStop() {
     unregisterReceiver(cancelRequestReceiver)
-    if (cancelled) {
-      stopForeground(STOP_FOREGROUND_REMOVE)
-    } else {
-      val notification = NotificationCompat.Builder(this, NOTIF_CHANNEL_ID)
-        .setSmallIcon(R.mipmap.check)
-        .setContentTitle("File sent")
-        .setContentText("$fileName was sent.")
-        .setColor(ThemeHelper.variant70Color(this))
-        .build()
-      notificationManager.notify(notificationId, notification)
+    stopForeground(STOP_FOREGROUND_REMOVE)
 
-      stopForeground(STOP_FOREGROUND_DETACH)
-    }
-    // it causes problems if we don't do this
+    val notification = NotificationCompat.Builder(this, NOTIF_CHANNEL_ID)
+      .setSmallIcon(R.mipmap.check)
+      .setContentTitle("File sent")
+      .setContentText("$fileName was sent.")
+      .setColor(ThemeHelper.variant70Color(this))
+      .build()
+    notificationManager.notify(Random.nextInt(), notification)
+
     stopSelf()
   }
 
