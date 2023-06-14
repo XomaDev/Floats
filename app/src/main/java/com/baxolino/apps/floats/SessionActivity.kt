@@ -191,10 +191,6 @@ class SessionActivity : AppCompatActivity() {
 
     receiver.cancel(this, executor)
 
-    // TODO:
-    //  when we really implement the saving mechanism
-    //  we will have to delete the temp file or the half saved file
-
     Handler(mainLooper).postDelayed({
       // reverse progress animation
       progressBar.setProgress(0, true)

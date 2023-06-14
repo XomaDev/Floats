@@ -1,15 +1,22 @@
 package com.baxolino.apps.floats
 
+import android.Manifest.permission.WRITE_EXTERNAL_STORAGE
 import android.annotation.SuppressLint
 import android.content.Intent
+import android.content.pm.PackageManager
+import android.net.Uri
 import android.os.Build
 import android.os.Bundle
+import android.provider.Settings
 import android.text.Html
 import android.util.Log
 import android.widget.ImageView
 import android.widget.TextView
 import android.widget.Toast
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
 import com.baxolino.apps.floats.camera.ScanActivity
 import com.baxolino.apps.floats.core.KnowEachOther
 import com.baxolino.apps.floats.core.SessionService
@@ -43,6 +50,8 @@ class HomeActivity : AppCompatActivity() {
 
     private const val TAG = "HomeActivity"
   }
+
+  private var permissionDialog: AlertDialog? = null
 
   private lateinit var deviceConnectionInfo: String
   private lateinit var ourId: String
@@ -117,6 +126,45 @@ class HomeActivity : AppCompatActivity() {
         .setMessage("Connection to device $device was broken.")
         .setPositiveButton("Dismiss") { dialog, _ ->
           dialog.dismiss()
+        }
+        .show()
+    }
+  }
+
+  override fun onResume() {
+    super.onResume()
+    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.R
+      && permissionDialog == null
+      && ContextCompat.checkSelfPermission(
+        this,
+        WRITE_EXTERNAL_STORAGE
+      ) != PackageManager.PERMISSION_GRANTED
+    ) {
+      ActivityCompat.requestPermissions(this, arrayOf(WRITE_EXTERNAL_STORAGE), 79)
+    }
+  }
+
+  override fun onRequestPermissionsResult(
+    requestCode: Int,
+    permissions: Array<out String>,
+    grantResults: IntArray
+  ) {
+    super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+    if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_DENIED) {
+      permissionDialog = MaterialAlertDialogBuilder(this, R.style.FloatsCustomDialogTheme)
+        .setCancelable(false)
+        .setTitle("Permission Denied")
+        .setMessage("App needs write permission for file saving.")
+        .setNeutralButton("Settings") { _, _ ->
+          permissionDialog = null
+          startActivity(
+            Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS)
+              .setData(
+                Uri.parse("package:$packageName")
+              )
+          )
+        }.setPositiveButton("Ask again") { _, _ ->
+          ActivityCompat.requestPermissions(this, arrayOf(WRITE_EXTERNAL_STORAGE), 79)
         }
         .show()
     }
