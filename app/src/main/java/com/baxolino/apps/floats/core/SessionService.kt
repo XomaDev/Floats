@@ -18,6 +18,7 @@ import com.baxolino.apps.floats.core.transfer.SocketConnection
 import com.baxolino.apps.floats.tools.ThemeHelper
 import java.io.InputStream
 import java.io.OutputStream
+import java.net.SocketException
 import java.util.concurrent.ScheduledThreadPoolExecutor
 import java.util.concurrent.TimeUnit
 import kotlin.concurrent.thread
@@ -116,13 +117,19 @@ class SessionService : Service() {
     executor.scheduleAtFixedRate({
       if ((System.currentTimeMillis() - lastHeartBeat) >= 5000) {
         Log.d(TAG, "Stopped receiving heart beats")
-        executor.shutdownNow()
-
         onDisconnect()
+
+        executor.shutdownNow()
       }
-      output.write(
-        HEARTBEAT_MESSAGE
-      )
+      try {
+        output.write(
+          HEARTBEAT_MESSAGE
+        )
+      } catch (e: SocketException) {
+        // this could be due to unexpected shutdown
+        onDisconnect()
+        executor.shutdownNow()
+      }
     }, 0, 2, TimeUnit.SECONDS)
 
     foreground()
