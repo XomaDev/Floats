@@ -231,7 +231,7 @@ class SessionActivity : AppCompatActivity() {
       .setTitle("Confirm")
       .setMessage(
         "Are you sure you want to send the file $fileName of size " +
-                "${Formatter.formatFileSize(applicationContext, fileLength.toLong())}?"
+                "${Formatter.formatFileSize(applicationContext, fileLength.toLong())}? \n\nYou can only send one file at a time."
       )
 
       .setPositiveButton("Proceed") { _, _ -> beginSocketTransfer(uri, fileName, fileLength) }
