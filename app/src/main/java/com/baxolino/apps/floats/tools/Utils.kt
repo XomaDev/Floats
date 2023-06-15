@@ -7,6 +7,8 @@ import android.net.LinkProperties
 import android.os.Build
 import android.provider.Settings
 import java.net.InetAddress
+import java.net.NetworkInterface
+
 
 object Utils {
   fun getDeviceName(contentResolver: ContentResolver): String {
@@ -18,7 +20,28 @@ object Utils {
     )
   }
 
+  private fun getIpv4Alternate(): InetAddress? {
+    val networkInterfaces = NetworkInterface.getNetworkInterfaces()
+    while (networkInterfaces.hasMoreElements()) {
+      val inetAddresses = networkInterfaces.nextElement().inetAddresses
+      while (inetAddresses.hasMoreElements()) {
+        val inetAddress = inetAddresses.nextElement()
+        if (!inetAddress.isLoopbackAddress
+          && !inetAddress.isLinkLocalAddress
+          && inetAddress.isSiteLocalAddress
+        ) {
+          return InetAddress.getByName(inetAddress.hostAddress)
+        }
+      }
+    }
+    return null
+  }
+
   fun getIpv4(context: Context): InetAddress {
+    val ipv4 = getIpv4Alternate()
+    ipv4?.let {
+      return it
+    }
     val connector = context.getSystemService(ConnectivityManager::class.java)
 
     // this may return null when not connected to any network
