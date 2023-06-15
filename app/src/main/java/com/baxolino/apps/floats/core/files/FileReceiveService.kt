@@ -97,17 +97,19 @@ class FileReceiveService : Service() {
   }
 
   private fun initSocketConnection(port: Int, host: String) {
-    val externalStorageDir = getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS)
+    val externalStorageDir = getExternalStoragePublicDirectory(
+      Environment.DIRECTORY_DOCUMENTS)
     var file = File(
       externalStorageDir, fileName
     )
+    var saveFileName = fileName
     var count = 1
     while (file.exists()) {
       // if there is already a file, like hello.txt, it'll save it as
       // (1) hello.txt
+      saveFileName = "($count) $fileName"
       file = File(
-        externalStorageDir,
-        "($count) $fileName"
+        externalStorageDir, saveFileName
       )
       count++
     }
@@ -134,7 +136,8 @@ class FileReceiveService : Service() {
             Log.d(TAG, "Received Cancel Callback")
           }
         },
-        file.absolutePath,
+        externalStorageDir.absolutePath,
+        saveFileName,
         fileLength,
         host, port
       )

@@ -6,6 +6,8 @@
 #include <jni.h>
 #include <fstream>
 #include <fcntl.h>
+#include <random>
+#include <sstream>
 
 
 constexpr int BUFFER_SIZE = 1000000;
@@ -35,7 +37,8 @@ Java_com_baxolino_apps_floats_core_NativeFileInterface_cancelFileReceive(
 jstring receiveContentSocket(
         JNIEnv *env,
         jobject callback,
-        jstring output,
+        jstring outputDir,
+        jstring fileName,
         jint expectedSize,
         jstring host,
         jint port,
@@ -43,7 +46,8 @@ jstring receiveContentSocket(
 ) {
 
    const char *hostStr = env->GetStringUTFChars(host, nullptr);
-   const char *outputPath = env->GetStringUTFChars(output, nullptr);
+   const char *outputPath = env->GetStringUTFChars(outputDir, nullptr);
+   const char *fileNameChars = env->GetStringUTFChars(fileName, nullptr);
 
    std::string hostName(hostStr);
    std::string outputPathStr(outputPath);
@@ -76,7 +80,8 @@ jstring receiveContentSocket(
          return receiveContentSocket(
                  env,
                  callback,
-                 output,
+                 outputDir,
+                 fileName,
                  expectedSize,
                  host,
                  port,
@@ -88,11 +93,29 @@ jstring receiveContentSocket(
 
 
    // Open the output file
-   int outputFile = open(outputPathStr.c_str(), O_WRONLY | O_CREAT | O_TRUNC, 0644);
+   int outputFile = open((outputPathStr + "/" + fileNameChars).c_str(), O_WRONLY | O_CREAT | O_TRUNC, 0644);
    if (outputFile == -1) {
       // Failed to open the output file
-      const char* errorMessage = strerror(errno);
-      return env->NewStringUTF(errorMessage);
+      if (errno == 17) {
+         // retry opening it with appended random name
+         std::random_device rd;
+         std::mt19937 generator(rd());
+         std::uniform_int_distribution<int> distribution(1000000, 9999999);
+         std::ostringstream oss;
+         oss << distribution(generator);
+         std::string outputPathWithRandomNumber = outputPathStr + "/(" + oss.str() + ") " +  fileNameChars;
+
+         outputFile = open(outputPathWithRandomNumber.c_str(), O_WRONLY | O_CREAT | O_TRUNC, 0644);
+         if (outputFile == -1) {
+            const char *errorMessage = strerror(errno);
+            return env->NewStringUTF(
+                    (std::string(errorMessage)
+                     + " "
+                     + std::to_string(errno)
+                     + " "
+                     + outputPathWithRandomNumber).c_str());
+         }
+      }
    }
 
    jclass clazz = env->GetObjectClass(callback);
@@ -130,7 +153,8 @@ jstring receiveContentSocket(
    close(sock);
 
    env->ReleaseStringUTFChars(host, hostStr);
-   env->ReleaseStringUTFChars(output, outputPath);
+   env->ReleaseStringUTFChars(outputDir, outputPath);
+   env->ReleaseStringUTFChars(fileName, fileNameChars);
 
    if (sizeExpected != result) {
       return env->NewStringUTF(("Transfer was disrupted. " + std::to_string(result)).c_str());
@@ -189,7 +213,8 @@ extern "C"
 JNIEXPORT jstring
 Java_com_baxolino_apps_floats_core_NativeFileInterface_receiveFile(JNIEnv *env, jobject thiz,
                                                                    jobject callback,
-                                                                   jstring output,
+                                                                   jstring outputDir,
+                                                                   jstring fileName,
                                                                    jint expectedSize,
                                                                    jstring host,
                                                                    jint port) {
@@ -198,7 +223,8 @@ Java_com_baxolino_apps_floats_core_NativeFileInterface_receiveFile(JNIEnv *env, 
    return receiveContentSocket(
            env,
            callback,
-           output,
+           outputDir,
+           fileName,
            expectedSize,
            host,
            port,

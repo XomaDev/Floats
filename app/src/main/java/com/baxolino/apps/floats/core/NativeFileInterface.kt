@@ -10,7 +10,8 @@ object NativeFileInterface {
   
   external fun receiveFile(
     callback: Callback,
-    output: String,
+    outputDir: String,
+    fileName: String,
     expectedSize: Int,
     host: String,
     port: Int
