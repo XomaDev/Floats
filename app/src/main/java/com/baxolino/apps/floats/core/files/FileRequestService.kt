@@ -205,13 +205,15 @@ class FileRequestService : Service() {
     unregisterReceiver(cancelRequestReceiver)
     stopForeground(STOP_FOREGROUND_REMOVE)
 
-    val notification = NotificationCompat.Builder(this, NOTIF_CHANNEL_ID)
-      .setSmallIcon(R.mipmap.check)
-      .setContentTitle("File sent")
-      .setContentText("$fileName was sent.")
-      .setColor(ThemeHelper.variant70Color(this))
-      .build()
-    notificationManager.notify(Random.nextInt(), notification)
+    if (!cancelled) {
+      val notification = NotificationCompat.Builder(this, NOTIF_CHANNEL_ID)
+        .setSmallIcon(R.mipmap.check)
+        .setContentTitle("File sent")
+        .setContentText("$fileName was sent.")
+        .setColor(ThemeHelper.variant70Color(this))
+        .build()
+      notificationManager.notify(Random.nextInt(), notification)
+    }
 
     stopSelf()
   }

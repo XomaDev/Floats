@@ -213,13 +213,15 @@ class FileReceiveService : Service() {
     unregisterReceiver(cancelReceiveListener)
     stopForeground(STOP_FOREGROUND_REMOVE)
 
-    val notification = NotificationCompat.Builder(this, NOTIF_CHANNEL_ID)
-      .setSmallIcon(R.mipmap.check)
-      .setContentTitle("File received")
-      .setContentText("$fileName was received.")
-      .setColor(ThemeHelper.variant70Color(this))
-      .build()
-    notificationManager.notify(Random.nextInt(), notification)
+    if (!cancelled) {
+      val notification = NotificationCompat.Builder(this, NOTIF_CHANNEL_ID)
+        .setSmallIcon(R.mipmap.check)
+        .setContentTitle("File received")
+        .setContentText("$fileName was received.")
+        .setColor(ThemeHelper.variant70Color(this))
+        .build()
+      notificationManager.notify(Random.nextInt(), notification)
+    }
 
     stopSelf()
   }
