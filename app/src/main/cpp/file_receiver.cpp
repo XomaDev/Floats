@@ -28,15 +28,14 @@ readBytes(
 
 extern "C"
 JNIEXPORT void JNICALL
-Java_com_baxolino_apps_floats_core_NativeFileInterface_cancelFileReceive(
-        JNIEnv *env,
-        jobject thiz) {
+Java_com_baxolino_apps_floats_core_files_FileReceiveService_cancelFileReceive(JNIEnv *env,
+                                                                              jobject thiz) {
    wasCancelled = true;
 }
 
 jstring receiveContentSocket(
-        JNIEnv *env,
         jobject callback,
+        JNIEnv *env,
         jstring outputDir,
         jstring fileName,
         jint expectedSize,
@@ -78,8 +77,8 @@ jstring receiveContentSocket(
          usleep(500000);
 
          return receiveContentSocket(
-                 env,
                  callback,
+                 env,
                  outputDir,
                  fileName,
                  expectedSize,
@@ -89,7 +88,6 @@ jstring receiveContentSocket(
       }
       return env->NewStringUTF("Failed to connect to the server.");
    }
-
 
 
    // Open the output file
@@ -139,7 +137,7 @@ jstring receiveContentSocket(
    }
 
    if (wasCancelled) {
-      jmethodID cancelId = env->GetMethodID(clazz, "cancelled", "()V");
+      jmethodID cancelId = env->GetMethodID(clazz, "onCancelledNative", "()V");
       env->CallVoidMethod(callback, cancelId);
 
 
@@ -210,22 +208,21 @@ int readBytes(
 
 
 extern "C"
-JNIEXPORT jstring
-Java_com_baxolino_apps_floats_core_NativeFileInterface_receiveFile(JNIEnv *env, jobject thiz,
-                                                                   jobject callback,
-                                                                   jstring outputDir,
-                                                                   jstring fileName,
-                                                                   jint expectedSize,
-                                                                   jstring host,
-                                                                   jint port) {
+JNIEXPORT jstring JNICALL
+Java_com_baxolino_apps_floats_core_files_FileReceiveService_receiveFile(JNIEnv *env,
+                                                                        jobject thiz,
+                                                                        jstring output_dir,
+                                                                        jstring file_name,
+                                                                        jint expected_size,
+                                                                        jstring host, jint port) {
    wasCancelled = false;
 
    return receiveContentSocket(
+           thiz,
            env,
-           callback,
-           outputDir,
-           fileName,
-           expectedSize,
+           output_dir,
+           file_name,
+           expected_size,
            host,
            port,
            true);

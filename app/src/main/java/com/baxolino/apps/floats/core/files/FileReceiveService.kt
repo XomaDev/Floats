@@ -19,7 +19,6 @@ import android.util.Log
 import android.widget.Toast
 import androidx.annotation.RequiresApi
 import androidx.core.app.NotificationCompat
-import com.baxolino.apps.floats.core.NativeFileInterface
 import com.baxolino.apps.floats.R
 import com.baxolino.apps.floats.core.files.MessageReceiver.Companion.RECEIVE_ACTION
 import com.baxolino.apps.floats.tools.ThemeHelper
@@ -114,34 +113,13 @@ class FileReceiveService : Service() {
       count++
     }
     Log.d(TAG, "Path = $file")
-    val result = NativeFileInterface
-      .receiveFile(
-        object : NativeFileInterface.Callback {
-          override fun onStart() {
-            Log.d(TAG, "Started")
-
-            timeStart = System.currentTimeMillis()
-
-            // let them know, we are starting
-            message(0, -1, Bundle().apply {
-              putLong("time", timeStart)
-            })
-          }
-
-          override fun update(received: Int) {
-            updateInfo(received)
-          }
-
-          override fun cancelled() {
-            Log.d(TAG, "Received Cancel Callback")
-          }
-        },
-        externalStorageDir.absolutePath,
-        saveFileName,
-        fileLength,
-        host, port
-      )
-    if ("success" in result!!) {
+    val result = receiveFile(
+      externalStorageDir.absolutePath,
+      saveFileName,
+      fileLength,
+      host, port
+    )
+    if ("success" in result) {
       Log.d(TAG, "Success! ${file.length()} res_message: $result")
     } else {
       cancelled = true
@@ -154,7 +132,33 @@ class FileReceiveService : Service() {
     onComplete()
   }
 
-  private fun updateInfo(received: Int) {
+  private external fun receiveFile(
+    outputDir: String,
+    fileName: String,
+    expectedSize: Int,
+    host: String,
+    port: Int
+  ): String
+
+
+  // called by the native class
+  @Suppress("unused")
+  fun onStart() {
+    Log.d(TAG, "Started")
+
+    timeStart = System.currentTimeMillis()
+
+    // let them know, we are starting
+    message(0, -1, Bundle().apply {
+      putLong("time", timeStart)
+    })
+  }
+
+
+  // this is called by the native file receiver class
+
+  @Suppress("unused")
+  fun update(received: Int) {
     if (hasStopped)
       return
     val progress = (received.toFloat().div(fileLength) * 100).toInt()
@@ -183,13 +187,19 @@ class FileReceiveService : Service() {
     })
   }
 
+  private external fun cancelFileReceive()
+
+  @Suppress("unused")
+  fun onCancelledNative() {
+    Log.d(TAG, "Received Native Cancel Callback")
+  }
+
   // called by CancelRequestReceiver
   private fun cancelled() {
     cancelled = true
 
-    NativeFileInterface
-      // cancels any ongoing file receiving
-      .cancelFileReceive()
+    // cancels any ongoing file receiving
+    cancelFileReceive()
     unregisterWithStop()
   }
 
