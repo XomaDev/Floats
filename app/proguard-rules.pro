@@ -26,3 +26,15 @@
 
 -flattenpackagehierarchy
 -dontpreverify
+
+-keep public class com.baxolino.apps.floats.core.files.FileReceiveService {
+    public *;
+}
+
+-keep public class com.baxolino.apps.floats.core.files.FileRequestService {
+    public *;
+}
+
+-keep public class com.baxolino.apps.floats.core.SessionService {
+    public *;
+}
