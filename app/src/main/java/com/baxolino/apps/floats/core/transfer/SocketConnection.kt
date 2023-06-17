@@ -19,10 +19,6 @@ class SocketConnection {
     private var mainSocket: SocketConnection? = null
 
     fun getMainSocket(): SocketConnection {
-      return getMainSocket(-1)
-    }
-
-    fun getMainSocket(localPort: Int): SocketConnection {
       mainSocket?.let {
         return it
       }
