@@ -47,7 +47,12 @@ class SocketConnection {
     acceptOnPort(localPort, -1, onConnect, null)
   }
 
-  fun acceptOnPort(localPort: Int, timeout: Int, onConnect: () -> Unit, onTimeout: (() -> Unit)?): SocketConnection {
+  fun acceptOnPort(
+    localPort: Int,
+    timeout: Int,
+    onConnect: () -> Unit,
+    onTimeout: (() -> Unit)?
+  ): SocketConnection {
     thread {
       val serverSocket = ServerSocket(localPort)
       if (timeout != -1)
@@ -64,7 +69,22 @@ class SocketConnection {
     return this
   }
 
-  fun connectOnPort(port: Int, host: String, retry: Boolean, onConnect: () -> Unit): SocketConnection {
+  fun connectOnPort(
+    port: Int,
+    host: String,
+    retry: Boolean,
+    onConnect: () -> Unit
+  ): SocketConnection {
+    return connectOnPort(port, host, retry, onConnect, null)
+  }
+
+  fun connectOnPort(
+    port: Int,
+    host: String,
+    retry: Boolean,
+    onConnect: () -> Unit,
+    onFail: ((String) -> Unit)?
+  ): SocketConnection {
     thread {
       socket = Socket()
       try {
@@ -72,7 +92,7 @@ class SocketConnection {
         val socketAddress: SocketAddress = InetSocketAddress(host, port)
 
         // Set the connection timeout
-        socket.connect(socketAddress, 5000)
+        socket.connect(socketAddress, 4000)
 
         Log.d(TAG, "acceptOnPort() Connection was established.")
         onConnected(onConnect)
@@ -80,10 +100,12 @@ class SocketConnection {
         Log.d(TAG, "Socket Timeout Occurred")
         if (retry)
           connectOnPort(port, host, false, onConnect)
+        else onFail?.invoke("Failed to reach the device.")
       } catch (e: Exception) {
         e.printStackTrace()
         if (retry)
           connectOnPort(port, host, false, onConnect)
+        else onFail?.invoke("I/O Exception ${e.message}")
         Log.d(TAG, "I/O Exception ${e.message}")
       }
     }

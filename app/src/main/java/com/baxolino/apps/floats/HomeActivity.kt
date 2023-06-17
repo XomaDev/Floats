@@ -13,7 +13,6 @@ import android.text.Html
 import android.util.Log
 import android.widget.ImageView
 import android.widget.TextView
-import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
@@ -84,7 +83,7 @@ class HomeActivity : AppCompatActivity() {
     localPort = SocketUtils.findAvailableTcpPort()
 
     Log.d(TAG, "Port[$localPort]")
-    connector = SocketConnection.getMainSocket(localPort)
+    connector = SocketConnection.getMainSocket()
 
     val connectionInfo = arrayOf(
       ByteBuffer.wrap(
@@ -102,29 +101,29 @@ class HomeActivity : AppCompatActivity() {
         Html.FROM_HTML_SEPARATOR_LINE_BREAK_PARAGRAPH
       )
 
+    val scanButton = findViewById<MaterialCardView>(R.id.scanButton)
+
+    scanButton.setOnClickListener {
+      if (ContextCompat.checkSelfPermission(
+          this,
+          CAMERA
+        ) == PackageManager.PERMISSION_DENIED
+      ) {
+        ActivityCompat.requestPermissions(
+          this,
+          arrayOf(CAMERA),
+          CAMERA_REQUEST_CODE
+        )
+      } else {
+        startActivity(
+          Intent(this, ScanActivity::class.java)
+        )
+      }
+    }
+
     if (intent.hasExtra("content")) {
       onScanResult()
     } else {
-      val scanButton = findViewById<MaterialCardView>(R.id.scanButton)
-
-      scanButton.setOnClickListener {
-        if (ContextCompat.checkSelfPermission(
-            this,
-            CAMERA
-          ) == PackageManager.PERMISSION_DENIED
-        ) {
-          ActivityCompat.requestPermissions(
-            this,
-            arrayOf(CAMERA),
-            CAMERA_REQUEST_CODE
-          )
-        } else {
-          startActivity(
-            Intent(this, ScanActivity::class.java)
-          )
-        }
-      }
-
       // we put it over here because, we don't want it called multiple
       // times
       connector.acceptOnPort(localPort) {
@@ -225,15 +224,17 @@ class HomeActivity : AppCompatActivity() {
       val port = args[1].toInt()
 
       Log.d(TAG, "onScanResult: $args $ipv4Address")
-      Toast.makeText(
-        this,
-        "Connecting", Toast.LENGTH_SHORT
-      ).show()
 
-      connector.connectOnPort(port, ipv4Address, false) {
+      connector.connectOnPort(port, ipv4Address, false, {
         Log.d(TAG, "Connected()")
         onConnectionSuccessful(false)
-      }
+      }, {
+        Snackbar.make(
+          findViewById(R.id.home_layout),
+          it,
+          Snackbar.LENGTH_LONG
+        ).show()
+      })
     }
   }
 
