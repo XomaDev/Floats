@@ -25,6 +25,7 @@ import com.baxolino.apps.floats.core.files.MessageReceiver
 import com.baxolino.apps.floats.core.files.RequestHandler
 import com.baxolino.apps.floats.core.transfer.SocketConnection
 import com.baxolino.apps.floats.tools.ThemeHelper
+import com.google.android.material.card.MaterialCardView
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.google.android.material.progressindicator.CircularProgressIndicator
@@ -52,13 +53,14 @@ class SessionActivity : AppCompatActivity() {
 
   private var receiver: FileReceiver? = null
 
-  private val connection = SocketConnection.getMainSocket()
-  private var executor = TaskExecutor(connection)
+  private lateinit var connection:SocketConnection
+  private lateinit var executor:TaskExecutor
 
   // we don't use this to receive messages here,
   // we are required to call onPause() and onResume()
   // lifecycles on it
-  private val messageReceiver = MessageReceiver()
+  private lateinit var messageReceiver: MessageReceiver
+  private var isConnected = false
 
   private val onDisconnectReceiver = object : BroadcastReceiver() {
     override fun onReceive(context: Context?, intent: Intent?) {
@@ -90,15 +92,20 @@ class SessionActivity : AppCompatActivity() {
 
   override fun onCreate(savedInstanceState: Bundle?) {
     super.onCreate(savedInstanceState)
+    Log.d(TAG, "onCreate()")
     setContentView(R.layout.activity_session)
 
     ThemeHelper.themeOfSessionActivity(this)
 
-    val isConnected = intent.hasExtra("deviceName")
+    isConnected = intent.hasExtra("deviceName")
 
     if (!isConnected)
       return
 
+    connection = SocketConnection.getMainSocket()
+    executor = TaskExecutor(connection)
+
+    messageReceiver = MessageReceiver()
 
     // or else we are just testing
     deviceName = intent.getStringExtra("deviceName")!!
@@ -127,10 +134,26 @@ class SessionActivity : AppCompatActivity() {
 
     frameProgress = findViewById(R.id.progress_frame)
 
+    val progressCard = findViewById<MaterialCardView>(R.id.progress_card)
+
+
+
     // the session activity, was closed, and then reopened through
     // notification, we need to set the listeners back, if any
     val receiver = FileReceiver.activeReceiver
     receiver?.let {
+      frameProgress.setOnLongClickListener {
+
+        cancelFileTransfer(receiver)
+        return@setOnLongClickListener true
+      }
+      // since some devices, don't register long
+      // click of the frame progress
+      progressCard.setOnLongClickListener {
+        cancelFileTransfer(receiver)
+        return@setOnLongClickListener true
+      }
+
       fileNameLabel.text = FileNameUtil.toShortDisplayName(it.name)
       fileSizeLabel.text = Formatter.formatShortFileSize(
         applicationContext,
@@ -283,6 +306,8 @@ class SessionActivity : AppCompatActivity() {
 
   override fun onResume() {
     super.onResume()
+    if (!isConnected)
+      return
     messageReceiver.onResume(this)
     registerReceiver(
       onDisconnectReceiver, IntentFilter(
@@ -293,6 +318,8 @@ class SessionActivity : AppCompatActivity() {
 
   override fun onPause() {
     super.onPause()
+    if (!isConnected)
+      return
     messageReceiver.onPause(this)
     unregisterReceiver(
       onDisconnectReceiver

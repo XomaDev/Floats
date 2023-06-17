@@ -4,11 +4,64 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:layout_margin="25dp"
+    android:orientation="vertical"
     tools:context=".camera.ScanActivity">
 
-    <androidx.camera.view.PreviewView
-        android:id="@+id/preview"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent" />
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Scan Code"
+        android:fontFamily="@font/inter"
+        android:textSize="28sp"/>
 
+    <com.google.android.material.card.MaterialCardView
+        android:layout_marginTop="25dp"
+        app:strokeWidth="4dp"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content">
+        <FrameLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+            <androidx.camera.view.PreviewView
+                android:id="@+id/preview"
+                android:layout_width="600dp"
+                android:layout_height="300dp" />
+            <TextView
+                android:textSize="25sp"
+                android:layout_gravity="center"
+                android:fontFamily="@font/inter"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="•"/>
+        </FrameLayout>
+    </com.google.android.material.card.MaterialCardView>
+
+    <TextView
+        android:fontFamily="@font/inter"
+        android:layout_marginTop="25dp"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="1. Open the app on the other device"/>
+    <TextView
+        android:fontFamily="@font/inter"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="2. Scan the code displayed"/>
+
+
+    <com.google.android.material.card.MaterialCardView
+        android:layout_marginTop="25dp"
+        app:strokeWidth="0dp"
+        app:contentPadding="10dp"
+        app:cardElevation="1dp"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content">
+        <TextView
+            android:id="@+id/tip_network"
+            android:fontFamily="@font/inter"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Ensure both devices are on the same network, such as a hotspot or Wi-Fi."/>
+    </com.google.android.material.card.MaterialCardView>
 </LinearLayout>
