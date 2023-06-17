@@ -127,6 +127,19 @@ class SessionActivity : AppCompatActivity() {
 
     frameProgress = findViewById(R.id.progress_frame)
 
+    // the session activity, was closed, and then reopened through
+    // notification, we need to set the listeners back, if any
+    val receiver = FileReceiver.activeReceiver
+    receiver?.let {
+      fileNameLabel.text = FileNameUtil.toShortDisplayName(it.name)
+      fileSizeLabel.text = Formatter.formatShortFileSize(
+        applicationContext,
+        it.length.toLong()
+      )
+
+      // re-register the listeners
+      listeners(receiver)
+    }
     lookForFileRequests()
 
     val onBackPressedCallback = object : OnBackPressedCallback(true) {
@@ -146,39 +159,43 @@ class SessionActivity : AppCompatActivity() {
       val fname = receiver.name
       runOnUiThread { onTransferRequested(fname, receiver.length) }
 
-      receiver.setStartListener {
-        runOnUiThread {
-          frameProgress.setOnLongClickListener {
-            cancelFileTransfer(receiver)
-            return@setOnLongClickListener true
-          }
-        }
-      }
-      receiver.setUpdateListener {
-        runOnUiThread {
-          progressBar.setProgress(receiver.progress, true)
-          if (receiver.transferSpeed.isNotEmpty())
-            transferSpeedText.text = "${receiver.transferSpeed}ps"
-        }
-      }
-      receiver.setFinishedListener {
-        frameProgress.setOnLongClickListener(null)
-
-        runOnUiThread {
-          fileNameLabel.text = "No files being received"
-          fileSizeLabel.text = "(> ^_^)>"
-        }
-        receiver.reset(this)
-      }
-      receiver.setDisruptionListener {
-        runOnUiThread {
-          Log.d(TAG, "lookForFileRequests: disrupted")
-          progressBar.setProgress(0, true)
-        }
-      }
+      listeners(receiver)
       receiver.receive(this)
     }
     executor.register(RequestHandler(listener))
+  }
+
+  private fun listeners(receiver: FileReceiver) {
+    receiver.setStartListener {
+      runOnUiThread {
+        frameProgress.setOnLongClickListener {
+          cancelFileTransfer(receiver)
+          return@setOnLongClickListener true
+        }
+      }
+    }
+    receiver.setUpdateListener {
+      runOnUiThread {
+        progressBar.setProgress(receiver.progress, true)
+        if (receiver.transferSpeed.isNotEmpty())
+          transferSpeedText.text = "${receiver.transferSpeed}ps"
+      }
+    }
+    receiver.setFinishedListener {
+      frameProgress.setOnLongClickListener(null)
+
+      runOnUiThread {
+        fileNameLabel.text = "No files being received"
+        fileSizeLabel.text = "(> ^_^)>"
+      }
+      receiver.reset(this)
+    }
+    receiver.setDisruptionListener {
+      runOnUiThread {
+        Log.d(TAG, "lookForFileRequests: disrupted")
+        progressBar.setProgress(0, true)
+      }
+    }
   }
 
   private fun cancelFileTransfer(receiver: FileReceiver) {
