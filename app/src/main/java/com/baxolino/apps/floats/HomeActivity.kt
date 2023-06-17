@@ -1,5 +1,6 @@
 package com.baxolino.apps.floats
 
+import android.Manifest.permission.CAMERA
 import android.Manifest.permission.WRITE_EXTERNAL_STORAGE
 import android.annotation.SuppressLint
 import android.content.Intent
@@ -34,10 +35,9 @@ import com.github.alexzhirkevich.customqrgenerator.vector.style.QrVectorColors
 import com.github.alexzhirkevich.customqrgenerator.vector.style.QrVectorFrameShape
 import com.github.alexzhirkevich.customqrgenerator.vector.style.QrVectorPixelShape
 import com.github.alexzhirkevich.customqrgenerator.vector.style.QrVectorShapes
-import com.google.android.material.button.MaterialButton
 import com.google.android.material.card.MaterialCardView
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
-import com.google.android.material.floatingactionbutton.FloatingActionButton
+import com.google.android.material.snackbar.Snackbar
 import java.net.InetAddress
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
@@ -51,6 +51,8 @@ class HomeActivity : AppCompatActivity() {
     }
 
     private const val TAG = "HomeActivity"
+    private const val STORAGE_REQUEST_CODE = 7
+    private const val CAMERA_REQUEST_CODE = 8
   }
 
   private var permissionDialog: AlertDialog? = null
@@ -106,9 +108,21 @@ class HomeActivity : AppCompatActivity() {
       val scanButton = findViewById<MaterialCardView>(R.id.scanButton)
 
       scanButton.setOnClickListener {
-        startActivity(
-          Intent(this, ScanActivity::class.java)
-        )
+        if (ContextCompat.checkSelfPermission(
+            this,
+            CAMERA
+          ) == PackageManager.PERMISSION_DENIED
+        ) {
+          ActivityCompat.requestPermissions(
+            this,
+            arrayOf(CAMERA),
+            CAMERA_REQUEST_CODE
+          )
+        } else {
+          startActivity(
+            Intent(this, ScanActivity::class.java)
+          )
+        }
       }
 
       // we put it over here because, we don't want it called multiple
@@ -142,7 +156,7 @@ class HomeActivity : AppCompatActivity() {
         WRITE_EXTERNAL_STORAGE
       ) != PackageManager.PERMISSION_GRANTED
     ) {
-      ActivityCompat.requestPermissions(this, arrayOf(WRITE_EXTERNAL_STORAGE), 79)
+      ActivityCompat.requestPermissions(this, arrayOf(WRITE_EXTERNAL_STORAGE), STORAGE_REQUEST_CODE)
     }
   }
 
@@ -152,7 +166,10 @@ class HomeActivity : AppCompatActivity() {
     grantResults: IntArray
   ) {
     super.onRequestPermissionsResult(requestCode, permissions, grantResults)
-    if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_DENIED) {
+    if (requestCode == STORAGE_REQUEST_CODE
+      && grantResults.isNotEmpty()
+      && grantResults[0] == PackageManager.PERMISSION_DENIED
+    ) {
       permissionDialog = MaterialAlertDialogBuilder(this, R.style.FloatsCustomDialogTheme)
         .setCancelable(false)
         .setTitle("Permission Denied")
@@ -169,6 +186,21 @@ class HomeActivity : AppCompatActivity() {
           ActivityCompat.requestPermissions(this, arrayOf(WRITE_EXTERNAL_STORAGE), 79)
         }
         .show()
+    } else if (requestCode == CAMERA_REQUEST_CODE && grantResults.isNotEmpty()) {
+      if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+        startActivity(
+          Intent(
+            this,
+            ScanActivity::class.java
+          )
+        )
+      } else {
+        Snackbar.make(
+          findViewById(R.id.home_layout),
+          "Camera Permission was denied.",
+          Snackbar.LENGTH_LONG
+        ).show()
+      }
     }
   }
 
