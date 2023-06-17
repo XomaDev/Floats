@@ -13,6 +13,7 @@ class FileReceiver internal constructor(private val port: Int, val name: String,
 
   companion object {
     private const val TAG = "FileReceiver"
+    var activeReceiver: FileReceiver? = null
   }
 
   private lateinit var startListener: () -> Unit
@@ -35,6 +36,7 @@ class FileReceiver internal constructor(private val port: Int, val name: String,
     MessageReceiver.receiveListener = { what, arg1, data ->
       onMessageReceived(what, arg1, data)
     }
+    activeReceiver = this
   }
 
   fun setStartListener(listener: () -> Unit) {
@@ -75,10 +77,12 @@ class FileReceiver internal constructor(private val port: Int, val name: String,
         updateListener.invoke()
       }
       2 -> {
+        activeReceiver = null
         // "finished" message, even if failed
         finishedListener.invoke()
       }
       3 -> {
+        activeReceiver = null
         // when file transfer was disrupted or was not
         // properly transferred
         disruptionListener.invoke()
