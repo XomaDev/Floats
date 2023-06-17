@@ -69,63 +69,6 @@
                 android:textAlignment="center" />
 
 
-<!--            <TextView-->
-<!--                android:layout_width="match_parent"-->
-<!--                android:layout_height="wrap_content"-->
-<!--                android:layout_marginTop="30dp"-->
-<!--                android:fontFamily="@font/inter"-->
-<!--                android:text="Quick Connect"-->
-<!--                android:textSize="26sp" />-->
-
-<!--            <com.google.android.material.card.MaterialCardView-->
-<!--                android:id="@+id/nearby_card"-->
-<!--                android:layout_width="match_parent"-->
-<!--                android:layout_height="wrap_content"-->
-<!--                android:layout_marginTop="25dp"-->
-<!--                app:cardBackgroundColor="@color/card_view_background"-->
-<!--                app:contentPadding="15dp"-->
-<!--                app:strokeWidth="0dp">-->
-
-<!--                <LinearLayout-->
-<!--                    android:layout_width="match_parent"-->
-<!--                    android:layout_height="wrap_content"-->
-<!--                    android:baselineAligned="false"-->
-<!--                    android:orientation="horizontal">-->
-
-<!--                    <LinearLayout-->
-<!--                        android:layout_width="0dp"-->
-<!--                        android:layout_height="wrap_content"-->
-<!--                        android:layout_weight=".5">-->
-
-<!--                        <TextView-->
-<!--                            android:id="@+id/nearby_device_text"-->
-<!--                            android:layout_width="wrap_content"-->
-<!--                            android:layout_height="wrap_content"-->
-<!--                            android:layout_gravity="center"-->
-<!--                            android:fontFamily="@font/inter"-->
-<!--                            android:text="Galaxy A03s"-->
-<!--                            android:textColor="@color/alt_variant_60" />-->
-<!--                    </LinearLayout>-->
-
-<!--                    <LinearLayout-->
-<!--                        android:layout_width="0dp"-->
-<!--                        android:layout_height="wrap_content"-->
-<!--                        android:layout_weight=".5"-->
-<!--                        android:gravity="end">-->
-
-<!--                        <ImageView-->
-<!--                            android:id="@+id/nearby_device_chevron"-->
-<!--                            android:layout_width="wrap_content"-->
-<!--                            android:layout_height="wrap_content"-->
-<!--                            android:layout_gravity="center"-->
-<!--                            android:background="@drawable/chevron_right"-->
-<!--                            android:backgroundTint="@color/alt_variant_60"-->
-<!--                            android:importantForAccessibility="no" />-->
-<!--                    </LinearLayout>-->
-<!--                </LinearLayout>-->
-<!--            </com.google.android.material.card.MaterialCardView>-->
-
-
             <com.google.android.material.card.MaterialCardView
                 android:id="@+id/scanButton"
                 android:layout_marginTop="25dp"
