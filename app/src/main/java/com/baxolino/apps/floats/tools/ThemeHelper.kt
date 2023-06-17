@@ -6,9 +6,12 @@ import android.graphics.drawable.GradientDrawable
 import android.widget.FrameLayout
 import android.widget.ImageView
 import android.widget.RemoteViews
+import android.widget.TextView
 import com.baxolino.apps.floats.HomeActivity
 import com.baxolino.apps.floats.R
 import com.baxolino.apps.floats.SessionActivity
+import com.baxolino.apps.floats.camera.ScanActivity
+import com.google.android.material.card.MaterialCardView
 import com.google.android.material.color.DynamicColors
 
 
@@ -26,6 +29,42 @@ object ThemeHelper {
       )
     )
 
+    val tipCard = homeActivity.findViewById<MaterialCardView>(R.id.tip_card)
+    tipCard.backgroundTintList = ColorStateList.valueOf(
+      homeActivity.getColor(
+        com.google.android.material.R.color.material_dynamic_neutral80
+      )
+    )
+
+    val tipText = homeActivity.findViewById<TextView>(R.id.documents_tip)
+    tipText.setTextColor(
+      homeActivity.getColor(
+        com.google.android.material.R.color.material_dynamic_primary80
+      )
+    )
+
+    val buttonText = homeActivity.findViewById<TextView>(R.id.button_text)
+    buttonText.setTextColor(
+      homeActivity.getColor(
+        com.google.android.material.R.color.material_dynamic_primary70
+      )
+    )
+
+    val qrScanIcon = homeActivity.findViewById<ImageView>(R.id.qr_scan_icon)
+    qrScanIcon.backgroundTintList = ColorStateList.valueOf(
+      homeActivity.getColor(
+        com.google.android.material.R.color.material_dynamic_primary80
+      )
+    )
+  }
+
+  fun themeOfScanActivity(scan: ScanActivity) {
+    val tipText = scan.findViewById<TextView>(R.id.tip_network)
+    tipText.setTextColor(
+      scan.getColor(
+        com.google.android.material.R.color.material_dynamic_primary60
+      )
+    )
   }
 
   fun themeOfSessionActivity(session: SessionActivity) {

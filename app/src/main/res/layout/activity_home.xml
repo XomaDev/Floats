@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.coordinatorlayout.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
@@ -8,34 +8,12 @@
     android:orientation="vertical"
     tools:context=".HomeActivity">
 
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:gravity="center">
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:fontFamily="@font/inter"
-            android:text="F"
-            android:textSize="40sp"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent" />
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:fontFamily="@font/inter"
-            android:text="LOATS"
-            android:textSize="30sp"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent" />
-    </LinearLayout>
 
     <ScrollView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical">
+
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -43,44 +21,168 @@
             android:gravity="center"
             android:orientation="vertical">
 
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:fontFamily="@font/inter"
+                    android:text="F"
+                    android:textSize="40sp"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toTopOf="parent" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:fontFamily="@font/inter"
+                    android:text="LOATS"
+                    android:textSize="30sp"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toTopOf="parent" />
+            </LinearLayout>
+
             <TextView
                 android:id="@+id/device_label"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="25dp"
                 android:fontFamily="@font/inter"
-                android:text="**" />
+                android:text="**"/>
+
 
             <ImageView
                 android:id="@+id/qr_image"
-                android:layout_width="340dp"
-                android:layout_height="340dp"
-                android:backgroundTint="@color/alt_variant_60" />
+                android:layout_width="320dp"
+                android:layout_height="320dp"
+                android:backgroundTint="@color/alt_variant_60"
+                android:importantForAccessibility="no" />
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="match_parent"
-                android:layout_marginTop="25dp"
                 android:fontFamily="@font/inter"
                 android:text="Scan the code above from another device to connect."
                 android:textAlignment="center" />
 
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/scanButton"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="25dp"
-                android:fontFamily="@font/inter"
-                android:text="Scan from another device"
-                app:icon="@drawable/qr_code_scan" />
 
-            <TextView
-                android:id="@+id/documents_tip"
+<!--            <TextView-->
+<!--                android:layout_width="match_parent"-->
+<!--                android:layout_height="wrap_content"-->
+<!--                android:layout_marginTop="30dp"-->
+<!--                android:fontFamily="@font/inter"-->
+<!--                android:text="Quick Connect"-->
+<!--                android:textSize="26sp" />-->
+
+<!--            <com.google.android.material.card.MaterialCardView-->
+<!--                android:id="@+id/nearby_card"-->
+<!--                android:layout_width="match_parent"-->
+<!--                android:layout_height="wrap_content"-->
+<!--                android:layout_marginTop="25dp"-->
+<!--                app:cardBackgroundColor="@color/card_view_background"-->
+<!--                app:contentPadding="15dp"-->
+<!--                app:strokeWidth="0dp">-->
+
+<!--                <LinearLayout-->
+<!--                    android:layout_width="match_parent"-->
+<!--                    android:layout_height="wrap_content"-->
+<!--                    android:baselineAligned="false"-->
+<!--                    android:orientation="horizontal">-->
+
+<!--                    <LinearLayout-->
+<!--                        android:layout_width="0dp"-->
+<!--                        android:layout_height="wrap_content"-->
+<!--                        android:layout_weight=".5">-->
+
+<!--                        <TextView-->
+<!--                            android:id="@+id/nearby_device_text"-->
+<!--                            android:layout_width="wrap_content"-->
+<!--                            android:layout_height="wrap_content"-->
+<!--                            android:layout_gravity="center"-->
+<!--                            android:fontFamily="@font/inter"-->
+<!--                            android:text="Galaxy A03s"-->
+<!--                            android:textColor="@color/alt_variant_60" />-->
+<!--                    </LinearLayout>-->
+
+<!--                    <LinearLayout-->
+<!--                        android:layout_width="0dp"-->
+<!--                        android:layout_height="wrap_content"-->
+<!--                        android:layout_weight=".5"-->
+<!--                        android:gravity="end">-->
+
+<!--                        <ImageView-->
+<!--                            android:id="@+id/nearby_device_chevron"-->
+<!--                            android:layout_width="wrap_content"-->
+<!--                            android:layout_height="wrap_content"-->
+<!--                            android:layout_gravity="center"-->
+<!--                            android:background="@drawable/chevron_right"-->
+<!--                            android:backgroundTint="@color/alt_variant_60"-->
+<!--                            android:importantForAccessibility="no" />-->
+<!--                    </LinearLayout>-->
+<!--                </LinearLayout>-->
+<!--            </com.google.android.material.card.MaterialCardView>-->
+
+
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/scanButton"
                 android:layout_marginTop="25dp"
+                app:contentPadding="15dp"
+                app:strokeWidth="0dp"
+                app:cardElevation="1dp"
+
                 android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:fontFamily="@font/inter"
-                android:text=""/>
+                android:layout_height="wrap_content">
+                <LinearLayout
+                    android:gravity="center"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:orientation="horizontal">
+                    <ImageView
+                        android:id="@+id/qr_scan_icon"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:background="@drawable/scan_outline"/>
+                    <TextView
+                        android:id="@+id/button_text"
+                        android:layout_marginStart="12dp"
+                        android:textSize="14sp"
+                        android:textColor="@color/alt_variant_60"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:fontFamily="@font/inter"
+                        android:text="Scan from camera"/>
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/tip_card"
+                android:layout_marginTop="40dp"
+                app:contentPadding="7dp"
+                app:cardBackgroundColor="@color/card_view_background"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content">
+
+                <TextView
+                    android:id="@+id/documents_tip"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:fontFamily="sans-serif-smallcaps"
+                    android:text="" />
+            </com.google.android.material.card.MaterialCardView>
         </LinearLayout>
     </ScrollView>
-</LinearLayout>
+
+<!--    <com.google.android.material.floatingactionbutton.FloatingActionButton-->
+<!--        android:id="@+id/scanButton"-->
+
+<!--        style="?attr/floatingActionButtonStyle"-->
+<!--        android:layout_width="wrap_content"-->
+<!--        android:layout_height="wrap_content"-->
+<!--        android:layout_gravity="bottom|end"-->
+<!--        android:importantForAccessibility="no"-->
+<!--        app:srcCompat="@drawable/scan_outline" />-->
+
+</androidx.coordinatorlayout.widget.CoordinatorLayout>

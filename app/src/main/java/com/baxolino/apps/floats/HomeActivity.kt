@@ -35,7 +35,9 @@ import com.github.alexzhirkevich.customqrgenerator.vector.style.QrVectorFrameSha
 import com.github.alexzhirkevich.customqrgenerator.vector.style.QrVectorPixelShape
 import com.github.alexzhirkevich.customqrgenerator.vector.style.QrVectorShapes
 import com.google.android.material.button.MaterialButton
+import com.google.android.material.card.MaterialCardView
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
+import com.google.android.material.floatingactionbutton.FloatingActionButton
 import java.net.InetAddress
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
@@ -101,7 +103,7 @@ class HomeActivity : AppCompatActivity() {
     if (intent.hasExtra("content")) {
       onScanResult()
     } else {
-      val scanButton = findViewById<MaterialButton>(R.id.scanButton)
+      val scanButton = findViewById<MaterialCardView>(R.id.scanButton)
 
       scanButton.setOnClickListener {
         startActivity(
