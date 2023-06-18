@@ -13,27 +13,14 @@
         android:layout_height="wrap_content"
         android:gravity="center">
 
-        <LinearLayout
+        <TextView
             android:layout_width="wrap_content"
-            android:layout_height="wrap_content">
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:fontFamily="@font/inter"
-                android:text="S"
-                android:textSize="40sp"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toTopOf="parent" />
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:fontFamily="@font/inter"
-                android:text="CAN CODE"
-                android:textSize="30sp"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toTopOf="parent" />
-        </LinearLayout>
+            android:layout_height="wrap_content"
+            android:fontFamily="@font/source_sans_pro_bold"
+            android:text="Scan Code"
+            android:textSize="40sp"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
     </LinearLayout>
 
     <com.google.android.material.card.MaterialCardView
@@ -61,14 +48,10 @@
     <TextView
         android:fontFamily="@font/inter"
         android:layout_marginTop="25dp"
+        android:layout_gravity="center"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="1. Open the app on the other device"/>
-    <TextView
-        android:fontFamily="@font/inter"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="2. Scan the code displayed"/>
+        android:text="Place the code inside the square to connect."/>
 
 
     <com.google.android.material.card.MaterialCardView
