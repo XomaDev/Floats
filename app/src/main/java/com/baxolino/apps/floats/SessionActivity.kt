@@ -166,7 +166,7 @@ class SessionActivity : AppCompatActivity() {
   private fun verifySessionServiceAlive() {
     val executor = ScheduledThreadPoolExecutor(1)
     executor.scheduleAtFixedRate({
-      Log.d(TAG, "Verified")
+      Log.d(TAG, "Check")
       val book = Paper.book()
       if (!book.contains("last_beat")) {
         executor.shutdown()
@@ -174,7 +174,7 @@ class SessionActivity : AppCompatActivity() {
         return@scheduleAtFixedRate
       }
       val lastBeat = book.read<Long>("last_beat")!!
-      if ((System.currentTimeMillis() - lastBeat) >= 5000) {
+      if ((System.currentTimeMillis() - lastBeat) >= 15000) {
         Log.d(TAG, "Service Disconnected")
         onDisconnect()
         executor.shutdown()
@@ -183,7 +183,6 @@ class SessionActivity : AppCompatActivity() {
   }
 
   private fun onDisconnect() {
-
     // clear the main socket connection
     // instance; or it gets messed up
     SocketConnection.clear()
