@@ -17,6 +17,7 @@ import com.baxolino.apps.floats.R
 import com.baxolino.apps.floats.SessionActivity
 import com.baxolino.apps.floats.core.transfer.SocketConnection
 import com.baxolino.apps.floats.tools.ThemeHelper
+import io.paperdb.Paper
 import java.io.InputStream
 import java.io.OutputStream
 import java.net.SocketException
@@ -94,6 +95,8 @@ class SessionService : Service() {
   }
 
   private fun init() {
+    Paper.init(this)
+
     input = connection.input
     output = connection.output
 
@@ -106,6 +109,9 @@ class SessionService : Service() {
           HEARTBEAT_MESSAGE -> {
             Log.d(TAG, "Beat")
             lastHeartBeat = System.currentTimeMillis()
+
+            Paper.book()
+              .write("last_beat", lastHeartBeat)
           }
 
           MANUAL_DISCONNECT_MESSAGE -> {
@@ -130,6 +136,8 @@ class SessionService : Service() {
           HEARTBEAT_MESSAGE
         )
       } catch (e: SocketException) {
+        Log.d(TAG, "Stopped receiving heart beats")
+
         // this could be due to unexpected shutdown
         onDisconnect()
         executor.shutdownNow()
@@ -149,6 +157,7 @@ class SessionService : Service() {
         DISCONNECT_BROADCAST_ACTION
       )
     )
+    stopSelf()
   }
 
   private fun stop() {

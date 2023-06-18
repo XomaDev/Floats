@@ -30,6 +30,9 @@ import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.google.android.material.progressindicator.CircularProgressIndicator
 import com.google.android.material.snackbar.Snackbar
+import io.paperdb.Paper
+import java.util.concurrent.ScheduledThreadPoolExecutor
+import java.util.concurrent.TimeUnit
 
 
 class SessionActivity : AppCompatActivity() {
@@ -65,42 +68,25 @@ class SessionActivity : AppCompatActivity() {
   private val onDisconnectReceiver = object : BroadcastReceiver() {
     override fun onReceive(context: Context?, intent: Intent?) {
       Log.d(TAG, "Disconnect broadcast received")
-
-      // clear the main socket connection
-      // instance; or it gets messed up
-      SocketConnection.clear()
-
-      // close the connection
-      connection.close()
-      executor.stopStreams()
-
-      // open the HomeActivity and notify the disconnect
-      // event to the user
-      startActivity(
-        Intent(
-          this@SessionActivity,
-          HomeActivity::class.java
-        ).putExtra(
-          "event_disconnect",
-          deviceName
-        ).setFlags(
-          Intent.FLAG_ACTIVITY_CLEAR_TOP
-        )
-      )
+      onDisconnect()
     }
   }
 
   override fun onCreate(savedInstanceState: Bundle?) {
     super.onCreate(savedInstanceState)
     Log.d(TAG, "onCreate()")
-    setContentView(R.layout.activity_session)
 
+    setContentView(R.layout.activity_session)
     ThemeHelper.themeOfSessionActivity(this)
+
 
     isConnected = intent.hasExtra("deviceName")
 
     if (!isConnected)
       return
+
+    // init the Paper db
+    Paper.init(this)
 
     connection = SocketConnection.getMainSocket()
     executor = TaskExecutor(connection)
@@ -164,6 +150,7 @@ class SessionActivity : AppCompatActivity() {
       listeners(receiver)
     }
     lookForFileRequests()
+    verifySessionServiceAlive()
 
     val onBackPressedCallback = object : OnBackPressedCallback(true) {
       override fun handleOnBackPressed() {
@@ -173,6 +160,51 @@ class SessionActivity : AppCompatActivity() {
       }
     }
     onBackPressedDispatcher.addCallback(this, onBackPressedCallback)
+  }
+
+
+  private fun verifySessionServiceAlive() {
+    val executor = ScheduledThreadPoolExecutor(1)
+    executor.scheduleAtFixedRate({
+      Log.d(TAG, "Verified")
+      val book = Paper.book()
+      if (!book.contains("last_beat")) {
+        executor.shutdown()
+        onDisconnect()
+        return@scheduleAtFixedRate
+      }
+      val lastBeat = book.read<Long>("last_beat")!!
+      if ((System.currentTimeMillis() - lastBeat) >= 5000) {
+        Log.d(TAG, "Service Disconnected")
+        onDisconnect()
+        executor.shutdown()
+      }
+    }, 5, 1, TimeUnit.SECONDS)
+  }
+
+  private fun onDisconnect() {
+
+    // clear the main socket connection
+    // instance; or it gets messed up
+    SocketConnection.clear()
+
+    // close the connection
+    connection.close()
+    executor.stopStreams()
+
+    // open the HomeActivity and notify the disconnect
+    // event to the user
+    startActivity(
+      Intent(
+        this@SessionActivity,
+        HomeActivity::class.java
+      ).putExtra(
+        "event_disconnect",
+        deviceName
+      ).setFlags(
+        Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_CLEAR_TASK
+      )
+    )
   }
 
   private fun lookForFileRequests() {
