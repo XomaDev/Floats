@@ -40,6 +40,8 @@ import com.google.android.material.snackbar.Snackbar
 import java.net.InetAddress
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
+import java.util.concurrent.ScheduledThreadPoolExecutor
+import java.util.concurrent.TimeUnit
 
 
 class HomeActivity : AppCompatActivity() {
@@ -61,6 +63,8 @@ class HomeActivity : AppCompatActivity() {
 
   private var localPort = -1
   private lateinit var connector: SocketConnection
+
+  private var hasConnection = true
 
   @SuppressLint("HardwareIds")
   override fun onCreate(savedInstanceState: Bundle?) {
@@ -85,9 +89,23 @@ class HomeActivity : AppCompatActivity() {
     Log.d(TAG, "Port[$localPort]")
     connector = SocketConnection.getMainSocket()
 
+    val ipv4 = getIpv4(this)
+    if (ipv4 == null) {
+      hasConnection = false
+      startActivity(
+        Intent(
+          this,
+          ConnectionActivity::class.java
+        )
+      )
+      return
+    } else {
+      // just keep connection goes off
+      lookOnDisconnect()
+    }
     val connectionInfo = arrayOf(
       ByteBuffer.wrap(
-        getIpv4(this).address
+        ipv4.address
       ).int,
       localPort,
     ).joinToString("\u0000")
@@ -146,8 +164,32 @@ class HomeActivity : AppCompatActivity() {
     }
   }
 
+  private fun lookOnDisconnect() {
+    val executor = ScheduledThreadPoolExecutor(1)
+    executor.scheduleAtFixedRate({
+      if (getIpv4(this) == null) {
+        executor.shutdown()
+        startActivity(
+          Intent(
+            this,
+            ConnectionActivity::class.java
+          )
+        )
+      }
+    }, 0, 1, TimeUnit.SECONDS)
+  }
+
   override fun onResume() {
     super.onResume()
+    if (getIpv4(this) == null) {
+      startActivity(
+        Intent(
+          this,
+          ConnectionActivity::class.java
+        )
+      )
+      return
+    }
     if (Build.VERSION.SDK_INT < Build.VERSION_CODES.R
       && permissionDialog == null
       && ContextCompat.checkSelfPermission(

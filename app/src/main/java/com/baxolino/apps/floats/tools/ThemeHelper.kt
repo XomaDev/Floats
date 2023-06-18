@@ -7,6 +7,7 @@ import android.widget.FrameLayout
 import android.widget.ImageView
 import android.widget.RemoteViews
 import android.widget.TextView
+import com.baxolino.apps.floats.ConnectionActivity
 import com.baxolino.apps.floats.HomeActivity
 import com.baxolino.apps.floats.R
 import com.baxolino.apps.floats.SessionActivity
@@ -85,6 +86,18 @@ object ThemeHelper {
       2, session.getColor(
         com.google.android.material.R.color.material_dynamic_neutral_variant40
       ), 6f, 7f
+    )
+  }
+
+  fun themeOfNoConnectionActivity(connection: ConnectionActivity) {
+    if (!HAS_DYNAMIC_THEMING)
+      return
+    val alertIcon = connection.findViewById<ImageView>(R.id.alert_icon)
+
+    alertIcon.backgroundTintList = ColorStateList.valueOf(
+      connection.getColor(
+        com.google.android.material.R.color.material_dynamic_primary80
+      )
     )
   }
 

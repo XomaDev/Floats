@@ -3,17 +3,14 @@
     xmlns:tools="http://schemas.android.com/tools">
 
     <uses-permission android:name="android.permission.CHANGE_WIFI_MULTICAST_STATE" />
-
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
-
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
 
     <uses-feature android:name="android.hardware.camera.any" />
 
     <uses-permission android:name="android.permission.CAMERA" />
-
     <uses-permission
         android:name="android.permission.WRITE_EXTERNAL_STORAGE"
         android:maxSdkVersion="28" />
@@ -32,6 +29,9 @@
         android:usesCleartextTraffic="true"
         tools:targetApi="31">
         <activity
+            android:name=".ConnectionActivity"
+            android:exported="false" />
+        <activity
             android:name=".SessionActivity"
             android:exported="false"
             android:hardwareAccelerated="true"
@@ -44,7 +44,6 @@
             android:screenOrientation="portrait"
             android:theme="@style/Theme.Floats"
             tools:ignore="LockedOrientationActivity" />
-
         <activity
             android:name=".HomeActivity"
             android:exported="true"
@@ -65,12 +64,10 @@
             android:name=".core.SessionService"
             android:exported="false"
             android:process=":shizuka" />
-
         <service
             android:name=".core.files.FileRequestService"
             android:exported="false"
             android:process=":doraemon" />
-
         <service
             android:name=".core.files.FileReceiveService"
             android:exported="false"

@@ -3,7 +3,6 @@ package com.baxolino.apps.floats.tools
 import android.content.ContentResolver
 import android.content.Context
 import android.net.ConnectivityManager
-import android.net.LinkProperties
 import android.os.Build
 import android.provider.Settings
 import java.net.InetAddress
@@ -37,7 +36,7 @@ object Utils {
     return null
   }
 
-  fun getIpv4(context: Context): InetAddress {
+  fun getIpv4(context: Context): InetAddress? {
     val ipv4 = getIpv4Alternate()
     ipv4?.let {
       return it
@@ -45,8 +44,8 @@ object Utils {
     val connector = context.getSystemService(ConnectivityManager::class.java)
 
     // this may return null when not connected to any network
-    val linkProperties = connector.getLinkProperties(connector.activeNetwork) as LinkProperties
-    for (linkAddress in linkProperties.linkAddresses) {
+    val nullableProperties = connector.getLinkProperties(connector.activeNetwork) ?: return null
+    for (linkAddress in nullableProperties.linkAddresses) {
       val address = linkAddress.address
       val hostAddress = address.hostAddress
 
@@ -54,7 +53,7 @@ object Utils {
       if (isValidIpv4(hostAddress))
         return InetAddress.getByAddress(address.address)
     }
-    throw Error("Could not find Ipv4 address")
+    return null
   }
 
   private fun isValidIpv4(ip: String?): Boolean {
