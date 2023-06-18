@@ -65,6 +65,8 @@ class SessionActivity : AppCompatActivity() {
   private lateinit var messageReceiver: MessageReceiver
   private var isConnected = false
 
+  private lateinit var serviceVerifyExecutor:ScheduledThreadPoolExecutor
+
   private val onDisconnectReceiver = object : BroadcastReceiver() {
     override fun onReceive(context: Context?, intent: Intent?) {
       Log.d(TAG, "Disconnect broadcast received")
@@ -164,12 +166,12 @@ class SessionActivity : AppCompatActivity() {
 
 
   private fun verifySessionServiceAlive() {
-    val executor = ScheduledThreadPoolExecutor(1)
-    executor.scheduleAtFixedRate({
+    serviceVerifyExecutor = ScheduledThreadPoolExecutor(1)
+    serviceVerifyExecutor.scheduleAtFixedRate({
       Log.d(TAG, "Check")
       val book = Paper.book()
       if (!book.contains("last_beat")) {
-        executor.shutdown()
+        serviceVerifyExecutor.shutdown()
         onDisconnect()
         return@scheduleAtFixedRate
       }
@@ -177,12 +179,15 @@ class SessionActivity : AppCompatActivity() {
       if ((System.currentTimeMillis() - lastBeat) >= 15000) {
         Log.d(TAG, "Service Disconnected")
         onDisconnect()
-        executor.shutdown()
+        serviceVerifyExecutor.shutdown()
       }
-    }, 5, 1, TimeUnit.SECONDS)
+    }, 5, 5, TimeUnit.SECONDS)
   }
 
   private fun onDisconnect() {
+    if (!serviceVerifyExecutor.isShutdown)
+      serviceVerifyExecutor.shutdownNow()
+    Log.d(TAG, "onDisconnect()")
     // clear the main socket connection
     // instance; or it gets messed up
     SocketConnection.clear()
