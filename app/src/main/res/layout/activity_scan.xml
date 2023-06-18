@@ -10,61 +10,78 @@
 
     <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:gravity="center">
+        android:layout_height="wrap_content">
 
-        <TextView
+        <Button
+            android:id="@+id/back_button"
+            style="?attr/materialIconButtonStyle"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:fontFamily="@font/source_sans_pro_bold"
-            android:text="Scan Code"
-            android:textSize="40sp"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent" />
+            android:layout_gravity="center"
+            app:icon="@drawable/chevron_left" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:fontFamily="@font/source_sans_pro_bold"
+                android:text="Scan Code"
+                android:textSize="40sp"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent" />
+        </LinearLayout>
     </LinearLayout>
 
     <com.google.android.material.card.MaterialCardView
-        android:layout_marginTop="25dp"
-        app:strokeWidth="4dp"
         android:layout_width="wrap_content"
-        android:layout_height="wrap_content">
+        android:layout_height="wrap_content"
+        android:layout_marginTop="25dp"
+        app:strokeWidth="4dp">
+
         <FrameLayout
             android:layout_width="match_parent"
             android:layout_height="match_parent">
+
             <androidx.camera.view.PreviewView
                 android:id="@+id/preview"
                 android:layout_width="600dp"
                 android:layout_height="300dp" />
+
             <TextView
-                android:textSize="25sp"
-                android:layout_gravity="center"
-                android:fontFamily="@font/inter"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="•"/>
+                android:layout_gravity="center"
+                android:fontFamily="@font/inter"
+                android:text="•"
+                android:textSize="25sp" />
         </FrameLayout>
     </com.google.android.material.card.MaterialCardView>
 
     <TextView
-        android:fontFamily="@font/inter"
-        android:layout_marginTop="25dp"
-        android:layout_gravity="center"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Place the code inside the square to connect."/>
+        android:layout_gravity="center"
+        android:layout_marginTop="25dp"
+        android:fontFamily="@font/inter"
+        android:text="Place the code inside the square to connect." />
 
 
     <com.google.android.material.card.MaterialCardView
-        android:layout_marginTop="25dp"
-        app:strokeWidth="0dp"
-        app:contentPadding="10dp"
-        app:cardElevation="1dp"
         android:layout_width="wrap_content"
-        android:layout_height="wrap_content">
+        android:layout_height="wrap_content"
+        android:layout_marginTop="25dp"
+        app:cardElevation="1dp"
+        app:contentPadding="10dp"
+        app:strokeWidth="0dp">
+
         <TextView
-            android:fontFamily="@font/inter"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Ensure both devices are on the same network, such as a hotspot or Wi-Fi."/>
+            android:fontFamily="@font/inter"
+            android:text="Ensure both devices are on the same network, such as a hotspot or Wi-Fi." />
     </com.google.android.material.card.MaterialCardView>
 </LinearLayout>

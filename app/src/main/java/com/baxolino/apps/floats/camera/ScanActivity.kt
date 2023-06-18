@@ -3,6 +3,7 @@ package com.baxolino.apps.floats.camera
 import android.content.Intent
 import android.os.Bundle
 import android.util.Log
+import android.widget.Button
 import androidx.activity.OnBackPressedCallback
 import androidx.appcompat.app.AppCompatActivity
 import androidx.camera.core.CameraSelector
@@ -13,7 +14,6 @@ import androidx.camera.view.PreviewView
 import androidx.core.content.ContextCompat
 import com.baxolino.apps.floats.HomeActivity
 import com.baxolino.apps.floats.R
-import com.baxolino.apps.floats.tools.ThemeHelper
 
 
 class ScanActivity : AppCompatActivity() {
@@ -33,6 +33,9 @@ class ScanActivity : AppCompatActivity() {
       }
     }
     onBackPressedDispatcher.addCallback(this, onBackPressedCallback)
+    findViewById<Button>(R.id.back_button).setOnClickListener {
+      finish()
+    }
     startCamera()
   }
 
