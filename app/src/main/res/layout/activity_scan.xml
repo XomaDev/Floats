@@ -8,12 +8,33 @@
     android:orientation="vertical"
     tools:context=".camera.ScanActivity">
 
-    <TextView
-        android:layout_width="wrap_content"
+    <LinearLayout
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Scan Code"
-        android:fontFamily="@font/inter"
-        android:textSize="28sp"/>
+        android:gravity="center">
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content">
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:fontFamily="@font/inter"
+                android:text="S"
+                android:textSize="40sp"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:fontFamily="@font/inter"
+                android:text="CAN CODE"
+                android:textSize="30sp"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent" />
+        </LinearLayout>
+    </LinearLayout>
 
     <com.google.android.material.card.MaterialCardView
         android:layout_marginTop="25dp"
@@ -58,7 +79,6 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content">
         <TextView
-            android:id="@+id/tip_network"
             android:fontFamily="@font/inter"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"

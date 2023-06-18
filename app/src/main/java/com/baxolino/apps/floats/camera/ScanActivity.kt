@@ -27,7 +27,6 @@ class ScanActivity : AppCompatActivity() {
   override fun onCreate(savedInstanceState: Bundle?) {
     super.onCreate(savedInstanceState)
     setContentView(R.layout.activity_scan)
-    ThemeHelper.themeOfScanActivity(this)
     val onBackPressedCallback = object : OnBackPressedCallback(true) {
       override fun handleOnBackPressed() {
         finish()

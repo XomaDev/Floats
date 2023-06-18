@@ -59,15 +59,6 @@ object ThemeHelper {
     )
   }
 
-  fun themeOfScanActivity(scan: ScanActivity) {
-    val tipText = scan.findViewById<TextView>(R.id.tip_network)
-    tipText.setTextColor(
-      scan.getColor(
-        com.google.android.material.R.color.material_dynamic_primary60
-      )
-    )
-  }
-
   fun themeOfSessionActivity(session: SessionActivity) {
     if (!HAS_DYNAMIC_THEMING) return
     val imageAdd = session.findViewById<ImageView>(R.id.image_add)
