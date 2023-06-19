@@ -185,6 +185,9 @@ class SessionActivity : AppCompatActivity() {
   }
 
   private fun onDisconnect() {
+    if (!isConnected)
+      return
+    isConnected = false
     if (!serviceVerifyExecutor.isShutdown)
       serviceVerifyExecutor.shutdownNow()
     Log.d(TAG, "onDisconnect()")
