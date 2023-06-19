@@ -2,10 +2,10 @@
 <androidx.coordinatorlayout.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/home_layout"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:layout_margin="20dp"
-    android:id="@+id/home_layout"
     android:orientation="vertical"
     tools:context=".HomeActivity">
 
@@ -43,7 +43,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="25dp"
                 android:fontFamily="@font/inter"
-                android:text="**"/>
+                android:text="**" />
 
 
             <ImageView
@@ -63,43 +63,46 @@
 
             <com.google.android.material.card.MaterialCardView
                 android:id="@+id/scanButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
                 android:layout_marginTop="25dp"
-                app:contentPadding="15dp"
-                app:strokeWidth="0dp"
                 app:cardElevation="1dp"
 
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content">
+                app:contentPadding="15dp"
+                app:strokeWidth="0dp">
+
                 <LinearLayout
-                    android:gravity="center"
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
+                    android:gravity="center"
                     android:orientation="horizontal">
+
                     <ImageView
-                        android:backgroundTint="@color/alt_variant_60"
                         android:id="@+id/qr_scan_icon"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:background="@drawable/scan_outline"/>
+                        android:background="@drawable/scan_outline"
+                        android:backgroundTint="@color/alt_variant_60" />
+
                     <TextView
                         android:id="@+id/button_text"
-                        android:layout_marginStart="12dp"
-                        android:textSize="14sp"
-                        android:textColor="@color/alt_variant_60"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
+                        android:layout_marginStart="12dp"
                         android:fontFamily="@font/inter"
-                        android:text="Scan from camera"/>
+                        android:text="Scan from camera"
+                        android:textColor="@color/alt_variant_60"
+                        android:textSize="14sp" />
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
             <com.google.android.material.card.MaterialCardView
                 android:id="@+id/tip_card"
-                android:layout_marginTop="40dp"
-                app:contentPadding="7dp"
-                app:cardBackgroundColor="@color/card_view_background"
                 android:layout_width="wrap_content"
-                android:layout_height="wrap_content">
+                android:layout_height="wrap_content"
+                android:layout_marginTop="40dp"
+                app:cardBackgroundColor="@color/card_view_background"
+                app:contentPadding="7dp">
 
                 <TextView
                     android:id="@+id/documents_tip"
