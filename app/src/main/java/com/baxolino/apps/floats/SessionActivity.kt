@@ -181,7 +181,9 @@ class SessionActivity : AppCompatActivity() {
         onDisconnect()
         serviceVerifyExecutor.shutdown()
       }
-    }, 5, 5, TimeUnit.SECONDS)
+    }, 45, 5, TimeUnit.SECONDS)
+    // a delay of 45 seconds; because some
+    // devices take too long to start the service sometimes
   }
 
   private fun onDisconnect() {
