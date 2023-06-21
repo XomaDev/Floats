@@ -1,0 +1,12 @@
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+  <item
+      android:id="@+id/item_1"
+      android:enabled="true"
+      android:icon="@drawable/search"
+      android:title="Code"/>
+  <item
+      android:id="@+id/item_2"
+      android:enabled="true"
+      android:icon="@drawable/people"
+      android:title="People"/>
+</menu>

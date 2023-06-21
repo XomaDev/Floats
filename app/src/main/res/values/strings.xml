@@ -12,5 +12,7 @@
     <string name="awaiting_transfer_text">The transfer typically begins instantly or could take a few seconds.</string>
     <string name="transfer_cancelled_receiver">File transfer was cancelled by the user.</string>
     <string name="transfer_canceled_sender">File transfer was cancelled by the receiving user.</string>
+    <!-- TODO: Remove or change this placeholder text -->
+    <string name="hello_blank_fragment">Hello blank fragment</string>
 
 </resources>
