@@ -4,6 +4,7 @@ import android.annotation.SuppressLint
 import android.os.Bundle
 import android.util.Log
 import androidx.appcompat.app.AppCompatActivity
+import io.paperdb.Paper
 
 
 class HomeActivity : AppCompatActivity() {
@@ -21,6 +22,7 @@ class HomeActivity : AppCompatActivity() {
     super.onCreate(savedInstanceState)
 
     Log.d(TAG, "onCreate()")
+    Paper.init(this)
     setContentView(R.layout.activity_home)
 
     val home = HomeFragment()
