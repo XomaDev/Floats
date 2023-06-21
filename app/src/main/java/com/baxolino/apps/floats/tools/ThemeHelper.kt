@@ -22,10 +22,14 @@ object ThemeHelper {
   private val HAS_DYNAMIC_THEMING = DynamicColors.isDynamicColorAvailable()
 
 
+  fun applyNavigationBarTheme(fragment: FragmentActivity) {
+    fragment.window.navigationBarColor = SurfaceColors.SURFACE_2.getColor(fragment)
+  }
+
   fun themeOfHomeActivity(view: View, fragment: FragmentActivity) {
     if (!HAS_DYNAMIC_THEMING) return
 
-    fragment.window.navigationBarColor = SurfaceColors.SURFACE_2.getColor(fragment)
+    applyNavigationBarTheme(fragment)
 
     val qrImageView = view.findViewById<ImageView>(R.id.qr_image)
     qrImageView.backgroundTintList = ColorStateList.valueOf(
@@ -59,6 +63,25 @@ object ThemeHelper {
     qrScanIcon.backgroundTintList = ColorStateList.valueOf(
       fragment.getColor(
         com.google.android.material.R.color.material_dynamic_primary80
+      )
+    )
+  }
+
+  fun themeOfPeopleActivity(view: View, fragment: FragmentActivity) {
+    if (!HAS_DYNAMIC_THEMING) return
+    applyNavigationBarTheme(fragment)
+
+    val tickCardViw = view.findViewById<MaterialCardView>(R.id.check)
+    tickCardViw.backgroundTintList = ColorStateList.valueOf(
+      fragment.getColor(
+        com.google.android.material.R.color.material_dynamic_primary70
+      )
+    )
+
+    val tickIcon = view.findViewById<ImageView>(R.id.tickIcon)
+    tickIcon.backgroundTintList = ColorStateList.valueOf(
+      fragment.getColor(
+        com.google.android.material.R.color.material_dynamic_primary20
       )
     )
   }
