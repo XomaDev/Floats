@@ -7,11 +7,12 @@
     android:orientation="vertical">
 
     <LinearLayout
-        android:visibility="gone"
         android:id="@+id/enterNameLayout"
-        android:orientation="vertical"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content">
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:visibility="gone">
+
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -57,21 +58,50 @@
 
 
         <com.google.android.material.card.MaterialCardView
-            android:layout_width="wrap_content"
-            app:strokeWidth="0dp"
             android:id="@+id/check"
-            app:cardBackgroundColor="@color/alt_variant_60"
-            android:layout_marginTop="25dp"
-            app:contentPadding="20dp"
-            app:cardCornerRadius="25dp"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
             android:layout_gravity="bottom|end"
+            android:layout_marginTop="25dp"
+            app:cardBackgroundColor="@color/alt_variant_60"
+            app:cardCornerRadius="25dp"
             app:cardElevation="1dp"
-            android:layout_height="wrap_content">
+            app:contentPadding="20dp"
+            app:strokeWidth="0dp">
+
             <ImageView
                 android:id="@+id/tickIcon"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:background="@drawable/round_check"/>
+                android:background="@drawable/round_check" />
         </com.google.android.material.card.MaterialCardView>
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:fontFamily="@font/source_sans_pro_bold"
+            android:text="Quick"
+            android:textSize="45sp" />
+
+        <TextView
+            android:layout_marginTop="10dp"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:fontFamily="@font/inter"
+            android:text="Tap on any device to instantly share a file without connecting." />
+
+
+        <ListView
+            android:id="@+id/device_list"
+            style="@style/NoDividerListView"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="25dp" />
     </LinearLayout>
 </LinearLayout>
