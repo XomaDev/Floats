@@ -129,6 +129,16 @@ object ThemeHelper {
     )
   }
 
+  fun altVariant60Color(context: Context): Int {
+    return context.getColor(
+      if (HAS_DYNAMIC_THEMING) {
+        com.google.android.material.R.color.material_dynamic_primary80
+      } else {
+        R.color.alt_variant_60
+      }
+    )
+  }
+
   fun variant70Color(context: Context): Int {
     return context.getColor(
       if (HAS_DYNAMIC_THEMING) {
