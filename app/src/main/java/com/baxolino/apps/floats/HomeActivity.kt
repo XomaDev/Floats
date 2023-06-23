@@ -1,9 +1,11 @@
 package com.baxolino.apps.floats
 
 import android.annotation.SuppressLint
+import android.os.Build
 import android.os.Bundle
 import android.util.Log
 import androidx.appcompat.app.AppCompatActivity
+import com.baxolino.apps.floats.nsd.NsdInterface
 import io.paperdb.Paper
 
 
@@ -24,6 +26,17 @@ class HomeActivity : AppCompatActivity() {
     Log.d(TAG, "onCreate()")
     Paper.init(this)
     setContentView(R.layout.activity_home)
+
+    NsdInterface(this)
+      .registerService(
+        "${
+          Build.MODEL
+        }$${
+          Paper
+            .book()
+            .read("name", "unknown")
+        }"
+      )
 
     val home = HomeFragment()
 

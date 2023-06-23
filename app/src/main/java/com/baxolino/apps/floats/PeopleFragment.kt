@@ -1,6 +1,7 @@
 package com.baxolino.apps.floats
 
 import android.os.Bundle
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -10,6 +11,7 @@ import android.widget.ListView
 import androidx.fragment.app.Fragment
 import com.baxolino.apps.floats.adapters.CustomListAdapter
 import com.baxolino.apps.floats.adapters.DeviceItem
+import com.baxolino.apps.floats.nsd.NsdInterface
 import com.baxolino.apps.floats.tools.ThemeHelper
 import com.google.android.material.card.MaterialCardView
 import io.paperdb.Paper
@@ -41,14 +43,39 @@ class PeopleFragment : Fragment() {
 
     val listView = view.findViewById<ListView>(R.id.device_list)
 
-    // Create your item list with data
-    val itemList = listOf(
-      DeviceItem("Galaxy A03s", "Dennis Littawe"),
-      DeviceItem("Xiaomi Mi Tab 5", "Peter muster")
-    )
+    val nameMap = HashMap<String, DeviceItem>()
 
-    val adapter = CustomListAdapter(requireActivity(), itemList)
-    listView.adapter = adapter
+    NsdInterface(requireContext())
+      .registerAvailabilityListener(object : NsdInterface.ServiceAvailableListener {
+        override fun available(name: String, port: Int, host: String) {
+          val separatorIndex = name.indexOf('$')
+
+          val deviceName = name.substring(0, separatorIndex)
+          val owner = name.substring(separatorIndex + 1, name.length)
+
+          Log.d("People", "available($name, $port, $host)")
+          nameMap[name] = DeviceItem(name, "")
+
+          val itemList = ArrayList<DeviceItem>()
+          for (entry in nameMap) {
+            itemList.add(
+              DeviceItem(
+                deviceName,
+                owner
+              )
+            )
+          }
+
+          requireActivity().runOnUiThread {
+            val adapter = CustomListAdapter(requireActivity(), itemList)
+            listView.adapter = adapter
+          }
+        }
+
+        override fun disappeared(name: String) {
+          nameMap.remove(name)
+        }
+      })
     return view
   }
 }
