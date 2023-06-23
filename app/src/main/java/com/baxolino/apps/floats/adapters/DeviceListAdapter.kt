@@ -2,15 +2,22 @@ package com.baxolino.apps.floats.adapters
 
 import android.content.Context
 import android.content.res.ColorStateList
+import android.view.Gravity
 import android.view.LayoutInflater
+import android.view.MenuInflater
+import android.view.MenuItem
 import android.view.View
 import android.view.ViewGroup
 import android.widget.BaseAdapter
 import android.widget.ImageView
+import android.widget.PopupMenu
 import android.widget.TextView
+import androidx.appcompat.view.menu.MenuBuilder
+import androidx.appcompat.view.menu.MenuPopupHelper
 import com.baxolino.apps.floats.R
 import com.baxolino.apps.floats.tools.ThemeHelper
 import com.google.android.material.card.MaterialCardView
+
 
 class DeviceListAdapter(val context: Context, private val itemList: List<DeviceItem>) :
   BaseAdapter() {
@@ -59,7 +66,27 @@ class DeviceListAdapter(val context: Context, private val itemList: List<DeviceI
         itemView.findViewById<ImageView>(R.id.deviceItemAction).apply {
           backgroundTintList = ColorStateList.valueOf(it)
           setOnClickListener {
-            // TODO
+
+            val popupMenu = PopupMenu(context, it, Gravity.END, 0, R.style.popupMenuStyle)
+            popupMenu.inflate(R.menu.popup_menu)
+            PopupHelper.insertMenuItemIcons(context, popupMenu)
+
+
+            popupMenu.setOnMenuItemClickListener { menuItem ->
+              when (menuItem.itemId) {
+                R.id.itemSend -> {
+                  // Handle menu item 1 click
+                  true
+                }
+                R.id.itemConnect -> {
+                  // Handle menu item 2 click
+                  true
+                }
+                // Handle other items as needed
+                else -> false
+              }
+            }
+            popupMenu.show()
           }
         }
       }

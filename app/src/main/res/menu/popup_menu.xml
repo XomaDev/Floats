@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item
+        android:id="@+id/itemSend"
+        android:enabled="true"
+        android:icon="@drawable/send"
+        android:title="Send"/>
+    <item
+        android:id="@+id/itemConnect"
+        android:enabled="true"
+        android:icon="@drawable/broadcast"
+        android:title="Connect"/>
+</menu>
