@@ -18,8 +18,8 @@
             android:orientation="horizontal">
 
             <com.google.android.material.card.MaterialCardView
-                android:layout_width="wrap_content"
                 android:id="@+id/deviceCard"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 app:cardCornerRadius="100dp"
                 app:contentPadding="10dp"
@@ -43,10 +43,11 @@
             </com.google.android.material.card.MaterialCardView>
 
             <LinearLayout
-                android:layout_width="match_parent"
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_gravity="center"
                 android:layout_marginStart="15dp"
+                android:layout_weight=".9"
                 android:orientation="vertical">
 
                 <TextView
@@ -54,7 +55,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:fontFamily="@font/inter"
-                    android:text="Galaxy A03s"
+                    android:text="--"
                     android:textColor="@color/alt_variant_60"
                     android:textSize="16sp" />
 
@@ -63,8 +64,15 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:fontFamily="@font/inter"
-                    android:text="Dennis Littawe" />
+                    android:text="--" />
             </LinearLayout>
+
+            <ImageView
+                android:id="@+id/deviceItemAction"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center|end"
+                android:background="@drawable/three_dots_vertical" />
         </LinearLayout>
     </com.google.android.material.card.MaterialCardView>
 </LinearLayout>

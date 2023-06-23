@@ -6,12 +6,13 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.BaseAdapter
+import android.widget.ImageView
 import android.widget.TextView
 import com.baxolino.apps.floats.R
 import com.baxolino.apps.floats.tools.ThemeHelper
 import com.google.android.material.card.MaterialCardView
 
-class CustomListAdapter(val context: Context, private val itemList: List<DeviceItem>) :
+class DeviceListAdapter(val context: Context, private val itemList: List<DeviceItem>) :
   BaseAdapter() {
 
   private val inflater: LayoutInflater = LayoutInflater.from(context)
@@ -49,9 +50,18 @@ class CustomListAdapter(val context: Context, private val itemList: List<DeviceI
           setTextColor(color)
         }
       }
-      itemView.findViewById<TextView>(R.id.ownerName).apply {
-        text = item.deviceOwner
-        setTextColor(ThemeHelper.variant60Color(context))
+
+      ThemeHelper.variant60Color(context).let {
+        itemView.findViewById<TextView>(R.id.ownerName).apply {
+          text = item.deviceOwner
+          setTextColor(it)
+        }
+        itemView.findViewById<ImageView>(R.id.deviceItemAction).apply {
+          backgroundTintList = ColorStateList.valueOf(it)
+          setOnClickListener {
+            // TODO
+          }
+        }
       }
     }
     return itemView!!

@@ -9,7 +9,7 @@ import android.widget.EditText
 import android.widget.LinearLayout
 import android.widget.ListView
 import androidx.fragment.app.Fragment
-import com.baxolino.apps.floats.adapters.CustomListAdapter
+import com.baxolino.apps.floats.adapters.DeviceListAdapter
 import com.baxolino.apps.floats.adapters.DeviceItem
 import com.baxolino.apps.floats.nsd.NsdInterface
 import com.baxolino.apps.floats.tools.ThemeHelper
@@ -42,7 +42,6 @@ class PeopleFragment : Fragment() {
     }
 
     val listView = view.findViewById<ListView>(R.id.device_list)
-
     val nameMap = HashMap<String, DeviceItem>()
 
     NsdInterface(requireContext())
@@ -67,7 +66,7 @@ class PeopleFragment : Fragment() {
           }
 
           requireActivity().runOnUiThread {
-            val adapter = CustomListAdapter(requireActivity(), itemList)
+            val adapter = DeviceListAdapter(requireActivity(), itemList)
             listView.adapter = adapter
           }
         }
