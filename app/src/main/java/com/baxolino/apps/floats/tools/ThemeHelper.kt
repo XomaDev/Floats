@@ -149,6 +149,16 @@ object ThemeHelper {
     )
   }
 
+  fun variant80Color(context: Context): Int {
+    return context.getColor(
+      if (HAS_DYNAMIC_THEMING) {
+        com.google.android.material.R.color.material_dynamic_primary80
+      } else {
+        R.color.alt_variant_dark
+      }
+    )
+  }
+
   fun getProgressBar(context: Context): RemoteViews {
     if (HAS_DYNAMIC_THEMING)
       return RemoteViews(context.packageName, R.layout.notification_progress_mtr)

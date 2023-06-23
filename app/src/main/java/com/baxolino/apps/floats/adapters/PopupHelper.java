@@ -5,7 +5,9 @@ import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
 import android.text.SpannableStringBuilder;
+import android.text.style.ForegroundColorSpan;
 import android.text.style.ImageSpan;
+import android.text.style.TextAppearanceSpan;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.PopupMenu;
@@ -48,8 +50,9 @@ public class PopupHelper {
 
     int iconSize = context.getResources().getDimensionPixelSize(R.dimen.menu_item_icon_size);
 
+    int color = ThemeHelper.INSTANCE.variant80Color(context);
     icon.setTint(
-            ThemeHelper.INSTANCE.variant70Color(context)
+            color
     );
     icon.setBounds(0, 0, iconSize, iconSize);
     ImageSpan imageSpan = new ImageSpan(icon);
@@ -59,6 +62,8 @@ public class PopupHelper {
 
     // Replace the space placeholder with the icon.
     ssb.setSpan(imageSpan, 1, 2, 0);
+    ssb.setSpan(new ForegroundColorSpan(color), 0, ssb.length(), 0);
+
     menuItem.setTitle(ssb);
     // Set the icon to null just in case, on some weird devices, they've customized Android to display
     // the icon in the menu... we don't want two icons to appear.
