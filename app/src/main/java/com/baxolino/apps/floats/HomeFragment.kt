@@ -43,13 +43,15 @@ import java.nio.ByteOrder
 import java.util.concurrent.ScheduledThreadPoolExecutor
 import java.util.concurrent.TimeUnit
 
-class HomeFragment : Fragment() {
+class HomeFragment(private val localPort: Int) : Fragment() {
 
   companion object {
     private const val TAG = "HomeActivity"
     private const val STORAGE_REQUEST_CODE = 7
     private const val CAMERA_REQUEST_CODE = 8
   }
+
+  private var initialized = false
 
   private lateinit var view: View
   private lateinit var intent: Intent
@@ -59,7 +61,6 @@ class HomeFragment : Fragment() {
   private lateinit var deviceConnectionInfo: String
   private lateinit var ourId: String
 
-  private var localPort = -1
   private lateinit var connector: SocketConnection
 
   private var hasConnection = true
@@ -69,8 +70,12 @@ class HomeFragment : Fragment() {
     container: ViewGroup?,
     savedInstanceState: Bundle?
   ): View {
-    // Inflate the layout for this fragment
+    if (initialized)
+      return view
+    initialized = true
+
     intent = requireActivity().intent
+    // Inflate the layout for this fragment
     view = inflater.inflate(R.layout.fragment_home, container, false)
 
     Log.d(TAG, "onCreate()")
@@ -83,9 +88,6 @@ class HomeFragment : Fragment() {
     ourId = deviceId
 
     val qrImageView = view.findViewById<ImageView>(R.id.qr_image)
-
-    // create a new socket connection with the local port
-    localPort = SocketUtils.findAvailableTcpPort()
 
     Log.d(TAG, "Port[$localPort]")
     connector = SocketConnection.getMainSocket()
@@ -279,17 +281,25 @@ class HomeFragment : Fragment() {
 
       Log.d(TAG, "onScanResult: $args $ipv4Address")
 
-      connector.connectOnPort(port, ipv4Address, false, {
-        Log.d(TAG, "Connected()")
-        onConnectionSuccessful(false)
-      }, {
-        Snackbar.make(
-          view.findViewById(R.id.home_layout),
-          it,
-          Snackbar.LENGTH_LONG
-        ).show()
-      })
+      doConnect(port, ipv4Address)
     }
+  }
+
+  /*
+    this could be also directly invoked by
+    HomeActivity, when connecting from the People Fragment
+  */
+  fun doConnect(port: Int, ipv4Address: String) {
+    connector.connectOnPort(port, ipv4Address, false, {
+      Log.d(TAG, "Connected()")
+      onConnectionSuccessful(false)
+    }, {
+      Snackbar.make(
+        view,
+        it,
+        Snackbar.LENGTH_LONG
+      ).show()
+    })
   }
 
   private fun onConnectionSuccessful(isServer: Boolean) {
@@ -305,7 +315,7 @@ class HomeFragment : Fragment() {
     )
     { name, host, hostPort ->
       // hostPort is valid if we are client
-      val service = Intent(requireActivity(), SessionService::class.java)
+      val service = Intent(activity, SessionService::class.java)
         .putExtra("partner_device", name)
         .putExtra("server", isServer)
         .putExtra("host", host)

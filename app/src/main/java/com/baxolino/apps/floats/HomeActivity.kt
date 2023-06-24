@@ -6,6 +6,7 @@ import android.os.Bundle
 import android.util.Log
 import android.view.MenuItem
 import androidx.appcompat.app.AppCompatActivity
+import com.baxolino.apps.floats.core.transfer.SocketUtils
 import com.baxolino.apps.floats.nsd.NsdInterface
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.google.android.material.navigation.NavigationBarView
@@ -30,52 +31,15 @@ class HomeActivity : AppCompatActivity() {
     Paper.init(this)
     setContentView(R.layout.activity_home)
 
-    NsdInterface(this)
-      .registerService(
-        "${
-          Build.MODEL
-        }$${
-          Paper
-            .book()
-            .read("name", "unknown")
-        }"
-      )
+    val localPort = SocketUtils.findAvailableTcpPort()
+    Log.d("People", "onCreate: Port = $localPort")
 
-    val home = HomeFragment()
-    val people = PeopleFragment()
+    Log.d(TAG, "Registered")
 
-    var currentId = R.id.itemCode
+    val home = HomeFragment(localPort)
+
     supportFragmentManager.beginTransaction()
       .replace(R.id.fragmentContainer, home)
       .commit()
-
-    findViewById<BottomNavigationView>(R.id.bottomNavigation)
-      .setOnItemSelectedListener(
-        object : NavigationBarView.OnItemSelectedListener {
-          override fun onNavigationItemSelected(item: MenuItem): Boolean {
-            if (currentId == item.itemId)
-              return false
-            when (item.itemId) {
-              R.id.itemCode -> {
-                supportFragmentManager.beginTransaction()
-                  .replace(R.id.fragmentContainer, home)
-                  .commit()
-                currentId = R.id.itemCode
-                return true
-              }
-
-              R.id.itemPeople -> {
-                supportFragmentManager.beginTransaction()
-                  .replace(R.id.fragmentContainer, people)
-                  .commit()
-                currentId = R.id.itemPeople
-                return true
-              }
-            }
-            return false
-          }
-        }
-      )
-
   }
 }
