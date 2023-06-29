@@ -22,6 +22,7 @@ import androidx.core.app.NotificationCompat
 import com.baxolino.apps.floats.R
 import com.baxolino.apps.floats.core.files.MessageReceiver.Companion.RECEIVE_ACTION
 import com.baxolino.apps.floats.tools.DynamicTheme
+import io.paperdb.Paper
 import java.io.File
 import kotlin.concurrent.thread
 import kotlin.random.Random
@@ -121,6 +122,9 @@ class FileReceiveService : Service() {
     )
     if ("success" in result) {
       Log.d(TAG, "Success! ${file.length()} res_message: $result")
+
+      val finalFilePath = result.substring(7)
+      Log.d(TAG, "Saved at path $finalFilePath")
     } else {
       cancelled = true
 

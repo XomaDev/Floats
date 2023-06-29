@@ -90,8 +90,9 @@ jstring receiveContentSocket(
    }
 
 
-   // Open the output file
-   int outputFile = open((outputPathStr + "/" + fileNameChars).c_str(), O_WRONLY | O_CREAT | O_TRUNC, 0644);
+   std::string finalOutput = outputPathStr + "/" + fileNameChars;
+
+   int outputFile = open(finalOutput.c_str(), O_WRONLY | O_CREAT | O_TRUNC, 0644);
    if (outputFile == -1) {
       // Failed to open the output file
       if (errno == 17) {
@@ -103,6 +104,7 @@ jstring receiveContentSocket(
          oss << distribution(generator);
          std::string outputPathWithRandomNumber = outputPathStr + "/(" + oss.str() + ") " +  fileNameChars;
 
+         finalOutput = outputPathWithRandomNumber;
          outputFile = open(outputPathWithRandomNumber.c_str(), O_WRONLY | O_CREAT | O_TRUNC, 0644);
          if (outputFile == -1) {
             const char *errorMessage = strerror(errno);
@@ -158,7 +160,7 @@ jstring receiveContentSocket(
       return env->NewStringUTF(("Transfer was disrupted. " + std::to_string(result)).c_str());
    }
 
-   return env->NewStringUTF("successful [matches length]");
+   return env->NewStringUTF(("successful " + finalOutput).c_str());
 }
 
 
