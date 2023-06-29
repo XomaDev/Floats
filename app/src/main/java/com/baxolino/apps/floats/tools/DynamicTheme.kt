@@ -79,11 +79,15 @@ object DynamicTheme {
     )
 
     val speedLabelFrame = session.findViewById<FrameLayout>(R.id.speed_label_frame)
-    val drawableSpeed = speedLabelFrame.background as GradientDrawable
+    setSpecialBorderTheme(session, speedLabelFrame)
+  }
+
+  fun setSpecialBorderTheme(context: Context, layout: FrameLayout) {
+    val drawableSpeed = layout.background as GradientDrawable
     drawableSpeed.mutate()
 
     drawableSpeed.setStroke(
-      2, session.getColor(
+      2, context.getColor(
         com.google.android.material.R.color.material_dynamic_neutral_variant40
       ), 6f, 7f
     )
@@ -98,6 +102,16 @@ object DynamicTheme {
       connection.getColor(
         com.google.android.material.R.color.material_dynamic_primary80
       )
+    )
+  }
+
+  fun neutralCardColor(context: Context): Int {
+    return context.getColor(
+      if (HAS_DYNAMIC_THEMING) {
+        com.google.android.material.R.color.material_dynamic_neutral_variant20
+      } else {
+        R.color.card_view_background
+      }
     )
   }
 

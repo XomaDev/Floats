@@ -1,7 +1,6 @@
 package com.baxolino.apps.floats.listviews
 
 import com.baxolino.apps.floats.R
-import java.util.Locale
 
 object FileMapping {
   fun getDetails(fileType: String): Pair<Int, String> {

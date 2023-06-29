@@ -7,9 +7,9 @@
     <com.google.android.material.card.MaterialCardView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        app:cardElevation="1dp"
         android:layout_marginTop="20dp"
-        app:contentPadding="15dp"
+        app:cardElevation="1dp"
+        app:contentPadding="20dp"
         app:strokeWidth="0dp">
 
         <LinearLayout
@@ -58,13 +58,26 @@
                         android:textSize="11sp" />
                 </LinearLayout>
 
-                <TextView
-                    android:id="@+id/actionButton"
+                <FrameLayout
+                    android:id="@+id/actionOutline"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginEnd="15dp"
-                    android:fontFamily="@font/inter"
-                    android:text="Play" />
+                    android:layout_gravity="center"
+                    android:background="@drawable/dotted_border"
+                    android:paddingStart="7dp"
+                    android:paddingEnd="7dp"
+                    android:paddingTop="4dp"
+                    android:paddingBottom="4dp"
+                    app:cardElevation="1dp"
+                    app:strokeWidth="0dp">
+
+                    <TextView
+                        android:id="@+id/actionButton"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:fontFamily="@font/inter"
+                        android:text="Play" />
+                </FrameLayout>
             </LinearLayout>
 
             <LinearLayout
@@ -76,7 +89,7 @@
                 <com.google.android.material.card.MaterialCardView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    app:cardElevation="3dp"
+                    android:id="@+id/sizeCard"
                     app:contentPadding="3dp"
                     app:strokeWidth="0dp">
 
@@ -108,8 +121,8 @@
                 <com.google.android.material.card.MaterialCardView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
+                    android:id="@+id/timeCard"
                     android:layout_marginStart="15dp"
-                    app:cardElevation="3dp"
                     app:contentPadding="3dp"
                     app:strokeWidth="0dp">
 

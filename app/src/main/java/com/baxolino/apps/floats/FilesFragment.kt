@@ -56,6 +56,7 @@ class FilesFragment(
           list.add(
             FileDetails(
               fileName,
+              file.absolutePath,
               getString("from"),
               getInt("size"),
               getLong("time")
