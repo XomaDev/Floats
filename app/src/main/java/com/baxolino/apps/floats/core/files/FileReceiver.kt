@@ -96,12 +96,13 @@ class FileReceiver internal constructor(private val port: Int, val name: String,
     )
   }
 
-  fun receive(session: SessionActivity) {
+  fun receive(session: SessionActivity, from: String) {
     val service = Intent(session, FileReceiveService::class.java)
       .putExtra("file_receive", name)
       .putExtra("file_length", length)
       .putExtra("port", port)
       .putExtra("host_address", session.hostAddress)
+      .putExtra("from", from)
 
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
       session.startForegroundService(service)

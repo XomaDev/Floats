@@ -23,6 +23,7 @@ import com.baxolino.apps.floats.R
 import com.baxolino.apps.floats.core.files.MessageReceiver.Companion.RECEIVE_ACTION
 import com.baxolino.apps.floats.tools.DynamicTheme
 import io.paperdb.Paper
+import org.json.JSONObject
 import java.io.File
 import kotlin.concurrent.thread
 import kotlin.random.Random
@@ -54,6 +55,8 @@ class FileReceiveService : Service() {
   private lateinit var fileName: String
   private lateinit var fileNameShort: String
 
+  private lateinit var from: String
+
   private var timeStart = 0L
   private var cancelled = false
 
@@ -71,6 +74,7 @@ class FileReceiveService : Service() {
     // init the paper db
     Paper.init(this)
 
+    from = intent.getStringExtra("from")!!
     fileName = intent.getStringExtra("file_receive")!!
     fileNameShort = FileNameUtil.toShortDisplayName(fileName)
 
@@ -126,12 +130,18 @@ class FileReceiveService : Service() {
     if ("success" in result) {
       Log.d(TAG, "Success! ${file.length()} res_message: $result")
 
-      val finalFilePath = result.substring(7)
+      val finalFilePath = result.substring(11)
       Log.d(TAG, "Saved at path $finalFilePath")
 
       val savedFile = File(finalFilePath)
+
+      val data = JSONObject()
+        .put("path", savedFile.absolutePath)
+        .put("size", fileLength)
+        .put("time", System.currentTimeMillis())
+        .put("from", from)
       Paper.book("files")
-        .write(savedFile.name, savedFile.absoluteFile)
+        .write(savedFile.name, data.toString())
     } else {
       cancelled = true
 

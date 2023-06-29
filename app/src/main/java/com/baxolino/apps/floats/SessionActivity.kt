@@ -224,7 +224,7 @@ class SessionActivity : AppCompatActivity() {
       runOnUiThread { onTransferRequested(fname, receiver.length) }
 
       listeners(receiver)
-      receiver.receive(this)
+      receiver.receive(this, from = deviceName)
     }
     executor.register(RequestHandler(listener))
   }
