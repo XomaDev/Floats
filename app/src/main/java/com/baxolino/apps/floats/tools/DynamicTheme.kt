@@ -42,7 +42,7 @@ object DynamicTheme {
     val tipCard = view.findViewById<MaterialCardView>(R.id.tip_card)
     tipCard.backgroundTintList = ColorStateList.valueOf(
       activity.getColor(
-        com.google.android.material.R.color.material_dynamic_neutral80
+        com.google.android.material.R.color.material_dynamic_neutral_variant50
       )
     )
 
@@ -119,16 +119,6 @@ object DynamicTheme {
     return context.getColor(
       if (HAS_DYNAMIC_THEMING) {
         com.google.android.material.R.color.material_dynamic_neutral_variant60
-      } else {
-        R.color.alt_variant_60
-      }
-    )
-  }
-
-  fun altVariant60Color(context: Context): Int {
-    return context.getColor(
-      if (HAS_DYNAMIC_THEMING) {
-        com.google.android.material.R.color.material_dynamic_primary80
       } else {
         R.color.alt_variant_60
       }
