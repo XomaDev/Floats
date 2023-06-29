@@ -6,8 +6,8 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ListView
-import com.baxolino.apps.floats.adapters.FileDetails
-import com.baxolino.apps.floats.adapters.FileListAdapter
+import com.baxolino.apps.floats.listviews.FileDetails
+import com.baxolino.apps.floats.listviews.FileListAdapter
 import io.paperdb.Paper
 import org.json.JSONObject
 import java.io.File

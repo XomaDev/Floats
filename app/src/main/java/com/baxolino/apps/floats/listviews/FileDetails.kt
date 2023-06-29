@@ -1,4 +1,4 @@
-package com.baxolino.apps.floats.adapters
+package com.baxolino.apps.floats.listviews
 
 data class FileDetails(
     val fileName: String,

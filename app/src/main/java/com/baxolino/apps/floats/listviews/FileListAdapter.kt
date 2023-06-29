@@ -1,4 +1,4 @@
-package com.baxolino.apps.floats.adapters
+package com.baxolino.apps.floats.listviews
 
 import android.content.Context
 import android.content.res.ColorStateList
@@ -10,6 +10,7 @@ import android.widget.ArrayAdapter
 import android.widget.ImageView
 import android.widget.TextView
 import com.baxolino.apps.floats.R
+import com.baxolino.apps.floats.core.files.FileNameUtil
 import com.baxolino.apps.floats.tools.DynamicTheme
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -32,9 +33,18 @@ class FileListAdapter(context: Context?, itemList: ArrayList<FileDetails>) :
     }
     val color = DynamicTheme.variant80Color(context)
 
+    val shortFileName = FileNameUtil.toShortDisplayName(details.fileName)
+    // we need to get the appropriate icon for the file
+    // and also the appropriate action text
+
+    val fileMapping = FileMapping.getDetails(
+      details.fileName.split('.').last()
+    )
     convertView.apply {
-      findViewById<ImageView>(R.id.fileIcon)
-        .backgroundTintList = ColorStateList.valueOf(color)
+      findViewById<ImageView>(R.id.fileIcon).apply {
+        setBackgroundResource(fileMapping.first) // the file type icon
+        backgroundTintList = ColorStateList.valueOf(color)
+      }
 
       findViewById<TextView>(R.id.timeLabel)
         .setTextColor(color)
@@ -42,10 +52,13 @@ class FileListAdapter(context: Context?, itemList: ArrayList<FileDetails>) :
       findViewById<TextView>(R.id.sizeLabel).setTextColor(color)
 
       findViewById<TextView>(R.id.actionButton)
-        .setTextColor(color)
+        .apply {
+          text = fileMapping.second // set the appropriate action text
+          setTextColor(color)
+        }
 
       findViewById<TextView>(R.id.fileName).apply {
-        text = details.fileName
+        text = shortFileName
         setTextColor(color)
       }
 
