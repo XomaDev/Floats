@@ -160,6 +160,9 @@ jstring receiveContentSocket(
       return env->NewStringUTF(("Transfer was disrupted. " + std::to_string(result)).c_str());
    }
 
+   // WARNING:
+   //  editing this can cause various problems
+   //  in the file receiver service
    return env->NewStringUTF(("successful " + finalOutput).c_str());
 }
 
