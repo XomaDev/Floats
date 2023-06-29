@@ -68,6 +68,9 @@ class FileReceiveService : Service() {
   override fun onStartCommand(intent: Intent, flags: Int, startId: Int): Int {
     Log.d(TAG, "onStartCommand()")
 
+    // init the paper db
+    Paper.init(this)
+
     fileName = intent.getStringExtra("file_receive")!!
     fileNameShort = FileNameUtil.toShortDisplayName(fileName)
 
@@ -125,6 +128,10 @@ class FileReceiveService : Service() {
 
       val finalFilePath = result.substring(7)
       Log.d(TAG, "Saved at path $finalFilePath")
+
+      val savedFile = File(finalFilePath)
+      Paper.book("files")
+        .write(savedFile.name, savedFile.absoluteFile)
     } else {
       cancelled = true
 
