@@ -1,5 +1,6 @@
 package com.baxolino.apps.floats.tools
 
+import android.app.Activity
 import android.content.Context
 import android.content.res.ColorStateList
 import android.graphics.drawable.GradientDrawable
@@ -17,71 +18,52 @@ import com.google.android.material.color.DynamicColors
 import com.google.android.material.elevation.SurfaceColors
 
 
-object ThemeHelper {
+object DynamicTheme {
 
   private val HAS_DYNAMIC_THEMING = DynamicColors.isDynamicColorAvailable()
 
 
-  fun applyNavigationBarTheme(fragment: FragmentActivity) {
-    fragment.window.navigationBarColor = SurfaceColors.SURFACE_2.getColor(fragment)
+  fun applyNavigationBarTheme(activity: Activity) {
+    activity.window.navigationBarColor = SurfaceColors.SURFACE_2.getColor(activity)
   }
 
-  fun themeOfHomeActivity(view: View, fragment: FragmentActivity) {
+  fun themeOfHomeActivity(view: View, activity: Activity) {
     if (!HAS_DYNAMIC_THEMING) return
 
-    applyNavigationBarTheme(fragment)
+    applyNavigationBarTheme(activity)
 
     val qrImageView = view.findViewById<ImageView>(R.id.qr_image)
     qrImageView.backgroundTintList = ColorStateList.valueOf(
-      fragment.getColor(
+      activity.getColor(
         com.google.android.material.R.color.material_dynamic_neutral_variant60
       )
     )
 
     val tipCard = view.findViewById<MaterialCardView>(R.id.tip_card)
     tipCard.backgroundTintList = ColorStateList.valueOf(
-      fragment.getColor(
+      activity.getColor(
         com.google.android.material.R.color.material_dynamic_neutral80
       )
     )
 
     val tipText = view.findViewById<TextView>(R.id.documents_tip)
     tipText.setTextColor(
-      fragment.getColor(
+      activity.getColor(
         com.google.android.material.R.color.material_dynamic_primary80
       )
     )
 
     val buttonText = view.findViewById<TextView>(R.id.button_text)
     buttonText.setTextColor(
-      fragment.getColor(
+      activity.getColor(
         com.google.android.material.R.color.material_dynamic_primary70
       )
     )
 
     val qrScanIcon = view.findViewById<ImageView>(R.id.qr_scan_icon)
     qrScanIcon.backgroundTintList = ColorStateList.valueOf(
-      fragment.getColor(
+      activity.getColor(
         com.google.android.material.R.color.material_dynamic_primary80
-      )
-    )
-  }
-
-  fun themeOfPeopleActivity(view: View, fragment: FragmentActivity) {
-    if (!HAS_DYNAMIC_THEMING) return
-    applyNavigationBarTheme(fragment)
-
-    val tickCardViw = view.findViewById<MaterialCardView>(R.id.check)
-    tickCardViw.backgroundTintList = ColorStateList.valueOf(
-      fragment.getColor(
-        com.google.android.material.R.color.material_dynamic_primary70
-      )
-    )
-
-    val tickIcon = view.findViewById<ImageView>(R.id.tickIcon)
-    tickIcon.backgroundTintList = ColorStateList.valueOf(
-      fragment.getColor(
-        com.google.android.material.R.color.material_dynamic_primary20
       )
     )
   }

@@ -3,7 +3,7 @@ package com.baxolino.apps.floats
 import android.content.Intent
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
-import com.baxolino.apps.floats.tools.ThemeHelper
+import com.baxolino.apps.floats.tools.DynamicTheme
 import com.baxolino.apps.floats.tools.Utils
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.snackbar.Snackbar
@@ -15,7 +15,7 @@ class ConnectionActivity : AppCompatActivity() {
     super.onCreate(savedInstanceState)
     setContentView(R.layout.activity_connection)
 
-    ThemeHelper.themeOfNoConnectionActivity(this)
+    DynamicTheme.themeOfNoConnectionActivity(this)
     findViewById<MaterialButton>(R.id.retry_button).setOnClickListener {
       if (Utils.getIpv4(this) != null) {
         startActivity(

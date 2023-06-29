@@ -24,7 +24,7 @@ import com.baxolino.apps.floats.core.files.FileRequest
 import com.baxolino.apps.floats.core.files.MessageReceiver
 import com.baxolino.apps.floats.core.files.RequestHandler
 import com.baxolino.apps.floats.core.transfer.SocketConnection
-import com.baxolino.apps.floats.tools.ThemeHelper
+import com.baxolino.apps.floats.tools.DynamicTheme
 import com.google.android.material.card.MaterialCardView
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.floatingactionbutton.FloatingActionButton
@@ -79,7 +79,7 @@ class SessionActivity : AppCompatActivity() {
     Log.d(TAG, "onCreate()")
 
     setContentView(R.layout.activity_session)
-    ThemeHelper.themeOfSessionActivity(this)
+    DynamicTheme.themeOfSessionActivity(this)
 
 
     isConnected = intent.hasExtra("deviceName")

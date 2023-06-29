@@ -1,12 +1,10 @@
 package com.baxolino.apps.floats
 
 import android.Manifest
+import android.app.Activity
 import android.content.Intent
 import android.content.pm.PackageManager
-import android.net.Uri
 import android.os.Build
-import android.os.Bundle
-import android.provider.Settings
 import android.text.Html
 import android.util.Log
 import android.view.LayoutInflater
@@ -17,13 +15,12 @@ import android.widget.TextView
 import androidx.appcompat.app.AlertDialog
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
-import androidx.fragment.app.Fragment
 import com.baxolino.apps.floats.camera.ScanActivity
 import com.baxolino.apps.floats.core.KnowEachOther
 import com.baxolino.apps.floats.core.SessionService
 import com.baxolino.apps.floats.core.transfer.SocketConnection
 import com.baxolino.apps.floats.core.transfer.SocketUtils
-import com.baxolino.apps.floats.tools.ThemeHelper
+import com.baxolino.apps.floats.tools.DynamicTheme
 import com.baxolino.apps.floats.tools.Utils
 import com.github.alexzhirkevich.customqrgenerator.QrData
 import com.github.alexzhirkevich.customqrgenerator.vector.QrCodeDrawable
@@ -43,7 +40,9 @@ import java.nio.ByteOrder
 import java.util.concurrent.ScheduledThreadPoolExecutor
 import java.util.concurrent.TimeUnit
 
-class HomeFragment(private val localPort: Int) : Fragment() {
+class HomeFragment(
+  private val activity: Activity
+) {
 
   companion object {
     private const val TAG = "HomeActivity"
@@ -62,27 +61,27 @@ class HomeFragment(private val localPort: Int) : Fragment() {
   private lateinit var ourId: String
 
   private lateinit var connector: SocketConnection
+  private val localPort = SocketUtils.findAvailableTcpPort()
 
   private var hasConnection = true
 
-  override fun onCreateView(
+  fun onCreate(
     inflater: LayoutInflater,
-    container: ViewGroup?,
-    savedInstanceState: Bundle?
+    container: ViewGroup?
   ): View {
     if (initialized)
       return view
     initialized = true
 
-    intent = requireActivity().intent
+    intent = activity.intent
     // Inflate the layout for this fragment
     view = inflater.inflate(R.layout.fragment_home, container, false)
 
     Log.d(TAG, "onCreate()")
-    ThemeHelper.themeOfHomeActivity(view, requireActivity())
+    DynamicTheme.themeOfHomeActivity(view, activity)
 
     val deviceText = view.findViewById<TextView>(R.id.device_label)
-    val deviceId = Utils.getDeviceName(requireActivity().contentResolver)
+    val deviceId = Utils.getDeviceName(activity.contentResolver)
 
     deviceText.text = deviceId
     ourId = deviceId
@@ -92,12 +91,12 @@ class HomeFragment(private val localPort: Int) : Fragment() {
     Log.d(TAG, "Port[$localPort]")
     connector = SocketConnection.getMainSocket()
 
-    val ipv4 = Utils.getIpv4(requireActivity())
+    val ipv4 = Utils.getIpv4(activity)
     if (ipv4 == null) {
       hasConnection = false
-      startActivity(
+      activity.startActivity(
         Intent(
-          requireActivity(),
+          activity,
           ConnectionActivity::class.java
         )
       )
@@ -126,18 +125,18 @@ class HomeFragment(private val localPort: Int) : Fragment() {
 
     scanButton.setOnClickListener {
       if (ContextCompat.checkSelfPermission(
-          requireActivity(),
+          activity,
           Manifest.permission.CAMERA
         ) == PackageManager.PERMISSION_DENIED
       ) {
         ActivityCompat.requestPermissions(
-          requireActivity(),
+          activity,
           arrayOf(Manifest.permission.CAMERA),
           CAMERA_REQUEST_CODE
         )
       } else {
-        startActivity(
-          Intent(requireActivity(), ScanActivity::class.java)
+        activity.startActivity(
+          Intent(activity, ScanActivity::class.java)
         )
       }
     }
@@ -157,7 +156,7 @@ class HomeFragment(private val localPort: Int) : Fragment() {
       // we are disconnected from a device we
       // were once connected to
 
-      MaterialAlertDialogBuilder(requireActivity(), R.style.FloatsCustomDialogTheme)
+      MaterialAlertDialogBuilder(activity, R.style.FloatsCustomDialogTheme)
         .setTitle("Disconnected")
         .setMessage("Connection to device $device was broken.")
         .setPositiveButton("Dismiss") { dialog, _ ->
@@ -172,11 +171,11 @@ class HomeFragment(private val localPort: Int) : Fragment() {
   private fun lookOnDisconnect() {
     val executor = ScheduledThreadPoolExecutor(1)
     executor.scheduleAtFixedRate({
-      if (Utils.getIpv4(requireActivity()) == null) {
+      if (Utils.getIpv4(activity) == null) {
         executor.shutdown()
-        startActivity(
+        activity.startActivity(
           Intent(
-            requireActivity(),
+            activity,
             ConnectionActivity::class.java
           )
         )
@@ -184,12 +183,11 @@ class HomeFragment(private val localPort: Int) : Fragment() {
     }, 0, 1, TimeUnit.SECONDS)
   }
 
-  override fun onResume() {
-    super.onResume()
-    if (Utils.getIpv4(requireActivity()) == null) {
-      startActivity(
+  fun onResume() {
+    if (Utils.getIpv4(activity) == null) {
+      activity.startActivity(
         Intent(
-          requireActivity(),
+          activity,
           ConnectionActivity::class.java
         )
       )
@@ -198,64 +196,14 @@ class HomeFragment(private val localPort: Int) : Fragment() {
     if (Build.VERSION.SDK_INT < Build.VERSION_CODES.R
       && permissionDialog == null
       && ContextCompat.checkSelfPermission(
-        requireActivity(),
+        activity,
         Manifest.permission.WRITE_EXTERNAL_STORAGE
       ) != PackageManager.PERMISSION_GRANTED
     ) {
       ActivityCompat.requestPermissions(
-        requireActivity(), arrayOf(Manifest.permission.WRITE_EXTERNAL_STORAGE),
+        activity, arrayOf(Manifest.permission.WRITE_EXTERNAL_STORAGE),
         STORAGE_REQUEST_CODE
       )
-    }
-  }
-
-  @Deprecated("Deprecated in Java")
-  override fun onRequestPermissionsResult(
-    requestCode: Int,
-    permissions: Array<out String>,
-    grantResults: IntArray
-  ) {
-    super.onRequestPermissionsResult(requestCode, permissions, grantResults)
-    if (requestCode == STORAGE_REQUEST_CODE
-      && grantResults.isNotEmpty()
-      && grantResults[0] == PackageManager.PERMISSION_DENIED
-    ) {
-      permissionDialog =
-        MaterialAlertDialogBuilder(requireActivity(), R.style.FloatsCustomDialogTheme)
-          .setCancelable(false)
-          .setTitle("Permission Denied")
-          .setMessage("App needs write permission for file saving.")
-          .setNeutralButton("Settings") { _, _ ->
-            permissionDialog = null
-            startActivity(
-              Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS)
-                .setData(
-                  Uri.parse("package:${requireActivity().packageName}")
-                )
-            )
-          }.setPositiveButton("Ask again") { _, _ ->
-            ActivityCompat.requestPermissions(
-              requireActivity(),
-              arrayOf(Manifest.permission.WRITE_EXTERNAL_STORAGE),
-              79
-            )
-          }
-          .show()
-    } else if (requestCode == CAMERA_REQUEST_CODE && grantResults.isNotEmpty()) {
-      if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-        startActivity(
-          Intent(
-            activity,
-            ScanActivity::class.java
-          )
-        )
-      } else {
-        Snackbar.make(
-          view.findViewById(R.id.home_layout),
-          "Camera Permission was denied.",
-          Snackbar.LENGTH_LONG
-        ).show()
-      }
     }
   }
 
@@ -322,11 +270,11 @@ class HomeFragment(private val localPort: Int) : Fragment() {
         .putExtra("port", if (isServer) localPort else hostPort)
 
       if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
-        requireActivity().startForegroundService(service)
-      else requireActivity().startService(service)
+        activity.startForegroundService(service)
+      else activity.startService(service)
 
-      startActivity(
-        Intent(requireActivity(), SessionActivity::class.java)
+      activity.startActivity(
+        Intent(activity, SessionActivity::class.java)
           .putExtra("deviceName", name)
           .putExtra("hostAddress", host)
       )
@@ -334,7 +282,7 @@ class HomeFragment(private val localPort: Int) : Fragment() {
   }
 
   private fun generateQr(qrImageView: ImageView, text: String) {
-    val primaryColor = ThemeHelper.variant60Color(requireActivity())
+    val primaryColor = DynamicTheme.variant60Color(activity)
 
     val options = QrVectorOptions.Builder()
       .setPadding(.3f)

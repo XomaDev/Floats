@@ -21,7 +21,7 @@ import androidx.core.app.NotificationCompat
 import com.baxolino.apps.floats.R
 import com.baxolino.apps.floats.core.transfer.Info
 import com.baxolino.apps.floats.core.transfer.SocketConnection
-import com.baxolino.apps.floats.tools.ThemeHelper
+import com.baxolino.apps.floats.tools.DynamicTheme
 import java.io.InputStream
 import kotlin.random.Random
 
@@ -165,7 +165,7 @@ class FileRequestService : Service() {
   }
 
   private fun buildNotification(progress: Int, speed: String): Notification {
-    val remoteLayout = ThemeHelper.getProgressBar(this)
+    val remoteLayout = DynamicTheme.getProgressBar(this)
     remoteLayout.setProgressBar(
       R.id.progress_notification,
       fileLength, progress, false
@@ -178,7 +178,7 @@ class FileRequestService : Service() {
     return NotificationCompat.Builder(this, NOTIF_CHANNEL_ID)
       .setSmallIcon(R.mipmap.upload)
       .setStyle(NotificationCompat.DecoratedCustomViewStyle())
-      .setColor(ThemeHelper.variant70Color(this))
+      .setColor(DynamicTheme.variant70Color(this))
       .setCustomContentView(remoteLayout)
       .setOngoing(true)
       .build()
@@ -210,7 +210,7 @@ class FileRequestService : Service() {
         .setSmallIcon(R.mipmap.check)
         .setContentTitle("File sent")
         .setContentText("$fileName was sent.")
-        .setColor(ThemeHelper.variant70Color(this))
+        .setColor(DynamicTheme.variant70Color(this))
         .build()
       notificationManager.notify(Random.nextInt(), notification)
     }

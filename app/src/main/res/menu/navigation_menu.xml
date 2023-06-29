@@ -5,8 +5,8 @@
       android:icon="@drawable/search"
       android:title="Code"/>
   <item
-      android:id="@+id/itemPeople"
+      android:id="@+id/itemFiles"
       android:enabled="true"
-      android:icon="@drawable/people"
-      android:title="People"/>
+      android:icon="@drawable/folder"
+      android:title="Files"/>
 </menu>

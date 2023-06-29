@@ -16,7 +16,7 @@ import androidx.core.app.NotificationCompat
 import com.baxolino.apps.floats.R
 import com.baxolino.apps.floats.SessionActivity
 import com.baxolino.apps.floats.core.transfer.SocketConnection
-import com.baxolino.apps.floats.tools.ThemeHelper
+import com.baxolino.apps.floats.tools.DynamicTheme
 import io.paperdb.Paper
 import java.io.InputStream
 import java.io.OutputStream
@@ -202,7 +202,7 @@ class SessionService : Service() {
       .setContentText("Connected to $partner")
       .setContentIntent(sessionIntent)
       .addAction(R.mipmap.x_lg, "Disconnect", disconnectPendingIntent)
-      .setColor(ThemeHelper.variant70Color(this))
+      .setColor(DynamicTheme.variant70Color(this))
       .setOngoing(true)
       .build()
     startForeground(

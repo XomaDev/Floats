@@ -21,7 +21,7 @@ import androidx.annotation.RequiresApi
 import androidx.core.app.NotificationCompat
 import com.baxolino.apps.floats.R
 import com.baxolino.apps.floats.core.files.MessageReceiver.Companion.RECEIVE_ACTION
-import com.baxolino.apps.floats.tools.ThemeHelper
+import com.baxolino.apps.floats.tools.DynamicTheme
 import java.io.File
 import kotlin.concurrent.thread
 import kotlin.random.Random
@@ -231,7 +231,7 @@ class FileReceiveService : Service() {
         .setSmallIcon(R.mipmap.check)
         .setContentTitle("File received")
         .setContentText("$fileName was received.")
-        .setColor(ThemeHelper.variant70Color(this))
+        .setColor(DynamicTheme.variant70Color(this))
         .build()
       notificationManager.notify(Random.nextInt(), notification)
     }
@@ -270,7 +270,7 @@ class FileReceiveService : Service() {
 
   private fun createNotification(progress: Int, speed: String): Notification {
     // Get the layouts to use in the custom notification
-    val remoteLayout = ThemeHelper.getProgressBar(this)
+    val remoteLayout = DynamicTheme.getProgressBar(this)
     remoteLayout.setProgressBar(
       R.id.progress_notification,
       fileLength, progress, false
@@ -283,7 +283,7 @@ class FileReceiveService : Service() {
     return NotificationCompat.Builder(this, NOTIF_CHANNEL_ID)
       .setSmallIcon(R.mipmap.download)
       .setStyle(NotificationCompat.DecoratedCustomViewStyle())
-      .setColor(ThemeHelper.variant70Color(this))
+      .setColor(DynamicTheme.variant70Color(this))
       .setCustomContentView(remoteLayout)
       .setOngoing(true)
       .build()
