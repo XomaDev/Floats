@@ -7,9 +7,9 @@
     <com.google.android.material.card.MaterialCardView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="20dp"
+        android:layout_marginTop="25dp"
         app:cardElevation="1dp"
-        app:contentPadding="20dp"
+        app:contentPadding="15dp"
         app:strokeWidth="0dp">
 
         <LinearLayout
