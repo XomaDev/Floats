@@ -115,11 +115,6 @@ class HomeFragment(
     deviceConnectionInfo = connectionInfo
     generateQr(qrImageView, connectionInfo)
 
-    view.findViewById<TextView>(R.id.documents_tip).text =
-      Html.fromHtml(
-        "Files go to the <b>Documents</b> folder.",
-        Html.FROM_HTML_SEPARATOR_LINE_BREAK_PARAGRAPH
-      )
 
     val scanButton = view.findViewById<MaterialCardView>(R.id.scanButton)
 

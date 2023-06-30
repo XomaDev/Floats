@@ -38,20 +38,6 @@ object DynamicTheme {
       )
     )
 
-    val tipCard = view.findViewById<MaterialCardView>(R.id.tip_card)
-    tipCard.backgroundTintList = ColorStateList.valueOf(
-      activity.getColor(
-        com.google.android.material.R.color.material_dynamic_neutral_variant50
-      )
-    )
-
-    val tipText = view.findViewById<TextView>(R.id.documents_tip)
-    tipText.setTextColor(
-      activity.getColor(
-        com.google.android.material.R.color.material_dynamic_primary80
-      )
-    )
-
     val buttonText = view.findViewById<TextView>(R.id.button_text)
     buttonText.setTextColor(
       activity.getColor(
