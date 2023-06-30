@@ -1,15 +1,18 @@
 package com.baxolino.apps.floats
 
 import android.Manifest
+import android.Manifest.permission.WRITE_EXTERNAL_STORAGE
 import android.app.Activity
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.net.Uri
 import android.os.Build
-import android.text.Html
+import android.provider.Settings
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.Button
 import android.widget.ImageView
 import android.widget.TextView
 import androidx.appcompat.app.AlertDialog
@@ -31,7 +34,6 @@ import com.github.alexzhirkevich.customqrgenerator.vector.style.QrVectorColors
 import com.github.alexzhirkevich.customqrgenerator.vector.style.QrVectorFrameShape
 import com.github.alexzhirkevich.customqrgenerator.vector.style.QrVectorPixelShape
 import com.github.alexzhirkevich.customqrgenerator.vector.style.QrVectorShapes
-import com.google.android.material.card.MaterialCardView
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.snackbar.Snackbar
 import java.net.InetAddress
@@ -46,8 +48,8 @@ class HomeFragment(
 
   companion object {
     private const val TAG = "HomeActivity"
-    private const val STORAGE_REQUEST_CODE = 7
-    private const val CAMERA_REQUEST_CODE = 8
+    const val STORAGE_REQUEST_CODE = 7
+    const val CAMERA_REQUEST_CODE = 8
   }
 
   private var initialized = false
@@ -116,7 +118,7 @@ class HomeFragment(
     generateQr(qrImageView, connectionInfo)
 
 
-    val scanButton = view.findViewById<MaterialCardView>(R.id.scanButton)
+    val scanButton = view.findViewById<Button>(R.id.scanButton)
 
     scanButton.setOnClickListener {
       if (ContextCompat.checkSelfPermission(
@@ -199,6 +201,41 @@ class HomeFragment(
         activity, arrayOf(Manifest.permission.WRITE_EXTERNAL_STORAGE),
         STORAGE_REQUEST_CODE
       )
+    }
+  }
+
+  fun onCameraPermission(granted: Boolean) {
+    if (granted) {
+      activity.startActivity(
+        Intent(activity, ScanActivity::class.java)
+      )
+    } else {
+      Snackbar.make(
+        view,
+        "Camera Permission was denied.",
+        Snackbar.LENGTH_LONG
+      ).show()
+    }
+  }
+
+  fun onStoragePermission(granted: Boolean) {
+    if (!granted) {
+      permissionDialog = MaterialAlertDialogBuilder(activity, R.style.FloatsCustomDialogTheme)
+        .setCancelable(false)
+        .setTitle("Permission Denied")
+        .setMessage("App needs write permission for file saving.")
+        .setNeutralButton("Settings") { _, _ ->
+          permissionDialog = null
+          activity.startActivity(
+            Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS)
+              .setData(
+                Uri.parse("package:${activity.packageName}")
+              )
+          )
+        }.setPositiveButton("Retry") { _, _ ->
+          ActivityCompat.requestPermissions(activity, arrayOf(WRITE_EXTERNAL_STORAGE), 79)
+        }
+        .show()
     }
   }
 

@@ -1,6 +1,7 @@
 package com.baxolino.apps.floats
 
 import android.annotation.SuppressLint
+import android.content.Intent
 import android.os.Bundle
 import android.util.Log
 import android.view.ViewGroup.LayoutParams.MATCH_PARENT
@@ -20,6 +21,9 @@ class HomeActivity : AppCompatActivity() {
     private const val TAG = "HomeActivity"
   }
 
+  private lateinit var home: HomeFragment
+  private lateinit var files: FilesFragment
+
   @SuppressLint("HardwareIds")
   override fun onCreate(savedInstanceState: Bundle?) {
     super.onCreate(savedInstanceState)
@@ -36,7 +40,7 @@ class HomeActivity : AppCompatActivity() {
 
     var currentTab = R.id.itemCode
 
-    val home = HomeFragment(this)
+    home = HomeFragment(this)
     val viewHome = home.onCreate(
       layoutInflater,
       null
@@ -47,8 +51,8 @@ class HomeActivity : AppCompatActivity() {
       MATCH_PARENT
     )
 
-    val people = FilesFragment(this)
-    val viewPeople = people.onCreate(
+    files = FilesFragment(this)
+    val viewPeople = files.onCreate(
       layoutInflater,
       null
     )
@@ -84,6 +88,23 @@ class HomeActivity : AppCompatActivity() {
           else -> false
         }
       }
+    }
+  }
+
+  override fun onResume() {
+    super.onResume()
+    home.onResume()
+  }
+
+  @Deprecated("Deprecated in Java")
+  override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+    super.onActivityResult(requestCode, resultCode, data)
+
+    val isOk = resultCode == RESULT_OK
+    if (requestCode == HomeFragment.CAMERA_REQUEST_CODE) {
+      home.onCameraPermission(isOk)
+    } else if (requestCode == HomeFragment.STORAGE_REQUEST_CODE) {
+      home.onStoragePermission(isOk)
     }
   }
 }
