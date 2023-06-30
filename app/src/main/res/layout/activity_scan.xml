@@ -8,17 +8,22 @@
     android:orientation="vertical"
     tools:context=".camera.ScanActivity">
 
-    <LinearLayout
+    <FrameLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content">
 
-        <Button
-            android:id="@+id/back_button"
-            style="?attr/materialIconButtonStyle"
+        <LinearLayout
+            android:layout_gravity="left|center"
             android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="center"
-            app:icon="@drawable/chevron_left" />
+            android:layout_height="wrap_content">
+            <Button
+                android:id="@+id/back_button"
+                style="?attr/materialIconButtonStyle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                app:icon="@drawable/chevron_left" />
+        </LinearLayout>
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -34,7 +39,7 @@
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toTopOf="parent" />
         </LinearLayout>
-    </LinearLayout>
+    </FrameLayout>
 
     <com.google.android.material.card.MaterialCardView
         android:layout_width="wrap_content"

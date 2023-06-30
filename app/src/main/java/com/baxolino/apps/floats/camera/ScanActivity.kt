@@ -14,6 +14,7 @@ import androidx.camera.view.PreviewView
 import androidx.core.content.ContextCompat
 import com.baxolino.apps.floats.HomeActivity
 import com.baxolino.apps.floats.R
+import com.baxolino.apps.floats.tools.DynamicTheme
 
 
 class ScanActivity : AppCompatActivity() {
@@ -27,6 +28,9 @@ class ScanActivity : AppCompatActivity() {
   override fun onCreate(savedInstanceState: Bundle?) {
     super.onCreate(savedInstanceState)
     setContentView(R.layout.activity_scan)
+
+    DynamicTheme.applyNavigationBarTheme(this)
+
     val onBackPressedCallback = object : OnBackPressedCallback(true) {
       override fun handleOnBackPressed() {
         finish()
