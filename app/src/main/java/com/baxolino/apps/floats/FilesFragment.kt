@@ -1,11 +1,13 @@
 package com.baxolino.apps.floats
 
 import android.app.Activity
+import android.text.Html
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ListView
+import android.widget.TextView
 import com.baxolino.apps.floats.listviews.FileDetails
 import com.baxolino.apps.floats.listviews.FileListAdapter
 import io.paperdb.Paper

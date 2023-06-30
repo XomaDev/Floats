@@ -9,7 +9,6 @@ import android.widget.FrameLayout
 import android.widget.ImageView
 import android.widget.RemoteViews
 import android.widget.TextView
-import androidx.fragment.app.FragmentActivity
 import com.baxolino.apps.floats.ConnectionActivity
 import com.baxolino.apps.floats.R
 import com.baxolino.apps.floats.SessionActivity

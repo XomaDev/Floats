@@ -58,26 +58,13 @@
                         android:textSize="11sp" />
                 </LinearLayout>
 
-                <FrameLayout
-                    android:id="@+id/actionOutline"
+                <Button
+                    style="?attr/materialIconButtonStyle"
+                    android:id="@+id/iconButton"
+                    app:icon="@drawable/share"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_gravity="center"
-                    android:background="@drawable/dotted_border"
-                    android:paddingStart="7dp"
-                    android:paddingEnd="7dp"
-                    android:paddingTop="4dp"
-                    android:paddingBottom="4dp"
-                    app:cardElevation="1dp"
-                    app:strokeWidth="0dp">
-
-                    <TextView
-                        android:id="@+id/actionButton"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:fontFamily="@font/inter"
-                        android:text="Play" />
-                </FrameLayout>
+                    />
             </LinearLayout>
 
             <LinearLayout

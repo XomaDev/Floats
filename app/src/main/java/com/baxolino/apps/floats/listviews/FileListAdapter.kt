@@ -8,16 +8,18 @@ import android.text.format.Formatter
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.webkit.MimeTypeMap
 import android.widget.ArrayAdapter
 import android.widget.FrameLayout
 import android.widget.ImageView
 import android.widget.TextView
+import androidx.core.content.ContextCompat.startActivity
+import androidx.core.content.FileProvider
 import com.baxolino.apps.floats.R
 import com.baxolino.apps.floats.core.files.FileNameUtil
 import com.baxolino.apps.floats.tools.DynamicTheme
 import com.google.android.material.card.MaterialCardView
 import java.io.File
+import java.net.URLConnection
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -50,22 +52,39 @@ class FileListAdapter(context: Context?, itemList: ArrayList<FileDetails>) :
 
     val file = File(details.filePath)
 
-    val map = MimeTypeMap.getSingleton()
-    val ext = MimeTypeMap.getFileExtensionFromUrl(file.name)
-    var type = map.getMimeTypeFromExtension(ext)
+    // let's share the file when asked to...
+    val actionIntent = Intent(Intent.ACTION_SEND)
+      .apply {
+        type = URLConnection.guessContentTypeFromName(file.name)
 
-    if (type == null)
-      type = "*/*"
-
-    val actionIntent = Intent(Intent.ACTION_VIEW)
-    actionIntent.setDataAndType(Uri.fromFile(file), type)
+        putExtra(
+          Intent.EXTRA_STREAM,
+          FileProvider.getUriForFile(
+            context,
+            "com.baxolino.apps.floats.fileprovider", file
+          )
+        )
+      }
 
     convertView.apply {
-      DynamicTheme.setSpecialBorderTheme(
-        context,
-        findViewById(R.id.actionOutline)
-      )
-
+//      findViewById<FrameLayout>(R.id.actionOutline).let {
+//        DynamicTheme.setSpecialBorderTheme(
+//          context,
+//          it
+//        )
+//        it.setOnClickListener {
+//          context.startActivity(actionIntent)
+//        }
+//
+//        findViewById<TextView>(R.id.actionButton)
+//          .apply {
+//            setOnClickListener {
+//              context.startActivity(actionIntent)
+//            }
+//            text = fileMapping.second // set the appropriate action text
+//            setTextColor(color)
+//          }
+//      }
 
       findViewById<ImageView>(R.id.fileIcon).apply {
         setBackgroundResource(fileMapping.first) // the file type icon
@@ -76,12 +95,6 @@ class FileListAdapter(context: Context?, itemList: ArrayList<FileDetails>) :
         .setTextColor(color)
 
       findViewById<TextView>(R.id.sizeLabel).setTextColor(color)
-
-      findViewById<TextView>(R.id.actionButton)
-        .apply {
-          text = fileMapping.second // set the appropriate action text
-          setTextColor(color)
-        }
 
       findViewById<TextView>(R.id.fileName).apply {
         text = shortFileName
