@@ -8,11 +8,9 @@ import android.view.View
 import android.widget.FrameLayout
 import android.widget.ImageView
 import android.widget.RemoteViews
-import android.widget.TextView
 import com.baxolino.apps.floats.ConnectionActivity
 import com.baxolino.apps.floats.R
 import com.baxolino.apps.floats.SessionActivity
-import com.google.android.material.card.MaterialCardView
 import com.google.android.material.color.DynamicColors
 import com.google.android.material.elevation.SurfaceColors
 
@@ -35,20 +33,6 @@ object DynamicTheme {
     qrImageView.backgroundTintList = ColorStateList.valueOf(
       activity.getColor(
         com.google.android.material.R.color.material_dynamic_neutral_variant60
-      )
-    )
-
-    val buttonText = view.findViewById<TextView>(R.id.button_text)
-    buttonText.setTextColor(
-      activity.getColor(
-        com.google.android.material.R.color.material_dynamic_primary70
-      )
-    )
-
-    val qrScanIcon = view.findViewById<ImageView>(R.id.qr_scan_icon)
-    qrScanIcon.backgroundTintList = ColorStateList.valueOf(
-      activity.getColor(
-        com.google.android.material.R.color.material_dynamic_primary80
       )
     )
   }
