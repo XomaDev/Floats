@@ -43,7 +43,7 @@ class FileListAdapter(context: Context?, itemList: ArrayList<FileDetails>) :
     // we need to get the appropriate icon for the file
     // and also the appropriate action text
 
-    val fileMapping = FileMapping.getDetails(
+    val fileIcon = FileMapping.getDetails(
       details.fileName.split('.').last()
     )
 
@@ -70,12 +70,11 @@ class FileListAdapter(context: Context?, itemList: ArrayList<FileDetails>) :
           setOnClickListener {
             context.startActivity(actionIntent)
           }
-          text = fileMapping.second // set the appropriate action text
           setTextColor(color)
         }
 
       findViewById<ImageView>(R.id.fileIcon).apply {
-        setBackgroundResource(fileMapping.first) // the file type icon
+        setBackgroundResource(fileIcon) // the file type icon
         backgroundTintList = ColorStateList.valueOf(color)
       }
 

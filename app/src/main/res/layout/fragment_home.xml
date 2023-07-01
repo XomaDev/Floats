@@ -47,8 +47,8 @@
 
             <ImageView
                 android:id="@+id/qr_image"
-                android:layout_width="360dp"
-                android:layout_height="360dp"
+                android:layout_width="330dp"
+                android:layout_height="340dp"
                 android:backgroundTint="@color/alt_variant_60"
                 android:importantForAccessibility="no" />
 
@@ -69,6 +69,21 @@
                 android:fontFamily="@font/inter"
                 android:text="Scan from camera"
                 app:icon="@drawable/scan_outline" />
+
+            <com.google.android.material.card.MaterialCardView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="25dp"
+                app:cardElevation="1dp"
+                app:contentPadding="10dp"
+                app:strokeWidth="0dp">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:fontFamily="@font/inter"
+                    android:text="Ensure both devices are on the same network, such as a hotspot or Wi-Fi." />
+            </com.google.android.material.card.MaterialCardView>
         </LinearLayout>
     </ScrollView>
 

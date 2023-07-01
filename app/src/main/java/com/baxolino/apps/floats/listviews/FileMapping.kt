@@ -3,20 +3,17 @@ package com.baxolino.apps.floats.listviews
 import com.baxolino.apps.floats.R
 
 object FileMapping {
-  fun getDetails(fileType: String): Pair<Int, String> {
+  fun getDetails(fileType: String): Int {
     /*
     video, audio, photo, text, zip, binary
      */
     var icon = R.drawable.icon_binary
-    var action = "View"
     when (fileType.lowercase()) {
       "mp4", "mkv", "avi" -> {
         icon = R.drawable.icon_video
-        action = "Play"
       }
       "mp3", "wav", "aac", "ogg", "aiff" -> {
         icon = R.drawable.icon_audio
-        action = "Play"
       }
       "jpeg", "jpg", "png", "webp" -> {
         icon = R.drawable.icon_image
@@ -37,6 +34,6 @@ object FileMapping {
         icon = R.drawable.icon_word
       }
     }
-    return Pair(icon, action)
+    return icon
   }
 }
