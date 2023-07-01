@@ -16,8 +16,14 @@ class ConnectionActivity : AppCompatActivity() {
     setContentView(R.layout.activity_connection)
 
     DynamicTheme.themeOfNoConnectionActivity(this)
+
+    var running = true
     findViewById<MaterialButton>(R.id.retry_button).setOnClickListener {
       if (Utils.getIpv4(this) != null) {
+        if (!running)
+          // avoid multiple attempts
+          return@setOnClickListener
+        running = false
         startActivity(
           Intent(
             this,
@@ -36,6 +42,9 @@ class ConnectionActivity : AppCompatActivity() {
     val executor = ScheduledThreadPoolExecutor(1)
     executor.scheduleAtFixedRate({
       if (Utils.getIpv4(this) != null) {
+        if (!running)
+          return@scheduleAtFixedRate
+        running = false
         executor.shutdown()
         startActivity(
           Intent(
