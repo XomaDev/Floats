@@ -6,10 +6,12 @@ import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.Button
 import android.widget.ListView
 import android.widget.TextView
 import com.baxolino.apps.floats.listviews.FileDetails
 import com.baxolino.apps.floats.listviews.FileListAdapter
+import com.google.android.material.snackbar.Snackbar
 import io.paperdb.Paper
 import org.json.JSONObject
 import java.io.File
@@ -35,16 +37,21 @@ class FilesFragment(
       return view
     view = inflater.inflate(R.layout.fragment_files, container, false)
 
-    val files = retrieveSavedFiles()
     val listView = view.findViewById<ListView>(R.id.devices_list)
-
-    listView.adapter = FileListAdapter(activity, files)
+    listView.adapter = FileListAdapter(activity, retrieveSavedFiles())
 
     view.findViewById<TextView>(R.id.filesTip).text =
       Html.fromHtml(
         "Files are saved into the <b>Documents</b> folder.",
         Html.FROM_HTML_SEPARATOR_LINE_BREAK_PARAGRAPH
       )
+    view.findViewById<Button>(R.id.clearHistory).setOnClickListener {
+      Paper.book("files").destroy()
+      // this will refresh the list
+      listView.adapter = FileListAdapter(activity, retrieveSavedFiles())
+      Snackbar.make(view, "File history was cleared", Snackbar.LENGTH_LONG)
+        .show()
+    }
     return view
   }
 
