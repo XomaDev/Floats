@@ -9,7 +9,6 @@ import android.view.ViewGroup
 import android.widget.Button
 import android.widget.ListView
 import android.widget.TextView
-import androidx.core.view.isEmpty
 import com.baxolino.apps.floats.listviews.FileDetails
 import com.baxolino.apps.floats.listviews.FileListAdapter
 import com.google.android.material.snackbar.Snackbar
@@ -39,8 +38,10 @@ class FilesFragment(
     view = inflater.inflate(R.layout.fragment_files, container, false)
 
     val listView = view.findViewById<ListView>(R.id.devices_list)
-    listView.adapter = FileListAdapter(activity, retrieveSavedFiles())
-    if (listView.isEmpty()) {
+
+    val files = retrieveSavedFiles()
+    listView.adapter = FileListAdapter(activity, files)
+    if (files.isEmpty()) {
       view.findViewById<View>(R.id.emptyListTip).visibility = View.VISIBLE
     }
     view.findViewById<TextView>(R.id.filesTip).text =
