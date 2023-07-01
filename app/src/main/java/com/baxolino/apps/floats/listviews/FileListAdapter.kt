@@ -3,16 +3,13 @@ package com.baxolino.apps.floats.listviews
 import android.content.Context
 import android.content.Intent
 import android.content.res.ColorStateList
-import android.net.Uri
 import android.text.format.Formatter
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ArrayAdapter
-import android.widget.FrameLayout
 import android.widget.ImageView
 import android.widget.TextView
-import androidx.core.content.ContextCompat.startActivity
 import androidx.core.content.FileProvider
 import com.baxolino.apps.floats.R
 import com.baxolino.apps.floats.core.files.FileNameUtil
@@ -67,24 +64,15 @@ class FileListAdapter(context: Context?, itemList: ArrayList<FileDetails>) :
       }
 
     convertView.apply {
-//      findViewById<FrameLayout>(R.id.actionOutline).let {
-//        DynamicTheme.setSpecialBorderTheme(
-//          context,
-//          it
-//        )
-//        it.setOnClickListener {
-//          context.startActivity(actionIntent)
-//        }
-//
-//        findViewById<TextView>(R.id.actionButton)
-//          .apply {
-//            setOnClickListener {
-//              context.startActivity(actionIntent)
-//            }
-//            text = fileMapping.second // set the appropriate action text
-//            setTextColor(color)
-//          }
-//      }
+
+      findViewById<TextView>(R.id.actionButton)
+        .apply {
+          setOnClickListener {
+            context.startActivity(actionIntent)
+          }
+          text = fileMapping.second // set the appropriate action text
+          setTextColor(color)
+        }
 
       findViewById<ImageView>(R.id.fileIcon).apply {
         setBackgroundResource(fileMapping.first) // the file type icon
