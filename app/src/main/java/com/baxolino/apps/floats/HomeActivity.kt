@@ -1,7 +1,7 @@
 package com.baxolino.apps.floats
 
 import android.annotation.SuppressLint
-import android.content.Intent
+import android.content.pm.PackageManager
 import android.os.Bundle
 import android.util.Log
 import android.view.ViewGroup.LayoutParams.MATCH_PARENT
@@ -96,15 +96,21 @@ class HomeActivity : AppCompatActivity() {
     home.onResume()
   }
 
-  @Deprecated("Deprecated in Java")
-  override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
-    super.onActivityResult(requestCode, resultCode, data)
+  override fun onRequestPermissionsResult(
+    requestCode: Int,
+    permissions: Array<out String>,
+    grantResults: IntArray
+  ) {
+    super.onRequestPermissionsResult(requestCode, permissions, grantResults)
 
-    val isOk = resultCode == RESULT_OK
+    val isGranted = grantResults.isNotEmpty()
+            && grantResults[0] == PackageManager.PERMISSION_GRANTED
+
     if (requestCode == HomeFragment.CAMERA_REQUEST_CODE) {
-      home.onCameraPermission(isOk)
+      home.onCameraPermission(isGranted)
     } else if (requestCode == HomeFragment.STORAGE_REQUEST_CODE) {
-      home.onStoragePermission(isOk)
+      home.onStoragePermission(isGranted)
     }
   }
+
 }

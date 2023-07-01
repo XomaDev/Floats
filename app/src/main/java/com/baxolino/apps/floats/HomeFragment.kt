@@ -194,17 +194,18 @@ class HomeFragment(
       && permissionDialog == null
       && ContextCompat.checkSelfPermission(
         activity,
-        Manifest.permission.WRITE_EXTERNAL_STORAGE
+        WRITE_EXTERNAL_STORAGE
       ) != PackageManager.PERMISSION_GRANTED
     ) {
       ActivityCompat.requestPermissions(
-        activity, arrayOf(Manifest.permission.WRITE_EXTERNAL_STORAGE),
+        activity, arrayOf(WRITE_EXTERNAL_STORAGE),
         STORAGE_REQUEST_CODE
       )
     }
   }
 
   fun onCameraPermission(granted: Boolean) {
+    Log.d(TAG, "Permission = $granted")
     if (granted) {
       activity.startActivity(
         Intent(activity, ScanActivity::class.java)
