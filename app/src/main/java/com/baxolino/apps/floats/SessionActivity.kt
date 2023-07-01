@@ -127,7 +127,7 @@ class SessionActivity : AppCompatActivity() {
 
 
     // the session activity, was closed, and then reopened through
-    // notification, we need to set the listeners back, if any
+    // notification, we need to set the (existing) listeners back, if any
     val receiver = FileReceiver.activeReceiver
     receiver?.let {
       frameProgress.setOnLongClickListener {

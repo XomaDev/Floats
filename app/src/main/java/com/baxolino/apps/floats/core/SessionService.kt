@@ -13,6 +13,8 @@ import android.os.IBinder
 import android.util.Log
 import androidx.annotation.RequiresApi
 import androidx.core.app.NotificationCompat
+import com.baxolino.apps.floats.HomeActivity
+import com.baxolino.apps.floats.HomeActivity.Companion.RESTORE_SESSION_CHECK
 import com.baxolino.apps.floats.R
 import com.baxolino.apps.floats.SessionActivity
 import com.baxolino.apps.floats.core.transfer.SocketConnection
@@ -60,6 +62,24 @@ class SessionService : Service() {
         )
         onDisconnect()
       }
+    }
+  }
+
+  // when the app was completely closed, we are responsible to
+  // restore it back to the previous session scree
+
+  private val restoreSessionRequestReceiver = object: BroadcastReceiver() {
+    override fun onReceive(context: Context?, intent: Intent?) {
+      Log.d(TAG, "Received restore request")
+      // when we receive a request, we are going to reply back to
+      // it with things like host address, and connected device name
+      sendBroadcast(
+        Intent(
+          HomeActivity.RESTORE_SESSION_REPLY
+        )
+          .putExtra("deviceName", partner)
+          .putExtra("hostAddress", host)
+      )
     }
   }
 
@@ -163,6 +183,7 @@ class SessionService : Service() {
   private fun stop() {
     stopForeground(STOP_FOREGROUND_REMOVE)
     unregisterReceiver(disconnectButtonReceiver)
+    unregisterReceiver(restoreSessionRequestReceiver)
   }
 
   private fun foreground() {
@@ -172,6 +193,10 @@ class SessionService : Service() {
     registerReceiver(
       disconnectButtonReceiver,
       IntentFilter(DISCONNECT_BUTTON_BROADCAST_ACTION)
+    )
+    registerReceiver(
+      restoreSessionRequestReceiver,
+      IntentFilter(RESTORE_SESSION_CHECK)
     )
 
     val disconnectPendingIntent = PendingIntent.getBroadcast(

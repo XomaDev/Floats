@@ -1,6 +1,9 @@
 package com.baxolino.apps.floats
 
-import android.annotation.SuppressLint
+import android.content.BroadcastReceiver
+import android.content.Context
+import android.content.Intent
+import android.content.IntentFilter
 import android.content.pm.PackageManager
 import android.os.Bundle
 import android.util.Log
@@ -19,17 +22,43 @@ class HomeActivity : AppCompatActivity() {
     }
 
     private const val TAG = "HomeActivity"
+
+    const val RESTORE_SESSION_CHECK = "restore_session_request"
+    const val RESTORE_SESSION_REPLY = "restore_session_reply"
   }
 
   private lateinit var home: HomeFragment
   private lateinit var files: FilesFragment
 
-  @SuppressLint("HardwareIds")
+  private val restoreSessionReplyReceiver = object : BroadcastReceiver() {
+    override fun onReceive(context: Context?, intent: Intent) {
+      Log.d(TAG, "Received restore reply")
+      val deviceName = intent.getStringExtra("deviceName")!!
+      val host = intent.getStringExtra("hostAddress")!!
+
+      startActivity(
+        Intent(this@HomeActivity, SessionActivity::class.java)
+          .putExtra("deviceName", deviceName)
+          .putExtra("hostAddress", host)
+      )
+    }
+  }
+
   override fun onCreate(savedInstanceState: Bundle?) {
     super.onCreate(savedInstanceState)
 
     Log.d(TAG, "onCreate()")
     Paper.init(this)
+
+    registerReceiver(
+      restoreSessionReplyReceiver,
+      IntentFilter(RESTORE_SESSION_REPLY)
+    )
+    sendBroadcast(
+      Intent(
+        RESTORE_SESSION_CHECK
+      )
+    )
     setContentView(R.layout.activity_home)
 
     val bottomNavigationView = findViewById<BottomNavigationView>(R.id.bottomNavigationView)
@@ -94,6 +123,16 @@ class HomeActivity : AppCompatActivity() {
   override fun onResume() {
     super.onResume()
     home.onResume()
+
+    // we receive a reply from the SessionService if it is
+    // in-case active
+    registerReceiver(restoreSessionReplyReceiver,
+      IntentFilter(RESTORE_SESSION_REPLY))
+  }
+
+  override fun onPause() {
+    super.onPause()
+    unregisterReceiver(restoreSessionReplyReceiver)
   }
 
   override fun onRequestPermissionsResult(
