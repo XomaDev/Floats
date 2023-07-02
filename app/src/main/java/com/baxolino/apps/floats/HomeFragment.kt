@@ -270,7 +270,7 @@ class HomeFragment(
     this could be also directly invoked by
     HomeActivity, when connecting from the People Fragment
   */
-  fun doConnect(port: Int, ipv4Address: String) {
+  private fun doConnect(port: Int, ipv4Address: String) {
     connector.connectOnPort(port, ipv4Address, false, {
       Log.d(TAG, "Connected()")
       onConnectionSuccessful(false)

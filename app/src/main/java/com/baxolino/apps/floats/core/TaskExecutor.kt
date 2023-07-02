@@ -17,6 +17,8 @@ class TaskExecutor(connection: SocketConnection) {
   val writer =
     MultiChannelSystem(connection.output)
 
+  private var handler: RequestHandler? = null
+
   init {
     reader.start()
     writer.start()
@@ -31,27 +33,23 @@ class TaskExecutor(connection: SocketConnection) {
   // the file name followed by the file length
   fun register(handler: RequestHandler) {
     handler.setReader(reader, this)
+    this.handler = handler
   }
 
-  fun respond(port: Int) {
+  fun unregister() {
+    handler?.destroy()
+  }
+
+  fun respond(channel: ChannelInfo) {
     writer.write(
-      ChannelInfo(
-        BitStream()
-          .writeInt32(port)
-          .toBytes()
-      ),
+      channel,
       ByteArray(1)
     )
   }
 
-  fun register(port: Int, forgetAfter: Boolean, listener: () -> Unit) {
+  fun register(channel: ChannelInfo, forgetAfter: Boolean, listener: () -> Unit) {
     val dataInputStream = DataInputStream()
 
-    val channel = ChannelInfo(
-      BitStream()
-        .writeInt32(port)
-        .toBytes()
-    )
     reader.registerChannelStream(
       channel,
       dataInputStream

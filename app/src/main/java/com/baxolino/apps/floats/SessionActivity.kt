@@ -19,10 +19,13 @@ import androidx.appcompat.app.AppCompatActivity
 import com.baxolino.apps.floats.core.SessionService
 import com.baxolino.apps.floats.core.TaskExecutor
 import com.baxolino.apps.floats.core.files.FileNameUtil
+import com.baxolino.apps.floats.core.files.FileReceiveService
 import com.baxolino.apps.floats.core.files.FileReceiver
 import com.baxolino.apps.floats.core.files.FileRequest
+import com.baxolino.apps.floats.core.files.FileUpdateInterface
 import com.baxolino.apps.floats.core.files.MessageReceiver
 import com.baxolino.apps.floats.core.files.RequestHandler
+import com.baxolino.apps.floats.core.transfer.ChannelInfo
 import com.baxolino.apps.floats.core.transfer.SocketConnection
 import com.baxolino.apps.floats.tools.DynamicTheme
 import com.google.android.material.card.MaterialCardView
@@ -52,9 +55,13 @@ class SessionActivity : AppCompatActivity() {
   private lateinit var transferSpeedText: TextView
 
   private lateinit var progressBar: CircularProgressIndicator
+
   private lateinit var frameProgress: FrameLayout
+  private lateinit var progressCard: MaterialCardView
 
   private var receiver: FileReceiver? = null
+
+  private lateinit var updater: FileUpdateInterface
 
   private lateinit var connection:SocketConnection
   private lateinit var executor:TaskExecutor
@@ -94,6 +101,7 @@ class SessionActivity : AppCompatActivity() {
     executor = TaskExecutor(connection)
 
     messageReceiver = MessageReceiver()
+    updater = FileUpdateInterface.getUpdateInterface()
 
     // or else we are just testing
     deviceName = intent.getStringExtra("deviceName")!!
@@ -122,35 +130,11 @@ class SessionActivity : AppCompatActivity() {
 
     frameProgress = findViewById(R.id.progress_frame)
 
-    val progressCard = findViewById<MaterialCardView>(R.id.progress_card)
+    progressCard = findViewById(R.id.progress_card)
 
 
-
-    // the session activity, was closed, and then reopened through
-    // notification, we need to set the (existing) listeners back, if any
-    val receiver = FileReceiver.activeReceiver
-    receiver?.let {
-      frameProgress.setOnLongClickListener {
-
-        cancelFileTransfer(receiver)
-        return@setOnLongClickListener true
-      }
-      // since some devices, don't register long
-      // click of the frame progress
-      progressCard.setOnLongClickListener {
-        cancelFileTransfer(receiver)
-        return@setOnLongClickListener true
-      }
-
-      fileNameLabel.text = FileNameUtil.toShortDisplayName(it.name)
-      fileSizeLabel.text = Formatter.formatShortFileSize(
-        applicationContext,
-        it.length.toLong()
-      )
-
-      // re-register the listeners
-      listeners(receiver)
-    }
+    setupUpdateListeners()
+    
     lookForFileRequests()
     verifySessionServiceAlive()
 
@@ -223,38 +207,45 @@ class SessionActivity : AppCompatActivity() {
       val fname = receiver.name
       runOnUiThread { onTransferRequested(fname, receiver.length) }
 
-      listeners(receiver)
       receiver.receive(this, from = deviceName)
     }
+    executor.unregister()
     executor.register(RequestHandler(listener))
   }
 
-  private fun listeners(receiver: FileReceiver) {
-    receiver.setStartListener {
+  private fun setupUpdateListeners() {
+    Log.d(TAG, "listeners: Has previous interface = ${FileUpdateInterface.staticUpdateInterface}")
+
+    if (updater.fileName.isNotEmpty()) {
+      // this means that, some file is being received
+      // currently
+      updateTextViews()
+      registerOnCancel()
+    }
+
+    updater.setStartListener {
       runOnUiThread {
-        frameProgress.setOnLongClickListener {
-          cancelFileTransfer(receiver)
-          return@setOnLongClickListener true
-        }
+        updateTextViews()
+        registerOnCancel()
       }
     }
-    receiver.setUpdateListener {
+    updater.setUpdateListener {
       runOnUiThread {
-        progressBar.setProgress(receiver.progress, true)
-        if (receiver.transferSpeed.isNotEmpty())
-          transferSpeedText.text = "${receiver.transferSpeed}ps"
+        progressBar.setProgress(updater.progress, true)
+        if (updater.transferSpeed.isNotEmpty())
+          transferSpeedText.text = "${updater.transferSpeed}ps"
       }
     }
-    receiver.setFinishedListener {
+    updater.setFinishedListener {
       frameProgress.setOnLongClickListener(null)
+      progressBar.setOnLongClickListener(null)
 
       runOnUiThread {
         fileNameLabel.text = "No files being received"
         fileSizeLabel.text = "(> ^_^)>"
       }
-      receiver.reset(this)
     }
-    receiver.setDisruptionListener {
+    updater.setDisruptionListener {
       runOnUiThread {
         Log.d(TAG, "lookForFileRequests: disrupted")
         progressBar.setProgress(0, true)
@@ -262,13 +253,36 @@ class SessionActivity : AppCompatActivity() {
     }
   }
 
-  private fun cancelFileTransfer(receiver: FileReceiver) {
+  private fun updateTextViews() {
+    fileNameLabel.text = FileNameUtil.toShortDisplayName(updater.fileName)
+    fileSizeLabel.text = Formatter.formatShortFileSize(
+      applicationContext,
+      updater.fileLength.toLong()
+    )
+  }
+
+  private fun registerOnCancel() {
+    frameProgress.setOnLongClickListener {
+
+      cancelFileTransfer()
+      return@setOnLongClickListener true
+    }
+    // since some devices, don't register long
+    // click of the frame progress
+    progressCard.setOnLongClickListener {
+      cancelFileTransfer()
+      return@setOnLongClickListener true
+    }
+  }
+
+  private fun cancelFileTransfer() {
     Toast.makeText(
       applicationContext,
       getString(R.string.transfer_cancelled_receiver), Toast.LENGTH_LONG
     ).show()
 
-    receiver.cancel(this, executor)
+    executor.respond(ChannelInfo.CANCEL_REQUEST_CHANNEL_INFO)
+    sendBroadcast(Intent(FileReceiveService.CANCEL_RECEIVE_ACTION))
 
     Handler(mainLooper).postDelayed({
       // reverse progress animation

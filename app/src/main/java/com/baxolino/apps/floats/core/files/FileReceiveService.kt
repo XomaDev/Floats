@@ -172,6 +172,8 @@ class FileReceiveService : Service() {
     // let them know, we are starting
     message(0, -1, Bundle().apply {
       putLong("time", timeStart)
+      putString("fileName", fileName)
+      putInt("fileLength", fileLength)
     })
   }
 

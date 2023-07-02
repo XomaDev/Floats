@@ -11,6 +11,8 @@ class RequestHandler(private val listener: (FileReceiver) -> Unit) {
   private lateinit var reader: MultiChannelStream
   private lateinit var exec: TaskExecutor
 
+  private val requests = DataInputStream()
+
   fun setReader(reader: MultiChannelStream, executor: TaskExecutor) {
     this.reader = reader
     this.exec = executor
@@ -19,7 +21,6 @@ class RequestHandler(private val listener: (FileReceiver) -> Unit) {
   }
 
   private fun init() {
-    val requests = DataInputStream()
     requests.byteListener = ByteListener {
       val port = requests.readInt32()
 
@@ -43,5 +44,10 @@ class RequestHandler(private val listener: (FileReceiver) -> Unit) {
       true
     }
     reader.registerChannelStream(ChannelInfo.FILE_REQUEST_CHANNEL_INFO, requests)
+  }
+
+  fun destroy() {
+    reader.forget(ChannelInfo.FILE_REQUEST_CHANNEL_INFO)
+    requests.byteListener = null
   }
 }

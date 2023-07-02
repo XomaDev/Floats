@@ -5,6 +5,7 @@ import java.util.Arrays;
 public class ChannelInfo {
 
   public static final ChannelInfo FILE_REQUEST_CHANNEL_INFO = new ChannelInfo((byte) 1);
+  public static final ChannelInfo CANCEL_REQUEST_CHANNEL_INFO = new ChannelInfo((byte) 2);
 
   private final byte[] channel;
 

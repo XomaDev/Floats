@@ -51,7 +51,7 @@ class FileRequest(
       MessageReceiver.requestListener = null
     }
 
-    exec.register(localPort, forgetAfter = true) {
+    exec.register(ChannelInfo.CANCEL_REQUEST_CHANNEL_INFO, forgetAfter = true) {
       // it was a cancel request
       // this will invoke the native class at the end to
       // stop sending data and eventually ending the service
