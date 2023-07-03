@@ -38,9 +38,13 @@ public class MultiChannelStream {
   }
 
   public void registerChannelStream(ChannelInfo channelInfo, DataInputStream inputStream) {
+    registerChannelStream(channelInfo, inputStream, false);
+  }
+
+  public void registerChannelStream(ChannelInfo channelInfo, DataInputStream inputStream, boolean override) {
     Log.d("KRSystem", "registerChannelStream: register stream = " + Arrays.toString(channelInfo.bytes()));
     DataInputStream stream = channels.get(channelInfo);
-    if (stream != null)
+    if (!override && stream != null)
       throw new IllegalStateException("Stream already registered = " + channelInfo);
     channels.put(channelInfo, inputStream);
   }
