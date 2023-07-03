@@ -17,15 +17,11 @@ import androidx.activity.OnBackPressedCallback
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import com.baxolino.apps.floats.core.SessionService
-import com.baxolino.apps.floats.core.TaskExecutor
+import com.baxolino.apps.floats.core.SessionService.Companion.TRANSMISSION_BROADCAST_ACTION
 import com.baxolino.apps.floats.core.files.FileNameUtil
 import com.baxolino.apps.floats.core.files.FileReceiveService
-import com.baxolino.apps.floats.core.files.FileReceiver
-import com.baxolino.apps.floats.core.files.FileRequest
 import com.baxolino.apps.floats.core.files.FileUpdateInterface
 import com.baxolino.apps.floats.core.files.MessageReceiver
-import com.baxolino.apps.floats.core.files.RequestHandler
-import com.baxolino.apps.floats.core.transfer.ChannelInfo
 import com.baxolino.apps.floats.core.transfer.SocketConnection
 import com.baxolino.apps.floats.tools.DynamicTheme
 import com.google.android.material.card.MaterialCardView
@@ -50,7 +46,7 @@ class SessionActivity : AppCompatActivity() {
   private lateinit var fileNameLabel: TextView
   private lateinit var fileSizeLabel: TextView
 
-  lateinit var hostAddress: String
+  private lateinit var hostAddress: String
 
   private lateinit var transferSpeedText: TextView
 
@@ -59,20 +55,14 @@ class SessionActivity : AppCompatActivity() {
   private lateinit var frameProgress: FrameLayout
   private lateinit var progressCard: MaterialCardView
 
-  private var receiver: FileReceiver? = null
-
   private lateinit var updater: FileUpdateInterface
-
-  private lateinit var connection:SocketConnection
-  private lateinit var executor:TaskExecutor
 
   // we don't use this to receive messages here,
   // we are required to call onPause() and onResume()
   // lifecycles on it
-  private lateinit var messageReceiver: MessageReceiver
   private var isConnected = false
 
-  private lateinit var serviceVerifyExecutor:ScheduledThreadPoolExecutor
+  private lateinit var serviceVerifyExecutor: ScheduledThreadPoolExecutor
 
   private val onDisconnectReceiver = object : BroadcastReceiver() {
     override fun onReceive(context: Context?, intent: Intent?) {
@@ -97,10 +87,6 @@ class SessionActivity : AppCompatActivity() {
     // init the Paper db
     Paper.init(this)
 
-    connection = SocketConnection.getMainSocket()
-    executor = TaskExecutor(connection)
-
-    messageReceiver = MessageReceiver()
     updater = FileUpdateInterface.getUpdateInterface()
 
     // or else we are just testing
@@ -134,8 +120,6 @@ class SessionActivity : AppCompatActivity() {
 
 
     setupUpdateListeners()
-    
-    lookForFileRequests()
     verifySessionServiceAlive()
 
     val onBackPressedCallback = object : OnBackPressedCallback(true) {
@@ -180,11 +164,6 @@ class SessionActivity : AppCompatActivity() {
     // clear the main socket connection
     // instance; or it gets messed up
     SocketConnection.clear()
-
-    // close the connection
-    connection.close()
-    executor.stopStreams()
-
     // open the HomeActivity and notify the disconnect
     // event to the user
     startActivity(
@@ -200,18 +179,6 @@ class SessionActivity : AppCompatActivity() {
     )
   }
 
-  private fun lookForFileRequests() {
-    val listener = { receiver: FileReceiver ->
-      this.receiver = receiver
-
-      val fname = receiver.name
-      runOnUiThread { onTransferRequested(fname, receiver.length) }
-
-      receiver.receive(this, from = deviceName)
-    }
-    executor.unregister()
-    executor.register(RequestHandler(listener))
-  }
 
   private fun setupUpdateListeners() {
     Log.d(TAG, "listeners: Has previous interface = ${FileUpdateInterface.staticUpdateInterface}")
@@ -225,6 +192,10 @@ class SessionActivity : AppCompatActivity() {
 
     updater.setStartListener {
       runOnUiThread {
+        onTransferRequested(
+          updater.fileName
+        )
+
         updateTextViews()
         registerOnCancel()
       }
@@ -281,8 +252,10 @@ class SessionActivity : AppCompatActivity() {
       getString(R.string.transfer_cancelled_receiver), Toast.LENGTH_LONG
     ).show()
 
-    executor.respond(ChannelInfo.CANCEL_REQUEST_CHANNEL_INFO)
-    sendBroadcast(Intent(FileReceiveService.CANCEL_RECEIVE_ACTION))
+    sendBroadcast(
+      Intent(TRANSMISSION_BROADCAST_ACTION)
+        .putExtra("what", 1)
+    ) // 1 refers to cancel transfer
 
     Handler(mainLooper).postDelayed({
       // reverse progress animation
@@ -290,12 +263,7 @@ class SessionActivity : AppCompatActivity() {
     }, 80)
   }
 
-  private fun onTransferRequested(name: String, length: Int) {
-    fileNameLabel.text = FileNameUtil.toShortDisplayName(name)
-    fileSizeLabel.text = Formatter.formatShortFileSize(
-      applicationContext,
-      length.toLong()
-    )
+  private fun onTransferRequested(name: String) {
     Snackbar.make(
       findViewById(R.id.session_layout),
       "Receiving $name",
@@ -326,7 +294,12 @@ class SessionActivity : AppCompatActivity() {
       .setTitle("Confirm")
       .setMessage(
         "Are you sure you want to send the file $fileName of size " +
-                "${Formatter.formatFileSize(applicationContext, fileLength.toLong())}? \n\nYou can only send one file at a time."
+                "${
+                  Formatter.formatFileSize(
+                    applicationContext,
+                    fileLength.toLong()
+                  )
+                }? \n\nYou can only send one file at a time."
       )
 
       .setPositiveButton("Proceed") { _, _ -> beginSocketTransfer(uri, fileName, fileLength) }
@@ -335,10 +308,13 @@ class SessionActivity : AppCompatActivity() {
   }
 
   private fun beginSocketTransfer(uri: Uri, fileName: String, fileLength: Int) {
-    val request = FileRequest(
-      uri, fileName, fileLength
+    sendBroadcast(
+      Intent(TRANSMISSION_BROADCAST_ACTION)
+        .putExtra("what", 0) // 0 refers to file send request
+        .putExtra("file_uri", uri.toString())
+        .putExtra("file_name", fileName)
+        .putExtra("file_length", fileLength)
     )
-    executor.execute(applicationContext, request)
   }
 
   private fun Uri.get(property: String): String {
@@ -363,7 +339,7 @@ class SessionActivity : AppCompatActivity() {
     super.onResume()
     if (!isConnected)
       return
-    messageReceiver.onResume(this)
+    MessageReceiver.onStart(this)
     registerReceiver(
       onDisconnectReceiver, IntentFilter(
         SessionService.DISCONNECT_BROADCAST_ACTION
@@ -375,7 +351,7 @@ class SessionActivity : AppCompatActivity() {
     super.onPause()
     if (!isConnected)
       return
-    messageReceiver.onPause(this)
+    MessageReceiver.onStop(this)
     unregisterReceiver(
       onDisconnectReceiver
     )

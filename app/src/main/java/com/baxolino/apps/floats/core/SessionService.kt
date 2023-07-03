@@ -17,6 +17,10 @@ import com.baxolino.apps.floats.HomeActivity
 import com.baxolino.apps.floats.HomeActivity.Companion.RESTORE_SESSION_CHECK
 import com.baxolino.apps.floats.R
 import com.baxolino.apps.floats.SessionActivity
+import com.baxolino.apps.floats.core.files.FileReceiveService
+import com.baxolino.apps.floats.core.files.FileRequest
+import com.baxolino.apps.floats.core.files.MessageReceiver
+import com.baxolino.apps.floats.core.files.RequestHandler
 import com.baxolino.apps.floats.core.transfer.ChannelInfo
 import com.baxolino.apps.floats.core.transfer.SocketConnection
 import com.baxolino.apps.floats.tools.DynamicTheme
@@ -40,11 +44,12 @@ class SessionService : Service() {
     private const val MANUAL_DISCONNECT_MESSAGE = 1
 
     const val DISCONNECT_BROADCAST_ACTION = "disconnect_broadcast"
+    const val TRANSMISSION_BROADCAST_ACTION = "transmission_broadcast"
     private const val DISCONNECT_BUTTON_BROADCAST_ACTION = "disconnect_button_broadcast"
   }
 
   private lateinit var partner: String
-  private lateinit var host: String
+  lateinit var host: String
 
   private val connection = SocketConnection()
   private lateinit var executor: TaskExecutor
@@ -61,6 +66,7 @@ class SessionService : Service() {
         ChannelInfo.SMALL_DATA_EXCHANGE_CHANNEL_INFO,
         MANUAL_DISCONNECT_MESSAGE.toByte()
       )
+      sendBroadcast(Intent(FileReceiveService.CANCEL_RECEIVE_ACTION))
 
       // the executor should first fully finish writing
       // the data, after that, we close :)
@@ -75,7 +81,7 @@ class SessionService : Service() {
   // when the app was completely closed, we are responsible to
   // restore it back to the previous session scree
 
-  private val restoreSessionRequestReceiver = object: BroadcastReceiver() {
+  private val restoreSessionRequestReceiver = object : BroadcastReceiver() {
     override fun onReceive(context: Context?, intent: Intent?) {
       Log.d(TAG, "Received restore request")
       // when we receive a request, we are going to reply back to
@@ -87,6 +93,32 @@ class SessionService : Service() {
           .putExtra("deviceName", partner)
           .putExtra("hostAddress", host)
       )
+    }
+  }
+
+  private val transferFileRequest = object : BroadcastReceiver() {
+    override fun onReceive(context: Context?, intent: Intent) {
+      when (intent.getIntExtra("what", -1)) {
+        0 -> {
+          val fileName = intent.getStringExtra("file_name")!!
+
+          Log.d(TAG, "Initiating file transfer $fileName")
+          val fileRequest = FileRequest(
+            intent.getStringExtra("file_uri")!!,
+            fileName,
+            intent.getIntExtra("file_length", -1)
+          )
+
+          executor.execute(
+            this@SessionService,
+            fileRequest
+          )
+        }
+
+        1 -> {
+          executor.respond(ChannelInfo.CANCEL_REQUEST_CHANNEL_INFO)
+        }
+      }
     }
   }
 
@@ -169,11 +201,15 @@ class SessionService : Service() {
       }
     }, 0, 2, TimeUnit.SECONDS)
 
+    executor.register(RequestHandler { receiver ->
+      Log.d(TAG, "File Receive Request = ${receiver.name}")
+      receiver.receive(this, partner)
+    })
+
     foreground()
   }
 
   private fun onDisconnect() {
-    connection.close()
     stop()
     // send the disconnect broadcast
     // action
@@ -186,7 +222,14 @@ class SessionService : Service() {
   }
 
   private fun stop() {
+    executor.stopStreams()
+    connection.close()
+
     stopForeground(STOP_FOREGROUND_REMOVE)
+
+    MessageReceiver.onStop(this)
+
+    unregisterReceiver(transferFileRequest)
     unregisterReceiver(disconnectButtonReceiver)
     unregisterReceiver(restoreSessionRequestReceiver)
   }
@@ -195,6 +238,12 @@ class SessionService : Service() {
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
       createChannel()
 
+    MessageReceiver.onStart(this)
+
+    registerReceiver(
+      transferFileRequest,
+      IntentFilter(TRANSMISSION_BROADCAST_ACTION)
+    )
     registerReceiver(
       disconnectButtonReceiver,
       IntentFilter(DISCONNECT_BUTTON_BROADCAST_ACTION)

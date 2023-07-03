@@ -56,7 +56,8 @@ class TaskExecutor(connection: SocketConnection) {
 
     reader.registerChannelStream(
       channel,
-      dataInputStream
+      dataInputStream,
+      true
     )
 
     dataInputStream.setByteListener {

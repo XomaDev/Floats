@@ -2,7 +2,6 @@ package com.baxolino.apps.floats.core.files
 
 import android.content.Context
 import android.content.Intent
-import android.net.Uri
 import android.os.Build
 import android.util.Log
 import com.baxolino.apps.floats.core.transfer.ChannelInfo
@@ -12,7 +11,7 @@ import com.baxolino.apps.floats.core.transfer.SocketUtils
 import com.baxolino.apps.floats.core.io.BitStream
 
 class FileRequest(
-  private val fileInput: Uri,
+  private val fileInput: String,
   private val fileName: String,
   private val fileLength: Int
 ) {
@@ -25,7 +24,7 @@ class FileRequest(
     val localPort = SocketUtils.findAvailableTcpPort()
 
     val service = Intent(context, FileRequestService::class.java)
-      .putExtra("file_uri", fileInput.toString())
+      .putExtra("file_uri", fileInput)
       .putExtra("file_name", fileName)
       .putExtra("file_length", fileLength)
       .putExtra("local_port", localPort)

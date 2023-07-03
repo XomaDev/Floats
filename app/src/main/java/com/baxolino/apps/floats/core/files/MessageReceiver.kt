@@ -8,21 +8,21 @@ import android.os.Bundle
 
 class MessageReceiver {
 
-  fun onResume(context: Context) {
-    context.registerReceiver(receiver, IntentFilter(RECEIVE_ACTION))
-  }
-
-  fun onPause(context: Context) {
-    context.unregisterReceiver(receiver)
-  }
-
   companion object {
+    fun onStart(context: Context) {
+      context.registerReceiver(receiver, IntentFilter(RECEIVE_ACTION))
+    }
+
+    fun onStop(context: Context) {
+      context.unregisterReceiver(receiver)
+    }
+
     const val RECEIVE_ACTION = "receive_message"
 
     var receiveListener: ((Int, Int, Bundle) -> Unit)? = null
     var requestListener: (() -> Unit)? = null
 
-    val receiver: BroadcastReceiver = object : BroadcastReceiver() {
+    private val receiver: BroadcastReceiver = object : BroadcastReceiver() {
       override fun onReceive(context: Context, intent: Intent) {
         when (intent.getIntExtra("type", -1)) {
           0 -> {

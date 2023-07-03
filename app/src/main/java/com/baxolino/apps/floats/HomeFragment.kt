@@ -314,6 +314,11 @@ class HomeFragment(
         activity.startForegroundService(service)
       else activity.startService(service)
 
+      // we don't require this port anymore :)
+      // it was just was initiating connection, and things like file transfer
+      // will be taken care by the SessionService
+      connector.close()
+
       activity.startActivity(
         Intent(activity, SessionActivity::class.java)
           .putExtra("deviceName", name)
