@@ -47,7 +47,11 @@ class TaskExecutor(connection: SocketConnection) {
     )
   }
 
-  fun register(channel: ChannelInfo, forgetAfter: Boolean, listener: () -> Unit) {
+  fun respond(channel: ChannelInfo, byte: Byte) {
+    writer.write(channel, byteArrayOf(byte))
+  }
+
+  fun register(channel: ChannelInfo, forgetAfter: Boolean, listener: (Byte) -> Unit) {
     val dataInputStream = DataInputStream()
 
     reader.registerChannelStream(
@@ -56,7 +60,7 @@ class TaskExecutor(connection: SocketConnection) {
     )
 
     dataInputStream.setByteListener {
-      listener.invoke()
+      listener.invoke(it)
       if (forgetAfter)
         reader.forget(channel)
       return@setByteListener true

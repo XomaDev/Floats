@@ -17,6 +17,7 @@ import com.baxolino.apps.floats.HomeActivity
 import com.baxolino.apps.floats.HomeActivity.Companion.RESTORE_SESSION_CHECK
 import com.baxolino.apps.floats.R
 import com.baxolino.apps.floats.SessionActivity
+import com.baxolino.apps.floats.core.transfer.ChannelInfo
 import com.baxolino.apps.floats.core.transfer.SocketConnection
 import com.baxolino.apps.floats.tools.DynamicTheme
 import io.paperdb.Paper
@@ -25,7 +26,6 @@ import java.io.OutputStream
 import java.net.SocketException
 import java.util.concurrent.ScheduledThreadPoolExecutor
 import java.util.concurrent.TimeUnit
-import kotlin.concurrent.thread
 
 
 class SessionService : Service() {
@@ -47,6 +47,7 @@ class SessionService : Service() {
   private lateinit var host: String
 
   private val connection = SocketConnection()
+  private lateinit var executor: TaskExecutor
 
   private lateinit var input: InputStream
   private lateinit var output: OutputStream
@@ -56,12 +57,18 @@ class SessionService : Service() {
   private val disconnectButtonReceiver = object : BroadcastReceiver() {
     override fun onReceive(context: Context?, intent: Intent?) {
       Log.d(TAG, "Disconnect Button Clicked")
-      thread {
-        output.write(
-          MANUAL_DISCONNECT_MESSAGE
-        )
+      executor.respond(
+        ChannelInfo.SMALL_DATA_EXCHANGE_CHANNEL_INFO,
+        MANUAL_DISCONNECT_MESSAGE.toByte()
+      )
+
+      // the executor should first fully finish writing
+      // the data, after that, we close :)
+      val poolExecutor = ScheduledThreadPoolExecutor(1)
+      poolExecutor.schedule({
         onDisconnect()
-      }
+        poolExecutor.shutdown()
+      }, 140, TimeUnit.MILLISECONDS)
     }
   }
 
@@ -120,47 +127,45 @@ class SessionService : Service() {
     input = connection.input
     output = connection.output
 
+    executor = TaskExecutor(connection)
+
     var lastHeartBeat = System.currentTimeMillis()
+    executor.register(ChannelInfo.SMALL_DATA_EXCHANGE_CHANNEL_INFO, false) {
+      when (it.toInt()) {
+        HEARTBEAT_MESSAGE -> {
+          Log.d(TAG, "Beat")
+          lastHeartBeat = System.currentTimeMillis()
 
-    val executor = ScheduledThreadPoolExecutor(2)
-    executor.scheduleAtFixedRate({
-      if (input.available() > 0) {
-        when (input.read()) {
-          HEARTBEAT_MESSAGE -> {
-            Log.d(TAG, "Beat")
-            lastHeartBeat = System.currentTimeMillis()
+          Paper.book()
+            .write("last_beat", lastHeartBeat)
+        }
 
-            Paper.book()
-              .write("last_beat", lastHeartBeat)
-          }
-
-          MANUAL_DISCONNECT_MESSAGE -> {
-            Log.d(TAG, "Manual disconnect")
-            executor.shutdownNow()
-
-            onDisconnect()
-          }
+        MANUAL_DISCONNECT_MESSAGE -> {
+          Log.d(TAG, "Manual disconnect")
+          onDisconnect()
         }
       }
-    }, 0, 1, TimeUnit.MILLISECONDS)
+    }
 
-    executor.scheduleAtFixedRate({
+    val poolExecutor = ScheduledThreadPoolExecutor(1)
+    poolExecutor.scheduleAtFixedRate({
       if ((System.currentTimeMillis() - lastHeartBeat) >= 5000) {
         Log.d(TAG, "Stopped receiving heart beats")
         onDisconnect()
 
-        executor.shutdownNow()
+        poolExecutor.shutdownNow()
       }
       try {
-        output.write(
-          HEARTBEAT_MESSAGE
+        executor.respond(
+          ChannelInfo.SMALL_DATA_EXCHANGE_CHANNEL_INFO,
+          HEARTBEAT_MESSAGE.toByte()
         )
       } catch (e: SocketException) {
         Log.d(TAG, "Stopped receiving heart beats")
 
         // this could be due to unexpected shutdown
         onDisconnect()
-        executor.shutdownNow()
+        poolExecutor.shutdownNow()
       }
     }, 0, 2, TimeUnit.SECONDS)
 

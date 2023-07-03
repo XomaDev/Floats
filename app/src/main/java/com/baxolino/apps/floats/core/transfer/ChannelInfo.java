@@ -6,6 +6,7 @@ public class ChannelInfo {
 
   public static final ChannelInfo FILE_REQUEST_CHANNEL_INFO = new ChannelInfo((byte) 1);
   public static final ChannelInfo CANCEL_REQUEST_CHANNEL_INFO = new ChannelInfo((byte) 2);
+  public static final ChannelInfo SMALL_DATA_EXCHANGE_CHANNEL_INFO = new ChannelInfo((byte) 3);
 
   private final byte[] channel;
 
