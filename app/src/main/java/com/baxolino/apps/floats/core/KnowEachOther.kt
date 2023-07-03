@@ -11,18 +11,15 @@ object KnowEachOther {
   private const val TAG = "KnowEachOther"
 
   fun initiate(
-    name: String,
-    localPort: Int,
+    data: String,
     connector: SocketConnection,
-    knew: (String, String, Int) -> Unit
+    knew: (String, String) -> Unit
   ) {
-    val nameContent = name.toByteArray()
+    val nameContent = data.toByteArray()
 
     BitOutputStream(connector.output).apply {
       writeShort16(nameContent.size.toShort())
       write(nameContent)
-      if (localPort != -1)
-        writeInt32(localPort)
       flush()
     }
 
@@ -39,11 +36,8 @@ object KnowEachOther {
 
       val other = String(buffer)
 
-      var portReceived = -1
-      if (localPort == -1)
-        portReceived = bitInput.readInt32()
       Log.d(TAG, "Other: $other")
-      knew.invoke(other, connector.socket.inetAddress.hostAddress!!, portReceived)
+      knew.invoke(other, connector.socket.inetAddress.hostAddress!!)
 
       executor.shutdownNow()
     }, 10, TimeUnit.MILLISECONDS)

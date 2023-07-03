@@ -36,6 +36,7 @@ import com.github.alexzhirkevich.customqrgenerator.vector.style.QrVectorPixelSha
 import com.github.alexzhirkevich.customqrgenerator.vector.style.QrVectorShapes
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.snackbar.Snackbar
+import org.json.JSONObject
 import java.net.InetAddress
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
@@ -290,17 +291,24 @@ class HomeFragment(
       // and send to the client
       localPort = SocketUtils.findAvailableTcpPort()
     }
+    val packetJson = JSONObject()
+      .put("name", ourId)
+    if (isServer) {
+      packetJson.put("port", localPort)
+    }
     KnowEachOther.initiate(
-      ourId,
-      if (isServer) localPort else -1, connector
+      packetJson.toString(), connector
     )
-    { name, host, hostPort ->
+    { data, host ->
+      val json = JSONObject(data)
+      val name = json.getString("name")
+
       // hostPort is valid if we are client
       val service = Intent(activity, SessionService::class.java)
         .putExtra("partner_device", name)
         .putExtra("server", isServer)
         .putExtra("host", host)
-        .putExtra("port", if (isServer) localPort else hostPort)
+        .putExtra("port", if (isServer) localPort else json.getInt("port"))
 
       if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
         activity.startForegroundService(service)
