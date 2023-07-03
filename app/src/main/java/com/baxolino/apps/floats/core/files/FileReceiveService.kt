@@ -232,7 +232,7 @@ class FileReceiveService : Service() {
       Toast.makeText(
         this,
         if (cancelled) "File transfer was disrupted."
-        else "File was transferred",
+        else "File was received",
         Toast.LENGTH_LONG
       ).show()
     }
