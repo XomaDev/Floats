@@ -45,6 +45,7 @@
                     <TextView
                         android:id="@+id/fileName"
                         android:layout_width="wrap_content"
+                        android:textStyle="bold"
                         android:layout_height="wrap_content"
                         android:fontFamily="@font/inter"
                         android:text="holiday.mp4" />
@@ -73,70 +74,55 @@
                 android:layout_marginTop="10dp"
                 android:orientation="horizontal">
 
-                <com.google.android.material.card.MaterialCardView
+                <LinearLayout
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:id="@+id/sizeCard"
-                    app:contentPadding="3dp"
-                    app:strokeWidth="0dp">
+                    android:layout_marginStart="4dp"
+                    android:layout_marginEnd="4dp"
+                    android:orientation="horizontal">
 
-                    <LinearLayout
+                    <TextView
+                        android:id="@+id/sizeLabel"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_marginStart="4dp"
-                        android:layout_marginEnd="4dp"
-                        android:orientation="horizontal">
+                        android:fontFamily="@font/inter"
+                        android:text="Size: "
+                        android:textStyle="bold"
+                        android:textSize="12sp" />
 
-                        <TextView
-                            android:id="@+id/sizeLabel"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:fontFamily="@font/inter"
-                            android:text="Size: "
-                            android:textSize="12sp" />
+                    <TextView
+                        android:id="@+id/sizeTextView"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:fontFamily="@font/inter"
+                        android:text="2.5 MB"
+                        android:textSize="12sp" />
+                </LinearLayout>
 
-                        <TextView
-                            android:id="@+id/sizeTextView"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:fontFamily="@font/inter"
-                            android:text="2.5 MB"
-                            android:textSize="12sp" />
-                    </LinearLayout>
-                </com.google.android.material.card.MaterialCardView>
-
-                <com.google.android.material.card.MaterialCardView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:id="@+id/timeCard"
+                <LinearLayout
                     android:layout_marginStart="15dp"
-                    app:contentPadding="3dp"
-                    app:strokeWidth="0dp">
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginEnd="4dp"
+                    android:orientation="horizontal">
 
-                    <LinearLayout
+                    <TextView
+                        android:id="@+id/timeLabel"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_marginStart="4dp"
-                        android:layout_marginEnd="4dp"
-                        android:orientation="horizontal">
+                        android:fontFamily="@font/inter"
+                        android:text="at "
+                        android:textStyle="bold"
+                        android:textSize="12sp" />
 
-                        <TextView
-                            android:id="@+id/timeLabel"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:fontFamily="@font/inter"
-                            android:text="at "
-                            android:textSize="12sp" />
-
-                        <TextView
-                            android:id="@+id/timeTextView"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:fontFamily="@font/inter"
-                            android:text="Today"
-                            android:textSize="12sp" />
-                    </LinearLayout>
-                </com.google.android.material.card.MaterialCardView>
+                    <TextView
+                        android:id="@+id/timeTextView"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:fontFamily="@font/inter"
+                        android:text="Today"
+                        android:textSize="12sp" />
+                </LinearLayout>
             </LinearLayout>
         </LinearLayout>
     </com.google.android.material.card.MaterialCardView>

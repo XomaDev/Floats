@@ -90,14 +90,6 @@ class FileListAdapter(context: Context?, itemList: ArrayList<FileDetails>) :
 
       findViewById<TextView>(R.id.fromTextView).text = details.from
 
-      findViewById<MaterialCardView>(R.id.sizeCard).backgroundTintList =
-        ColorStateList.valueOf(
-          DynamicTheme.neutralCardColor(context)
-        )
-      findViewById<MaterialCardView>(R.id.timeCard).backgroundTintList =
-        ColorStateList.valueOf(
-          DynamicTheme.neutralCardColor(context)
-        )
       findViewById<TextView>(R.id.sizeTextView).text =
         Formatter.formatFileSize(context, details.fileSize.toLong())
 
