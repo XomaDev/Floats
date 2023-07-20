@@ -10,6 +10,7 @@ import android.content.Intent
 import android.content.IntentFilter
 import android.net.Uri
 import android.os.Build
+import android.os.Bundle
 import android.os.Handler
 import android.os.IBinder
 import android.os.Looper
@@ -86,8 +87,18 @@ class FileRequestService : Service() {
 
     connection = SocketConnection()
       .acceptOnPort(localPort, 12000, {
+        // let them know, we are starting
+        message(0, -1, Bundle().apply {
+          putLong("time", timeStart)
+          putString("fileName", fileName)
+          putInt("fileLength", fileLength)
+        })
+
         uploadFileContents(input)
       }, {
+        //  TODO:
+        //  message back with a code to update the UI
+
         // connection was timed out; this generally
         // does not happen
         Handler(Looper.getMainLooper()).post {
@@ -130,12 +141,15 @@ class FileRequestService : Service() {
       output.write(buffer, 0, nread)
 
       wrote += nread
-      onUpdateProgressInfo(wrote)
+      update(wrote)
     }
     output.close()
     input.close()
 
     connection.close()
+
+    // let them know we finished
+    message(2)
     onComplete()
   }
 
@@ -143,10 +157,11 @@ class FileRequestService : Service() {
     cancelled = true
   }
 
-  private fun onUpdateProgressInfo(written: Int) {
+  private fun update(written: Int) {
     var speed = ""
 
     val difference = (System.currentTimeMillis() - timeStart)
+    val progress = (written.toFloat().div(fileLength) * 100).toInt()
 
     if (difference != 0L) {
       speed = Formatter.formatFileSize(
@@ -161,6 +176,30 @@ class FileRequestService : Service() {
     notificationManager.notify(
       notificationId,
       buildNotification(written, speed)
+    )
+
+    // this sends the progress and transfer speed
+    // to the activity
+    message(1, progress, Bundle().apply {
+      putString("speed", speed)
+    })
+  }
+
+  private fun message(what: Int) {
+    message(what, -1)
+  }
+
+  private fun message(what: Int, arg1: Int) {
+    message(what, arg1, Bundle())
+  }
+
+  private fun message(what: Int, arg1: Int, data: Bundle) {
+    sendBroadcast(
+      Intent(MessageReceiver.RECEIVE_ACTION)
+        .putExtra("type", 2)
+        .putExtra("what", what)
+        .putExtra("arg1", arg1)
+        .putExtra("bundle_data", data)
     )
   }
 

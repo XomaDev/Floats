@@ -22,6 +22,8 @@ class MessageReceiver {
     var receiveListener: ((Int, Int, Bundle) -> Unit)? = null
     var requestListener: (() -> Unit)? = null
 
+    var requestUpdateListener: ((Int, Int, Bundle) -> Unit)? = null
+
     private val receiver: BroadcastReceiver = object : BroadcastReceiver() {
       override fun onReceive(context: Context, intent: Intent) {
         when (intent.getIntExtra("type", -1)) {
@@ -34,6 +36,14 @@ class MessageReceiver {
           }
           1 -> {
             requestListener?.invoke()
+          }
+          2 -> {
+            // from FileRequestService
+            val what = intent.getIntExtra("what", -1)
+            val arg1 = intent.getIntExtra("arg1", -1)
+            val data = intent.getBundleExtra("bundle_data")!!
+
+            requestUpdateListener?.invoke(what, arg1, data)
           }
         }
       }

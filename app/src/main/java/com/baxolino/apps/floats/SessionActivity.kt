@@ -19,8 +19,7 @@ import androidx.appcompat.app.AppCompatActivity
 import com.baxolino.apps.floats.core.SessionService
 import com.baxolino.apps.floats.core.SessionService.Companion.TRANSMISSION_BROADCAST_ACTION
 import com.baxolino.apps.floats.core.files.FileNameUtil
-import com.baxolino.apps.floats.core.files.FileReceiveService
-import com.baxolino.apps.floats.core.files.FileUpdateInterface
+import com.baxolino.apps.floats.core.files.interfaces.ReceiveInterface
 import com.baxolino.apps.floats.core.files.MessageReceiver
 import com.baxolino.apps.floats.core.transfer.SocketConnection
 import com.baxolino.apps.floats.tools.DynamicTheme
@@ -55,7 +54,7 @@ class SessionActivity : AppCompatActivity() {
   private lateinit var frameProgress: FrameLayout
   private lateinit var progressCard: MaterialCardView
 
-  private lateinit var updater: FileUpdateInterface
+  private lateinit var receiveUpdater: ReceiveInterface
 
   // we don't use this to receive messages here,
   // we are required to call onPause() and onResume()
@@ -87,7 +86,7 @@ class SessionActivity : AppCompatActivity() {
     // init the Paper db
     Paper.init(this)
 
-    updater = FileUpdateInterface.getUpdateInterface()
+    receiveUpdater = ReceiveInterface.getUpdateInterface()
 
     // or else we are just testing
     deviceName = intent.getStringExtra("deviceName")!!
@@ -181,33 +180,35 @@ class SessionActivity : AppCompatActivity() {
 
 
   private fun setupUpdateListeners() {
-    Log.d(TAG, "listeners: Has previous interface = ${FileUpdateInterface.staticUpdateInterface}")
+    Log.d(TAG, "listeners: Has previous interface = ${ReceiveInterface.staticUpdateInterface}")
 
-    if (updater.fileName.isNotEmpty()) {
+    if (receiveUpdater.fileName.isNotEmpty()) {
       // this means that, some file is being received
       // currently
       updateTextViews()
       registerOnCancel()
     }
 
-    updater.setStartListener {
+    receiveUpdater.setStartListener {
       runOnUiThread {
-        onTransferRequested(
-          updater.fileName
-        )
+        Snackbar.make(
+          findViewById(R.id.session_layout),
+          "Receiving ${receiveUpdater.fileName}",
+          Snackbar.LENGTH_LONG
+        ).show()
 
         updateTextViews()
         registerOnCancel()
       }
     }
-    updater.setUpdateListener {
+    receiveUpdater.setUpdateListener {
       runOnUiThread {
-        progressBar.setProgress(updater.progress, true)
-        if (updater.transferSpeed.isNotEmpty())
-          transferSpeedText.text = "${updater.transferSpeed}ps"
+        progressBar.setProgress(receiveUpdater.progress, true)
+        if (receiveUpdater.transferSpeed.isNotEmpty())
+          transferSpeedText.text = "${receiveUpdater.transferSpeed}ps"
       }
     }
-    updater.setFinishedListener {
+    receiveUpdater.setFinishedListener {
       frameProgress.setOnLongClickListener(null)
       progressBar.setOnLongClickListener(null)
 
@@ -216,7 +217,7 @@ class SessionActivity : AppCompatActivity() {
         fileSizeLabel.text = "(> ^_^)>"
       }
     }
-    updater.setDisruptionListener {
+    receiveUpdater.setDisruptionListener {
       runOnUiThread {
         Log.d(TAG, "lookForFileRequests: disrupted")
         progressBar.setProgress(0, true)
@@ -225,10 +226,10 @@ class SessionActivity : AppCompatActivity() {
   }
 
   private fun updateTextViews() {
-    fileNameLabel.text = FileNameUtil.toShortDisplayName(updater.fileName)
+    fileNameLabel.text = FileNameUtil.toShortDisplayName(receiveUpdater.fileName)
     fileSizeLabel.text = Formatter.formatShortFileSize(
       applicationContext,
-      updater.fileLength.toLong()
+      receiveUpdater.fileLength.toLong()
     )
   }
 
@@ -261,14 +262,6 @@ class SessionActivity : AppCompatActivity() {
       // reverse progress animation
       progressBar.setProgress(0, true)
     }, 80)
-  }
-
-  private fun onTransferRequested(name: String) {
-    Snackbar.make(
-      findViewById(R.id.session_layout),
-      "Receiving $name",
-      Snackbar.LENGTH_LONG
-    ).show()
   }
 
   private var fileActivityResult = registerForActivityResult(

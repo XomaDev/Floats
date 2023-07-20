@@ -1,15 +1,16 @@
-package com.baxolino.apps.floats.core.files
+package com.baxolino.apps.floats.core.files.interfaces
 
 import android.os.Bundle
+import com.baxolino.apps.floats.core.files.MessageReceiver
 
-class FileUpdateInterface {
+class ReceiveInterface {
 
   companion object {
-    var staticUpdateInterface: FileUpdateInterface? = null
+    var staticUpdateInterface: ReceiveInterface? = null
 
-    fun getUpdateInterface(): FileUpdateInterface {
+    fun getUpdateInterface(): ReceiveInterface {
       if (staticUpdateInterface == null) {
-        return FileUpdateInterface()
+        return ReceiveInterface()
       }
       return staticUpdateInterface!!
     }
