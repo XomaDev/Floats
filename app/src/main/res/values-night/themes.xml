@@ -3,6 +3,5 @@
     <style name="Base.Theme.Floats" parent="Theme.Material3.DayNight.NoActionBar">
         <!-- Customize your dark theme here. -->
         <!-- <item name="colorPrimary">@color/my_dark_primary</item> -->
-        <item name="android:statusBarColor">@color/material_dynamic_neutral10</item>
     </style>
 </resources>

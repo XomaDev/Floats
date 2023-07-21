@@ -154,6 +154,7 @@
         <com.google.android.material.card.MaterialCardView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:layout_gravity="center"
             android:layout_marginTop="25dp"
             app:cardElevation="1dp"
             app:contentPadding="10dp"

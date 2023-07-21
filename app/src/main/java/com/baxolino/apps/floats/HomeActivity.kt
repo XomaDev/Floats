@@ -10,6 +10,7 @@ import android.util.Log
 import android.view.ViewGroup.LayoutParams.MATCH_PARENT
 import android.widget.FrameLayout
 import androidx.appcompat.app.AppCompatActivity
+import com.baxolino.apps.floats.tools.DynamicTheme
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import io.paperdb.Paper
 
@@ -60,6 +61,7 @@ class HomeActivity : AppCompatActivity() {
       )
     )
     setContentView(R.layout.activity_home)
+    DynamicTheme.setColorOfStatusBar(this)
 
     val bottomNavigationView = findViewById<BottomNavigationView>(R.id.bottomNavigationView)
 

@@ -3,6 +3,8 @@ package com.baxolino.apps.floats.tools
 import android.app.Activity
 import android.content.Context
 import android.content.res.ColorStateList
+import android.content.res.Configuration
+import android.content.res.Resources
 import android.graphics.drawable.GradientDrawable
 import android.view.View
 import android.widget.FrameLayout
@@ -22,6 +24,21 @@ object DynamicTheme {
 
   fun applyNavigationBarTheme(activity: Activity) {
     activity.window.navigationBarColor = SurfaceColors.SURFACE_2.getColor(activity)
+  }
+
+  fun setColorOfStatusBar(activity: Activity) {
+    if (!HAS_DYNAMIC_THEMING) return
+
+    activity.window.statusBarColor = activity.getColor(
+      if (isDarkModeEnabled(activity.resources))
+        com.google.android.material.R.color.material_dynamic_neutral10
+      else com.google.android.material.R.color.material_dynamic_neutral99
+    )
+  }
+
+  private fun isDarkModeEnabled(resources: Resources): Boolean {
+    val currentNightMode = resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK
+    return currentNightMode == Configuration.UI_MODE_NIGHT_YES
   }
 
   fun themeOfHomeActivity(view: View, activity: Activity) {
