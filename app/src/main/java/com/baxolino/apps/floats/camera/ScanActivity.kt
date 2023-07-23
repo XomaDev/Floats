@@ -2,7 +2,6 @@ package com.baxolino.apps.floats.camera
 
 import android.content.Intent
 import android.os.Bundle
-import android.util.Log
 import android.widget.Button
 import androidx.activity.OnBackPressedCallback
 import androidx.appcompat.app.AppCompatActivity
@@ -67,18 +66,13 @@ class ScanActivity : AppCompatActivity() {
       // Select back camera as a default
       val cameraSelector = CameraSelector.DEFAULT_BACK_CAMERA
 
-      try {
-        // Unbind use cases before rebinding
-        cameraProvider.unbindAll()
+      // Unbind use cases before rebinding
+      cameraProvider.unbindAll()
 
-        // Bind use cases to camera
-        cameraProvider.bindToLifecycle(
-          this, cameraSelector, preview, imageAnalyzer
-        )
-
-      } catch (exc: Exception) {
-        Log.e(TAG, "Use case binding failed", exc)
-      }
+      // Bind use cases to camera
+      cameraProvider.bindToLifecycle(
+        this, cameraSelector, preview, imageAnalyzer
+      )
 
     }, ContextCompat.getMainExecutor(this))
   }

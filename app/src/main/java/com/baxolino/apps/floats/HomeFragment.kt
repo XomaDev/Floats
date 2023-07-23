@@ -264,10 +264,6 @@ class HomeFragment(
     }
   }
 
-  fun onNotificationsPermission(granted: Boolean) {
-
-  }
-
   private fun onScanResult() {
     // we are back from the qr scan activity
     // and we can connect to that bluetooth device from the address
