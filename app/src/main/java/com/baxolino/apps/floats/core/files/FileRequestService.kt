@@ -263,7 +263,7 @@ class FileRequestService : Service() {
     val serviceChannel = NotificationChannel(
       NOTIF_CHANNEL_ID,
       NOTIF_CHANNEL_NAME,
-      NotificationManager.IMPORTANCE_HIGH
+      NotificationManager.IMPORTANCE_LOW
     )
     notificationManager.createNotificationChannel(serviceChannel)
   }

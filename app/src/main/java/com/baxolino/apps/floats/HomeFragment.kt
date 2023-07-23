@@ -3,6 +3,7 @@ package com.baxolino.apps.floats
 import android.Manifest
 import android.Manifest.permission.WRITE_EXTERNAL_STORAGE
 import android.app.Activity
+import android.content.DialogInterface
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.net.Uri
@@ -15,8 +16,10 @@ import android.view.ViewGroup
 import android.widget.Button
 import android.widget.ImageView
 import android.widget.TextView
+import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AlertDialog
 import androidx.core.app.ActivityCompat
+import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
 import com.baxolino.apps.floats.camera.ScanActivity
 import com.baxolino.apps.floats.core.KnowEachOther
@@ -51,6 +54,7 @@ class HomeFragment(
     private const val TAG = "HomeActivity"
     const val STORAGE_REQUEST_CODE = 7
     const val CAMERA_REQUEST_CODE = 8
+    const val NOTIF_PERMISSION_REQUEST_CODE = 9
   }
 
   private var initialized = false
@@ -162,8 +166,27 @@ class HomeFragment(
         }
         .show()
     }
-
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+      requestNotificationsPermission()
+    }
     return view
+  }
+
+  @RequiresApi(Build.VERSION_CODES.TIRAMISU)
+  private fun requestNotificationsPermission() {
+    if (NotificationManagerCompat.from(activity).areNotificationsEnabled())
+      return
+    MaterialAlertDialogBuilder(activity)
+      .setMessage("Enable notifications to get notified about file transfers.")
+      .setCancelable(true)
+      .setPositiveButton("Permit") { _: DialogInterface?, _: Int ->
+        activity.requestPermissions(
+          arrayOf(
+            Manifest.permission.POST_NOTIFICATIONS
+          ), NOTIF_PERMISSION_REQUEST_CODE
+        )
+      }
+      .show()
   }
 
   private fun lookOnDisconnect() {
@@ -239,6 +262,10 @@ class HomeFragment(
         }
         .show()
     }
+  }
+
+  fun onNotificationsPermission(granted: Boolean) {
+
   }
 
   private fun onScanResult() {

@@ -317,7 +317,7 @@ class FileReceiveService : Service() {
     val serviceChannel = NotificationChannel(
       NOTIF_CHANNEL_ID,
       NOTIF_CHANNEL_NAME,
-      NotificationManager.IMPORTANCE_DEFAULT
+      NotificationManager.IMPORTANCE_LOW
     )
     notificationManager.createNotificationChannel(serviceChannel)
   }
