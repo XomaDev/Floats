@@ -299,7 +299,5 @@ class SessionService : Service() {
     manager.createNotificationChannel(serviceChannel)
   }
 
-  override fun onBind(intent: Intent?): IBinder? {
-    return null
-  }
+  override fun onBind(intent: Intent?): IBinder? = null
 }

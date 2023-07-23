@@ -105,7 +105,8 @@ class FileReceiveService : Service() {
 
   private fun initSocketConnection(port: Int, host: String) {
     val externalStorageDir = getExternalStoragePublicDirectory(
-      Environment.DIRECTORY_DOCUMENTS)
+      Environment.DIRECTORY_DOCUMENTS
+    )
     var file = File(
       externalStorageDir, fileName
     )
@@ -322,7 +323,5 @@ class FileReceiveService : Service() {
     notificationManager.createNotificationChannel(serviceChannel)
   }
 
-  override fun onBind(intent: Intent?): IBinder? {
-    return null
-  }
+  override fun onBind(intent: Intent?): IBinder? = null
 }
