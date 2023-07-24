@@ -28,6 +28,7 @@ class ScanActivity : AppCompatActivity() {
     super.onCreate(savedInstanceState)
     setContentView(R.layout.activity_scan)
 
+    DynamicTheme.setColorOfStatusBar(this)
     DynamicTheme.applyNavigationBarTheme(this)
 
     val onBackPressedCallback = object : OnBackPressedCallback(true) {

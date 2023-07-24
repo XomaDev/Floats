@@ -16,6 +16,7 @@ class ConnectionActivity : AppCompatActivity() {
     setContentView(R.layout.activity_connection)
 
     DynamicTheme.themeOfNoConnectionActivity(this)
+    DynamicTheme.setColorOfStatusBar(this)
 
     var running = true
     findViewById<MaterialButton>(R.id.retry_button).setOnClickListener {
