@@ -75,6 +75,8 @@ class SessionActivity : AppCompatActivity() {
     Log.d(TAG, "onCreate()")
 
     setContentView(R.layout.activity_session)
+
+    DynamicTheme.setColorOfStatusBar(this)
     DynamicTheme.themeOfSessionActivity(this)
 
 
