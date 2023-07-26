@@ -11,6 +11,7 @@ import android.widget.ListView
 import android.widget.TextView
 import com.baxolino.apps.floats.listviews.FileDetails
 import com.baxolino.apps.floats.listviews.FileListAdapter
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.snackbar.Snackbar
 import io.paperdb.Paper
 import org.json.JSONObject
@@ -50,15 +51,22 @@ class FilesFragment(
         Html.FROM_HTML_SEPARATOR_LINE_BREAK_PARAGRAPH
       )
     view.findViewById<Button>(R.id.clearHistory).setOnClickListener {
-      if (listView.adapter == null) {
+      if (files.isEmpty())
         return@setOnClickListener
-      }
-      // this will refresh the list
-      listView.adapter = null
+      MaterialAlertDialogBuilder(activity, R.style.FloatsCustomDialogTheme)
+        .setTitle("Delete history?")
+        .setMessage("Receive history will be permanently deleted")
+        .setPositiveButton("Delete") { _, _ ->
+          // this will refresh the list
+          listView.adapter = null
 
-      Paper.book("files").destroy()
-      view.findViewById<View>(R.id.emptyListTip).visibility = View.VISIBLE
-      Snackbar.make(view, "File history was cleared", Snackbar.LENGTH_LONG)
+          Paper.book("files").destroy()
+          view.findViewById<View>(R.id.emptyListTip).visibility = View.VISIBLE
+          Snackbar.make(view, "File history was cleared", Snackbar.LENGTH_LONG)
+            .show()
+        }.setNegativeButton("Cancel") { dialog, _ ->
+          dialog.dismiss()
+        }
         .show()
     }
     return view
