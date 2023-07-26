@@ -19,14 +19,12 @@
 
         <Button
             android:id="@+id/clearHistory"
-            style="?attr/materialIconButtonStyle"
+            style="?attr/materialIconButtonFilledTonalStyle"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="center|end"
             android:fontFamily="@font/inter"
-            android:text="Clear history"
-            app:icon="@drawable/trash"
-            app:iconPadding="10dp" />
+            app:icon="@drawable/trash"/>
     </FrameLayout>
 
     <com.google.android.material.card.MaterialCardView
@@ -43,7 +41,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:fontFamily="@font/inter"
-            android:text="Files are saved into the Documents folder." />
+            android:text="Files are saved into the Documents folder" />
     </com.google.android.material.card.MaterialCardView>
 
 
@@ -55,7 +53,7 @@
         android:layout_height="wrap_content"
         android:fontFamily="@font/inter"
         android:layout_gravity="center"
-        android:text="Received files will be shown here."/>
+        android:text="Received files will be shown here"/>
 
     <ListView
         android:id="@+id/devices_list"

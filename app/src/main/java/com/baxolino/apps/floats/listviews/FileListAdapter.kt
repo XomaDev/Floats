@@ -14,7 +14,6 @@ import androidx.core.content.FileProvider
 import com.baxolino.apps.floats.R
 import com.baxolino.apps.floats.core.files.FileNameUtil
 import com.baxolino.apps.floats.tools.DynamicTheme
-import com.google.android.material.card.MaterialCardView
 import java.io.File
 import java.net.URLConnection
 import java.text.SimpleDateFormat
@@ -78,17 +77,12 @@ class FileListAdapter(context: Context?, itemList: ArrayList<FileDetails>) :
         backgroundTintList = ColorStateList.valueOf(color)
       }
 
-      findViewById<TextView>(R.id.timeLabel)
-        .setTextColor(color)
-
-      findViewById<TextView>(R.id.sizeLabel).setTextColor(color)
-
       findViewById<TextView>(R.id.fileName).apply {
         text = shortFileName
         setTextColor(color)
       }
 
-      findViewById<TextView>(R.id.fromTextView).text = details.from
+      findViewById<TextView>(R.id.fromTextView).text = "· " + details.from
 
       findViewById<TextView>(R.id.sizeTextView).text =
         Formatter.formatFileSize(context, details.fileSize.toLong())
