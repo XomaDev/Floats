@@ -29,7 +29,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_gravity="start"
-                    android:fontFamily="@font/inter"
+                    android:fontFamily="@font/source_sans_pro_bold"
                     android:text="Floats"
                     android:textSize="55sp"
                     android:textStyle="bold" />
