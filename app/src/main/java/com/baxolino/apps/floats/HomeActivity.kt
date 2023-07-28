@@ -1,25 +1,18 @@
 package com.baxolino.apps.floats
 
-import android.Manifest
 import android.content.BroadcastReceiver
 import android.content.Context
-import android.content.DialogInterface
 import android.content.Intent
 import android.content.IntentFilter
 import android.content.pm.PackageManager
-import android.os.Build
 import android.os.Bundle
 import android.util.Log
 import android.view.ViewGroup.LayoutParams.MATCH_PARENT
 import android.widget.FrameLayout
-import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.app.NotificationManagerCompat
 import com.baxolino.apps.floats.tools.DynamicTheme
 import com.google.android.material.bottomnavigation.BottomNavigationView
-import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import io.paperdb.Paper
-import kotlin.system.exitProcess
 
 
 class HomeActivity : AppCompatActivity() {
