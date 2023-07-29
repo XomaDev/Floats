@@ -45,7 +45,7 @@ class SessionService : Service() {
 
     const val DISCONNECT_BROADCAST_ACTION = "disconnect_broadcast"
     const val TRANSMISSION_BROADCAST_ACTION = "transmission_broadcast"
-    private const val DISCONNECT_BUTTON_BROADCAST_ACTION = "disconnect_button_broadcast"
+    const val DISCONNECT_BUTTON_BROADCAST_ACTION = "disconnect_button_broadcast"
   }
 
   private lateinit var partner: String

@@ -2,6 +2,7 @@ package com.baxolino.apps.floats
 
 import android.content.BroadcastReceiver
 import android.content.Context
+import android.content.DialogInterface
 import android.content.Intent
 import android.content.IntentFilter
 import android.net.Uri
@@ -17,12 +18,14 @@ import androidx.activity.OnBackPressedCallback
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import com.baxolino.apps.floats.core.SessionService
+import com.baxolino.apps.floats.core.SessionService.Companion.DISCONNECT_BUTTON_BROADCAST_ACTION
 import com.baxolino.apps.floats.core.SessionService.Companion.TRANSMISSION_BROADCAST_ACTION
 import com.baxolino.apps.floats.core.files.FileNameUtil
 import com.baxolino.apps.floats.core.files.interfaces.ReceiveInterface
 import com.baxolino.apps.floats.core.files.MessageReceiver
 import com.baxolino.apps.floats.core.transfer.SocketConnection
 import com.baxolino.apps.floats.tools.DynamicTheme
+import com.google.android.material.button.MaterialButton
 import com.google.android.material.card.MaterialCardView
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.floatingactionbutton.FloatingActionButton
@@ -106,6 +109,28 @@ class SessionActivity : AppCompatActivity() {
             .setType("*/*"), "Choose a file"
         )
       )
+    }
+
+    findViewById<MaterialButton>(R.id.disconnect_button).setOnClickListener {
+      // we'll send a disconnect broadcast request to the
+      // the session service; disconnect will be initiated
+
+      MaterialAlertDialogBuilder(this, R.style.FloatsCustomDialogTheme)
+        .setTitle("Disconnect?")
+        .setMessage("This may disrupt any ongoing transfers")
+        .setCancelable(false)
+        .setNegativeButton("Cancel") { dialog, _ ->
+          dialog.dismiss()
+        }
+        .setPositiveButton("Disconnect") { _: DialogInterface?, _: Int ->
+          // after confirmation
+          sendBroadcast(
+            Intent(
+              DISCONNECT_BUTTON_BROADCAST_ACTION
+            )
+          )
+        }
+        .show()
     }
 
     fileNameLabel = findViewById(R.id.file_name)
