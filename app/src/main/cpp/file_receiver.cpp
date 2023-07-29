@@ -174,6 +174,8 @@ int readBytes(
       }
       nRead += bytesRead;
       env->CallVoidMethod(callback, methodId, nRead);
+      if (wasCancelled)
+         return -1;
    }
    if (nRead == 0) {
       // sometimes what happens is, the sender device is sometimes

@@ -18,7 +18,10 @@ import com.baxolino.apps.floats.HomeActivity.Companion.RESTORE_SESSION_CHECK
 import com.baxolino.apps.floats.R
 import com.baxolino.apps.floats.SessionActivity
 import com.baxolino.apps.floats.core.files.FileReceiveService
+import com.baxolino.apps.floats.core.files.FileReceiveService.Companion.CANCEL_RECEIVE_ACTION
 import com.baxolino.apps.floats.core.files.FileRequest
+import com.baxolino.apps.floats.core.files.FileRequestService
+import com.baxolino.apps.floats.core.files.FileRequestService.Companion.CANCEL_REQUEST_ACTION
 import com.baxolino.apps.floats.core.files.MessageReceiver
 import com.baxolino.apps.floats.core.files.RequestHandler
 import com.baxolino.apps.floats.core.transfer.ChannelInfo
@@ -216,6 +219,28 @@ class SessionService : Service() {
     sendBroadcast(
       Intent(
         DISCONNECT_BROADCAST_ACTION
+      )
+    )
+
+    sendBroadcast(
+      Intent(
+        CANCEL_RECEIVE_ACTION
+      )
+    )
+    stopService(
+      Intent(
+        this, FileReceiveService::class.java
+      )
+    )
+
+    sendBroadcast(
+      Intent(
+        CANCEL_REQUEST_ACTION
+      )
+    )
+    stopService(
+      Intent(
+        this, FileRequestService::class.java
       )
     )
     stopSelf()
