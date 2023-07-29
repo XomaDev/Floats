@@ -33,16 +33,41 @@
                 android:layout_gravity="center"
                 android:gravity="end"
                 android:layout_weight="1"
-                android:layout_width="wrap_content"
+                android:layout_width="0dp"
                 android:layout_height="wrap_content">
-                <TextView
-                    android:id="@+id/transfer_speed"
-                    android:layout_gravity="center"
+
+                <com.google.android.material.card.MaterialCardView
                     android:layout_width="wrap_content"
+                    app:cardElevation="1dp"
+                    app:contentPadding="5dp"
                     android:layout_height="wrap_content"
-                    android:textSize="18sp"
-                    android:text="--"
-                    android:fontFamily="@font/inter"/>
+                    app:strokeWidth="0dp">
+
+                    <LinearLayout
+                        android:gravity="center"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal">
+                        <com.google.android.material.button.MaterialButton
+                            android:layout_width="wrap_content"
+                            android:layout_gravity="center"
+                            android:id="@+id/disconnect_button"
+                            app:icon="@drawable/ic_disconnect"
+                            android:fontFamily="@font/inter"
+                            android:layout_height="wrap_content"
+                            style="@style/Widget.Material3.Button.IconButton.Filled.Tonal"/>
+
+                        <TextView
+                            android:id="@+id/transfer_speed"
+                            android:layout_width="100dp"
+                            android:layout_height="wrap_content"
+                            android:text="--"
+                            android:textStyle="bold"
+                            android:layout_marginEnd="5dp"
+                            android:textAlignment="textEnd"
+                            android:fontFamily="@font/inter"/>
+                    </LinearLayout>
+                </com.google.android.material.card.MaterialCardView>
             </LinearLayout>
         </LinearLayout>
 
@@ -106,7 +131,7 @@
 
         <com.google.android.material.card.MaterialCardView
             android:layout_marginTop="30dp"
-            app:contentPadding="10dp"
+            app:contentPadding="5dp"
             app:strokeWidth="0dp"
             android:layout_gravity="center"
             app:cardElevation="1dp"
@@ -164,7 +189,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:fontFamily="@font/inter"
-                android:text="It is recommended to keep the app open when the files are being received." />
+                android:text="Tap the '+' icon to send files" />
         </com.google.android.material.card.MaterialCardView>
     </LinearLayout>
 
