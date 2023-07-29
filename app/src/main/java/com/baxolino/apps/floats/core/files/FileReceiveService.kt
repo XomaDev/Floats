@@ -107,21 +107,13 @@ class FileReceiveService : Service() {
     val externalStorageDir = getExternalStoragePublicDirectory(
       Environment.DIRECTORY_DOCUMENTS
     )
-    var file = File(
-      externalStorageDir, fileName
+
+    val saveFileName = getWithRandomizedName(fileName)
+    val file = File(
+      externalStorageDir, saveFileName
     )
-    var saveFileName = fileName
-    var count = 1
-    while (file.exists()) {
-      // if there is already a file, like hello.txt, it'll save it as
-      // (1) hello.txt
-      saveFileName = "($count) $fileName"
-      file = File(
-        externalStorageDir, saveFileName
-      )
-      count++
-    }
     Log.d(TAG, "Path = $file")
+
     val result = receiveFile(
       externalStorageDir.absolutePath,
       saveFileName,
@@ -137,6 +129,7 @@ class FileReceiveService : Service() {
       val savedFile = File(finalFilePath)
 
       val data = JSONObject()
+        .put("originalFileName", fileName)
         .put("path", savedFile.absolutePath)
         .put("size", fileLength)
         .put("time", System.currentTimeMillis())
@@ -152,6 +145,19 @@ class FileReceiveService : Service() {
       Log.d(TAG, "Message: $result")
     }
     onComplete()
+  }
+
+  private fun getWithRandomizedName(fileName: String): String {
+    // we just basically add some extra random numbers 
+    // before the file extension
+    val index = fileName.lastIndexOf('.')
+
+    val name = fileName.substring(0, index)
+    val extension = fileName.substring(index + 1)
+
+    return "$name${
+      Random.nextLong(999999999, 9999999999999)
+    }.$extension"
   }
 
   private external fun receiveFile(

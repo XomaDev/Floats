@@ -86,7 +86,7 @@ class FilesFragment(
         if (file.exists()) {
           list.add(
             FileDetails(
-              fileName,
+              getString("originalFileName"),
               file.absolutePath,
               getString("from"),
               getInt("size"),
