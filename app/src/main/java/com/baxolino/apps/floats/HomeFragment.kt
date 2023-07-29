@@ -3,10 +3,8 @@ package com.baxolino.apps.floats
 import android.Manifest
 import android.Manifest.permission.WRITE_EXTERNAL_STORAGE
 import android.app.Activity
-import android.content.Context
 import android.content.DialogInterface
 import android.content.Intent
-import android.content.SharedPreferences
 import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Build
@@ -74,8 +72,6 @@ class HomeFragment(
 
   private var hasConnection = true
 
-  private lateinit var preferences: SharedPreferences
-
   fun onCreate(
     inflater: LayoutInflater,
     container: ViewGroup?
@@ -90,8 +86,6 @@ class HomeFragment(
 
     Log.d(TAG, "onCreate()")
     DynamicTheme.themeOfHomeActivity(view, activity)
-
-    preferences = activity.getSharedPreferences("common", Context.MODE_PRIVATE)
 
     val deviceText = view.findViewById<TextView>(R.id.device_label)
     val deviceId = Utils.getDeviceName(activity.contentResolver)
@@ -180,19 +174,12 @@ class HomeFragment(
 
   @RequiresApi(Build.VERSION_CODES.TIRAMISU)
   private fun requestNotificationsPermission() {
-    if (NotificationManagerCompat.from(activity).areNotificationsEnabled()
-      || preferences.getBoolean("deny_notifications", false)
-    )
+    if (NotificationManagerCompat.from(activity).areNotificationsEnabled())
       return
     MaterialAlertDialogBuilder(activity, R.style.FloatsCustomDialogTheme)
       .setTitle("Notifications")
       .setMessage("Enable notifications to get notified about file transfers.")
       .setCancelable(false)
-      .setNegativeButton("Do not ask again") { _, _ ->
-        preferences.edit()
-          .putBoolean("deny_notifications", true)
-          .apply()
-      }
       .setPositiveButton("Permit") { _: DialogInterface?, _: Int ->
         activity.requestPermissions(
           arrayOf(
