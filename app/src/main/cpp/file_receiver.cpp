@@ -93,29 +93,15 @@ jstring receiveContentSocket(
    std::string finalOutput = outputPathStr + "/" + fileNameChars;
 
    int outputFile = open(finalOutput.c_str(), O_WRONLY | O_CREAT | O_TRUNC, 0644);
-   if (outputFile == -1) {
-      // Failed to open the output file
-      if (errno == 17) {
-         // retry opening it with appended random name
-         std::random_device rd;
-         std::mt19937 generator(rd());
-         std::uniform_int_distribution<int> distribution(1000000, 9999999);
-         std::ostringstream oss;
-         oss << distribution(generator);
-         std::string outputPathWithRandomNumber = outputPathStr + "/(" + oss.str() + ") " +  fileNameChars;
 
-         finalOutput = outputPathWithRandomNumber;
-         outputFile = open(outputPathWithRandomNumber.c_str(), O_WRONLY | O_CREAT | O_TRUNC, 0644);
-         if (outputFile == -1) {
-            const char *errorMessage = strerror(errno);
-            return env->NewStringUTF(
-                    (std::string(errorMessage)
-                     + " "
-                     + std::to_string(errno)
-                     + " "
-                     + outputPathWithRandomNumber).c_str());
-         }
-      }
+   if (outputFile == -1) {
+      const char *errorMessage = strerror(errno);
+      return env->NewStringUTF(
+              (std::string(errorMessage)
+               + " "
+               + std::to_string(errno)
+               + " "
+               + finalOutput).c_str());
    }
 
    jclass clazz = env->GetObjectClass(callback);
