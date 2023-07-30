@@ -278,6 +278,8 @@ class FileReceiveService : Service() {
   }
 
   private fun message(what: Int, arg1: Int, data: Bundle) {
+    if (hasStopped)
+      return
     sendBroadcast(
       Intent(RECEIVE_ACTION)
         .putExtra("type", 0)

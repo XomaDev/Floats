@@ -194,6 +194,8 @@ class FileRequestService : Service() {
   }
 
   private fun message(what: Int, arg1: Int, data: Bundle) {
+    if (cancelled)
+      return
     sendBroadcast(
       Intent(MessageReceiver.RECEIVE_ACTION)
         .putExtra("type", 2)
