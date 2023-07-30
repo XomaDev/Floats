@@ -40,7 +40,6 @@
         <activity
             android:name=".camera.ScanActivity"
             android:exported="false"
-            android:label="@string/title_activity_scan"
             android:screenOrientation="portrait"
             android:theme="@style/Theme.Floats"
             tools:ignore="LockedOrientationActivity" />

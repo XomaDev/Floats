@@ -277,7 +277,7 @@ class SessionActivity : AppCompatActivity() {
   private fun cancelFileTransfer() {
     Toast.makeText(
       applicationContext,
-      getString(R.string.transfer_cancelled_receiver), Toast.LENGTH_LONG
+      "File transfer was cancelled by the user.", Toast.LENGTH_LONG
     ).show()
 
     sendBroadcast(
