@@ -56,11 +56,11 @@ class SocketConnection {
       try {
         socket = serverSocket.accept()
         Log.d(TAG, "acceptOnPort() Connection was accepted.")
+        onConnected(onConnect)
       } catch (e: SocketTimeoutException) {
         Log.d(TAG, "Timed out while accepting.")
         onTimeout?.invoke()
       }
-      onConnected(onConnect)
     }
     return this
   }
