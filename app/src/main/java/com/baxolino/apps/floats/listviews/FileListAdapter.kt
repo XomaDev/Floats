@@ -77,7 +77,10 @@ class FileListAdapter(context: Context?, itemList: ArrayList<FileDetails>) :
         backgroundTintList = ColorStateList.valueOf(color)
       }
 
-      findViewById<TextView>(R.id.fileName).text = shortFileName
+      findViewById<TextView>(R.id.fileName).apply {
+        setTextColor(color)
+        text = shortFileName
+      }
 
       findViewById<TextView>(R.id.fromTextView).text = "· " + details.from
 
