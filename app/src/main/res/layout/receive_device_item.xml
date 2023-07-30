@@ -8,7 +8,8 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         app:cardElevation="1dp"
-        app:cardCornerRadius="0dp"
+        android:layout_marginTop="10dp"
+        app:cardCornerRadius="7dp"
         app:contentPadding="15dp"
         app:strokeWidth="0dp">
 
@@ -59,7 +60,7 @@
                             android:textSize="14sp" />
 
                         <TextView
-                            android:layout_marginStart="3dp"
+                            android:layout_marginStart="5dp"
                             android:id="@+id/fromTextView"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
@@ -70,7 +71,7 @@
                 </LinearLayout>
 
                 <Button
-                    style="?attr/materialIconButtonFilledTonalStyle"
+                    style="?attr/materialIconButtonStyle"
                     android:id="@+id/actionButton"
                     app:icon="@drawable/share"
                     android:layout_width="wrap_content"
