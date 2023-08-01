@@ -112,6 +112,7 @@ class FileReceiveService : Service() {
     val file = File(
       externalStorageDir, saveFileName
     )
+    file.createNewFile()
     Log.d(TAG, "Path = $file")
 
     val result = receiveFile(
