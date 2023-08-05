@@ -47,7 +47,7 @@ class FilesFragment(
     }
     view.findViewById<TextView>(R.id.filesTip).text =
       Html.fromHtml(
-        "Files are saved into the <b>Documents</b> folder.",
+        "Files are saved into the <b>Downloads</b> folder.",
         Html.FROM_HTML_SEPARATOR_LINE_BREAK_PARAGRAPH
       )
     view.findViewById<Button>(R.id.clearHistory).setOnClickListener {

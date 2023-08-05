@@ -105,14 +105,13 @@ class FileReceiveService : Service() {
 
   private fun initSocketConnection(port: Int, host: String) {
     val externalStorageDir = getExternalStoragePublicDirectory(
-      Environment.DIRECTORY_DOCUMENTS
+      Environment.DIRECTORY_DOWNLOADS
     )
 
     val saveFileName = getWithRandomizedName(fileName)
     val file = File(
       externalStorageDir, saveFileName
     )
-    file.createNewFile()
     Log.d(TAG, "Path = $file")
 
     val result = receiveFile(
